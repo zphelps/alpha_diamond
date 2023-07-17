@@ -81,9 +81,13 @@ class JobsApi {
 
         query.order("created_at", {ascending: false});
 
-        query.range(page * rowsPerPage, page * rowsPerPage + rowsPerPage - 1);
+        if (typeof page !== "undefined" && typeof rowsPerPage !== "undefined") {
+            query.range(page * rowsPerPage, page * rowsPerPage + rowsPerPage - 1);
+        }
 
         const res = await query;
+
+        console.log(res);
 
         return Promise.resolve({
             data: (res.data as Job[]) ?? [],

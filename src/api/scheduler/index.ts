@@ -150,6 +150,8 @@ class SchedulerApi {
             return response.data;
         });
 
+        console.log('Jobs to be scheduled', jobsToBeScheduled);
+
         //TODO: add on-demand jobs for the week
         const schedule: Schedule = {
             unscheduledJobs: [],
