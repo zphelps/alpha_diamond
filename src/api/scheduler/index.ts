@@ -3,22 +3,22 @@ import {supabase} from "../../config.ts";
 import {useAuth} from "../../hooks/use-auth.ts";
 import {Service} from "../../types/service.ts";
 import {Route} from "../../types/route.ts";
-import {format} from "date-fns";
+import {addDays, format} from "date-fns";
 import {jobsApi} from "../jobs";
 import {boolean} from "yup";
-import * as moment from "moment/moment";
+// import * as moment from "moment/moment";
 import {uuid} from "@supabase/supabase-js/dist/main/lib/helpers";
 import {Job} from "../../types/job.ts";
 import {routeOptimizerApi} from "../route-optimizer";
 
 type GetScheduleRequest = {
-    beginningOfWeek: moment.MomentInput;
+    beginningOfWeek: Date;
 };
 
 type GetScheduleResponse = Promise<Schedule>;
 
 type CreateScheduleServicesRequest = {
-    beginningOfWeek: moment.MomentInput;
+    beginningOfWeek: Date;
 };
 
 type CreateScheduleServicesResponse = Promise<{
@@ -174,7 +174,7 @@ class SchedulerApi {
                 const service = {
                     id: uuid(),
                     job: job,
-                    date: moment(beginningOfWeek).add(day, "days").format("YYYY-MM-DD"),
+                    date: format(addDays(beginningOfWeek, day), 'yyyy-MM-dd'), // moment(beginningOfWeek).add(day, "days").format("YYYY-MM-DD"),
                 };
                 schedule[day].push(service);
             }
@@ -231,7 +231,7 @@ class SchedulerApi {
                     const service = {
                         id: uuid(),
                         job: job,
-                        date: moment(beginningOfWeek).add(day, "days").format("YYYY-MM-DD"),
+                        date: format(addDays(beginningOfWeek, day), 'yyyy-MM-dd'), // moment(beginningOfWeek).add(day, "days").format("YYYY-MM-DD"),
                     };
                     schedule[day].push(service);
                 }
@@ -248,7 +248,7 @@ class SchedulerApi {
                 const service = {
                     id: uuid(),
                     job: job,
-                    date: moment(beginningOfWeek).add(day, "days").format("YYYY-MM-DD"),
+                    date: format(addDays(beginningOfWeek, day), 'yyyy-MM-dd'), // moment(beginningOfWeek).add(day, "days").format("YYYY-MM-DD"),
                 };
                 schedule[day].push(service);
             }
@@ -264,7 +264,7 @@ class SchedulerApi {
                 const service = {
                     id: uuid(),
                     job: job,
-                    date: moment(beginningOfWeek).add(day, "days").format("YYYY-MM-DD"),
+                    date: format(addDays(beginningOfWeek, day), 'yyyy-MM-dd'), // moment(beginningOfWeek).add(day, "days").format("YYYY-MM-DD"),
                 };
                 schedule[day].push(service);
             }
