@@ -11,7 +11,7 @@ import {ScheduleEvent} from "../../types/schedule-event.ts";
 import {useDispatch, useSelector} from "react-redux";
 import {Truck01} from "@untitled-ui/icons-react";
 import interactionPlugin from "@fullcalendar/interaction";
-import {format} from "date-fns"; // needed for dayClick
+import {addMinutes, format, startOfWeek} from "date-fns"; // needed for dayClick
 import ReactTooltip from 'react-tooltip';
 import {usePopover} from "../../hooks/use-popover.tsx";
 import {CreateContentPopover} from "../../components/create-popover.tsx";
@@ -26,7 +26,6 @@ import {date} from "yup";
 import {TimelineToolbar, TimelineView} from "../../sections/schedule/timeline-toolbar.tsx";
 import {schedulerApi} from "../../api/scheduler";
 import toast from "react-hot-toast";
-import * as moment from "moment/moment";
 
 interface CreateDialogData {
     range?: {
@@ -80,7 +79,7 @@ const useScheduleServices = (services: Service[] = []) => {
             return Object.values(services).map((service) => {
                 console.log(service)
                 const start = new Date(service.timestamp);
-                const end = moment(start).add(service.duration, 'minutes').toDate();
+                const end = addMinutes(start, service.duration);
                 console.log("Start: " + start.toISOString());
                 console.log("After adding " + service.duration + " minutes: " + end.toISOString());
                 return {
@@ -242,15 +241,14 @@ export const SchedulePage = () => {
 
             try {
                 toast.loading('Creating schedule services')
-                console.log('Beginning of Week: ');
-                // console.log('Beginning of Week: ', moment().startOf('week'));
-                // const res = await schedulerApi.createScheduleServices({
-                //     beginningOfWeek: moment().startOf('week'),
-                // })
+                console.log('Beginning of Week: ', startOfWeek(new Date()));
+                const res = await schedulerApi.createScheduleServices({
+                    beginningOfWeek: startOfWeek(new Date()),
+                })
 
-                // console.log(res)
-                //
-                // setGeneratedServices(res.scheduledServices);
+                console.log(res)
+
+                setGeneratedServices(res.scheduledServices);
 
 
                 // setServices([
