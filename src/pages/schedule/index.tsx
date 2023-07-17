@@ -242,14 +242,14 @@ export const SchedulePage = () => {
 
             try {
                 toast.loading('Creating schedule services')
-                console.log('Beginning of Week: ', moment().startOf('week'))
-                const res = await schedulerApi.createScheduleServices({
-                    beginningOfWeek: moment().startOf('week'),
-                })
+                console.log('Beginning of Week: ', moment().startOf('week'));
+                // const res = await schedulerApi.createScheduleServices({
+                //     beginningOfWeek: moment().startOf('week'),
+                // })
 
-                console.log(res)
-
-                setGeneratedServices(res.scheduledServices);
+                // console.log(res)
+                //
+                // setGeneratedServices(res.scheduledServices);
 
 
                 // setServices([
