@@ -9,7 +9,7 @@ import { NotificationsButton } from '../notifications-button';
 import { SearchButton } from '../search-button';
 
 const TOP_NAV_HEIGHT = 64;
-const SIDE_NAV_WIDTH = 250;
+const SIDE_NAV_WIDTH = 220;
 
 interface TopNavProps {
   onMobileNavOpen?: () => void;

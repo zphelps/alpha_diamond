@@ -1,7 +1,7 @@
 import type {FC} from "react";
 import {useMemo} from "react";
 import PropTypes from "prop-types";
-import {Divider, Drawer, Stack} from "@mui/material";
+import {Button, Divider, Drawer, Stack, Typography} from "@mui/material";
 import {useTheme} from "@mui/material/styles";
 import {Scrollbar} from "../../../components/scrollbar";
 import {usePathname} from "../../../hooks/use-pathname";
@@ -11,7 +11,7 @@ import {SideNavSection} from "./side-nav-section";
 import {CreateButton} from "../../../components/create-button";
 import Logo from "../../../assets/Logo.png";
 
-const SIDE_NAV_WIDTH = 250;
+const SIDE_NAV_WIDTH = 220;
 
 const useCssVars = (color: NavColor): Record<string, string> => {
     const theme = useTheme();
@@ -190,15 +190,24 @@ export const SideNav: FC<SideNavProps> = (props) => {
                         spacing={1.5}
                         sx={{pt: 3, px: 4}}
                     >
-                        {/*<img style={{height: '38px', width: '35px'}} src={Logo}></img>*/}
-                        {/*<Typography*/}
-                        {/*    variant="h6"*/}
-                        {/*    sx={{fontFamily: (theme) => theme.typography.fontFamily,*/}
-                        {/*      color: (theme) => theme.palette.text.secondary}}*/}
-                        {/*>*/}
-                        {/*  OneSchool*/}
-                        {/*</Typography>*/}
-                        <img style={{height: "80px", width: "150px"}} src={Logo}></img>
+                        {/*<img style={{height: "80px", width: "150px"}} src={Logo}></img>*/}
+                        <Stack direction={'row'}>
+                            <Typography
+                                variant={'h5'}
+                                fontWeight={'900'}
+                                color={'primary.main'}
+                            >
+                                Alpha
+                            </Typography>
+                            <Typography
+                                variant={'h5'}
+                                fontWeight={'900'}
+                                color={'text.secondary'}
+                            >
+                                Diamond
+                            </Typography>
+                        </Stack>
+
                     </Stack>
                     <Divider sx={{height: 2, mt: 2, mb: 2, background: (theme) => theme.palette.grey.A100}}/>
                     <Stack
@@ -210,7 +219,7 @@ export const SideNav: FC<SideNavProps> = (props) => {
                         }}
                     >
                         <CreateButton/>
-                        <Divider sx={{height: 2, mt: 3, mb: 2.5, background: (theme) => theme.palette.grey.A100}}/>
+                        <Divider sx={{height: 2, mt: 2, mb: 2.5, background: (theme) => theme.palette.grey.A100}}/>
                         {sections.map((section, index) => (
                             <SideNavSection
                                 items={section.items}

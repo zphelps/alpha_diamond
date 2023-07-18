@@ -56,16 +56,7 @@ export const AuthLayout: FC<LayoutProps> = (props) => {
                             spacing={1}
                             sx={{textDecoration: "none"}}
                         >
-                            <img style={{height: "40px", width: "35px"}} src={Logo}></img>
-                            <Typography
-                                variant="h5"
-                                sx={{
-                                    fontFamily: (theme) => theme.typography.fontFamily,
-                                    color: (theme) => theme.palette.text.secondary
-                                }}
-                            >
-                                OneSchool
-                            </Typography>
+                            <img style={{height: "50px", width: "90px"}} src={Logo}></img>
                         </Stack>
                     </Stack>
                 </Container>

@@ -1,14 +1,16 @@
 import type { FC } from 'react';
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import {Divider, Drawer, Stack, Typography} from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import {Divider, Drawer, IconButton, Stack, Typography} from '@mui/material';
+import {styled, useTheme} from '@mui/material/styles';
 import { Scrollbar } from '../../../components/scrollbar';
 import { usePathname } from '../../../hooks/use-pathname';
 import type { NavColor } from '../../../types/settings';
 import type { Section } from '../config';
 import { MobileNavSection } from './mobile-nav-section';
 import Logo from "../../../assets/Logo.png";
+import ChevronRightIcon from "@untitled-ui/icons-react/build/esm/ChevronRight";
+import ChevronLeftIcon from "@untitled-ui/icons-react/build/esm/ChevronLeft";
 
 const MOBILE_NAV_WIDTH = 280;
 
@@ -103,6 +105,16 @@ const useCssVars = (color: NavColor): Record<string, string> => {
   );
 };
 
+const DrawerHeader = styled('div')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: theme.spacing(0, 1),
+  // necessary for content to be below app bar
+  ...theme.mixins.toolbar,
+  justifyContent: 'flex-end',
+}));
+
+
 interface MobileNavProps {
   color?: NavColor;
   onClose?: () => void;
@@ -114,6 +126,7 @@ export const MobileNav: FC<MobileNavProps> = (props) => {
   const { color = 'evident', open, onClose, sections = [] } = props;
   const pathname = usePathname();
   const cssVars = useCssVars(color);
+  const theme = useTheme();
 
   return (
     <Drawer
@@ -130,6 +143,15 @@ export const MobileNav: FC<MobileNavProps> = (props) => {
       }}
       variant="temporary"
     >
+      <DrawerHeader>
+        <IconButton onClick={() => {
+          console.log('close');
+          onClose && onClose();
+        }}>
+          {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+        </IconButton>
+      </DrawerHeader>
+      <Divider />
       <Scrollbar
         sx={{
           height: '100%',
@@ -148,28 +170,7 @@ export const MobileNav: FC<MobileNavProps> = (props) => {
             spacing={1.5}
             sx={{ pt: 3, px: 4}}
           >
-            {/*<img style={{height: '38px', width: '35px'}} src={Logo}></img>*/}
-            {/*<Typography*/}
-            {/*    variant="h5"*/}
-            {/*    sx={{fontFamily: (theme) => theme.typography.fontFamily,*/}
-            {/*      color: (theme) => theme.palette.text.secondary}}*/}
-            {/*>*/}
-            {/*  OneSchool*/}
-            {/*</Typography>*/}
-            <img style={{height: "40px", width: "100px"}} src={Logo}></img>
-            <Typography
-                variant="h6"
-                sx={{
-                  fontFamily: (theme) => theme.typography.fontFamily,
-                  color: (theme) => theme.palette.text.secondary,
-                  letterSpacing: "0.025em",
-                  textAlign: "center",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-            >
-              Hamilton Heights High School
-            </Typography>
+            <img style={{height: "70px", width: "125px"}} src={Logo}></img>
           </Stack>
           <Divider sx={{ height: 2, mt: 3, mb: 2.5, background: (theme) => theme.palette.grey.A200 }} />
           <Stack

@@ -81,6 +81,7 @@ export const JobDetailsPage = () => {
     const job = useSelector((state) => state.jobs).jobs[params.jobID];
 
     const handleTabsChange = useCallback(
+        // @ts-ignore
         (event: ChangeEvent<{}>, value: string): void => {
             setCurrentTab(value);
         },
@@ -98,12 +99,12 @@ export const JobDetailsPage = () => {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    py: 8
+                    py: 1
                 }}
             >
                 <Container maxWidth="xl">
                     <Stack spacing={4}>
-                        <Stack spacing={4}>
+                        <Stack spacing={2}>
                             <div>
                                 <Link
                                     color="text.primary"
@@ -190,7 +191,7 @@ export const JobDetailsPage = () => {
                                     indicatorColor="primary"
                                     onChange={handleTabsChange}
                                     scrollButtons="auto"
-                                    sx={{mt: 3}}
+                                    sx={{mt: 0}}
                                     textColor="primary"
                                     value={currentTab}
                                     variant="scrollable"

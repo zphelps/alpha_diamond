@@ -20,8 +20,8 @@ export const TimelineContainer = styled("div")(
             fontFamily: theme.typography.fontFamily
         },
         "& .fc .fc-col-header-cell-cushion": {
-            paddingBottom: "10px",
-            paddingTop: "10px",
+            paddingBottom: "4px",
+            paddingTop: "4px",
             fontSize: theme.typography.overline.fontSize,
             fontWeight: theme.typography.overline.fontWeight,
             letterSpacing: theme.typography.overline.letterSpacing,
@@ -64,12 +64,15 @@ export const TimelineContainer = styled("div")(
         "& .fc-list": {
             borderColor: "transparent"
         },
+
         // ".fc-timegrid-slot-label-cushion": {
         //     height: "50px",
         //     // lineHeight: "40px !important"
         // },
         ".fc-timegrid-slot": {
             height: "50px",
+            fontWeight: '600',
+            fontSize: "13px",
             // lineHeight: "40px !important"
         }
     })

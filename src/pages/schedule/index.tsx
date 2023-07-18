@@ -354,7 +354,7 @@ export const SchedulePage = () => {
                 }}
             >
                 <Container maxWidth={false}>
-                    <Stack spacing={2}>
+                    <Stack spacing={0}>
                         <TimelineToolbar
                             date={date}
                             onAddClick={handleAddClick}
@@ -471,20 +471,36 @@ export const SchedulePage = () => {
                                     }}
                                     slotMinTime={'08:00'}
                                     slotMaxTime={'21:00'}
+                                    dayHeaderFormat={{
+
+                                    }}
                                     dayHeaderContent={(arg) => {
                                         const date = arg.date;
                                         return (
                                             <Button
+                                                sx={{
+                                                    p:0,
+                                                    m:0,
+                                                    margin: 0,
+                                                    padding: 0,
+                                                    minWidth: 0,
+                                                    minHeight: 0,
+                                                }}
                                                 onClick={handleClick}
                                             >
                                                 <Stack>
-                                                    <Typography variant={'subtitle2'}>{format(date, 'E')}</Typography>
+                                                    <Typography
+                                                        variant={'caption'}
+                                                    >
+                                                        {format(date, 'E')}
+                                                    </Typography>
                                                     <Typography variant={'caption'}>{format(date, 'M/d')}</Typography>
                                                 </Stack>
                                             </Button>
                                         )
                                     }}
                                     // resourceAreaWidth={'15%'}
+
                                     resourceAreaHeaderContent={() => (
                                         <Stack direction={'row'}>
                                             <Truck01/>
@@ -496,8 +512,8 @@ export const SchedulePage = () => {
                                         return (
                                             // <Stack paddingY={'25px'} justifyContent={'center'}>
                                             <Stack justifyContent={'center'}>
-                                                <Typography variant={'subtitle1'}>{resource.title}</Typography>
-                                                <Typography variant={'body2'}>Driver: {resource.extendedProps.driver}</Typography>
+                                                <Typography variant={'subtitle2'}>{resource.title}</Typography>
+                                                <Typography variant={'caption'}>Driver: {resource.extendedProps.driver}</Typography>
                                             </Stack>
 
                                         )

@@ -1,7 +1,7 @@
 import type { FC, ReactNode } from 'react';
 import PropTypes from 'prop-types';
 import type { Theme } from '@mui/material';
-import { useMediaQuery } from '@mui/material';
+import {Box, useMediaQuery} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import type { NavColor } from '../../../types/settings';
 import type { Section } from '../config';
@@ -10,7 +10,7 @@ import { SideNav } from './side-nav';
 import { TopNav } from './top-nav';
 import { useMobileNav } from './use-mobile-nav';
 
-const SIDE_NAV_WIDTH = 250;
+const SIDE_NAV_WIDTH = 220;
 
 const VerticalLayoutRoot = styled('div')(
   ({ theme }) => ({

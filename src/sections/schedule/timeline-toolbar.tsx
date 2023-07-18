@@ -83,7 +83,7 @@ export const TimelineToolbar: FC<CalendarToolbarProps> = (props) => {
 
   return (
     <Stack
-      alignItems="center"
+      alignItems={'top'}
       flexWrap="wrap"
       justifyContent="space-between"
       flexDirection={{
@@ -99,73 +99,73 @@ export const TimelineToolbar: FC<CalendarToolbarProps> = (props) => {
         direction="row"
         spacing={1}
       >
-        <Typography variant="h4">
+        <Typography variant="h5">
           {dateMonth}
         </Typography>
         <Typography
           sx={{ fontWeight: 300 }}
-          variant="h4"
+          variant="h5"
         >
           {dateDay}
         </Typography>
       </Stack>
       <Stack
-        alignItems="center"
+        alignItems="start"
         direction="row"
         spacing={1}
       >
-        <IconButton onClick={onDatePrev}>
+        <IconButton onClick={onDatePrev} size={'small'}>
           <SvgIcon>
             <ChevronLeftIcon />
           </SvgIcon>
         </IconButton>
-        <IconButton onClick={onDateNext}>
+        <IconButton onClick={onDateNext} size={'small'}>
           <SvgIcon>
             <ChevronRightIcon />
           </SvgIcon>
         </IconButton>
-        <TextField
-          label="View"
-          name="view"
-          onChange={handleViewChange}
-          select
-          SelectProps={{ native: true }}
-          size="small"
-          sx={{
-            minWidth: 120,
-            order: {
-              xs: -1,
-              md: 0
-            }
-          }}
-          value={view}
-        >
-          {availableViewOptions.map((option) => (
-            <option
-              key={option.value}
-              value={option.value}
-            >
-              {option.label}
-            </option>
-          ))}
-        </TextField>
-        <Button
-          onClick={onAddClick}
-          startIcon={(
-            <SvgIcon>
-              <PlusIcon />
-            </SvgIcon>
-          )}
-          sx={{
-            width: {
-              xs: '100%',
-              md: 'auto'
-            }
-          }}
-          variant="contained"
-        >
-          New Event
-        </Button>
+        {/*<TextField*/}
+        {/*  label="View"*/}
+        {/*  name="view"*/}
+        {/*  onChange={handleViewChange}*/}
+        {/*  select*/}
+        {/*  SelectProps={{ native: true }}*/}
+        {/*  size="small"*/}
+        {/*  sx={{*/}
+        {/*    minWidth: 120,*/}
+        {/*    order: {*/}
+        {/*      xs: -1,*/}
+        {/*      md: 0*/}
+        {/*    }*/}
+        {/*  }}*/}
+        {/*  value={view}*/}
+        {/*>*/}
+        {/*  {viewOptions.map((option) => (*/}
+        {/*    <option*/}
+        {/*      key={option.value}*/}
+        {/*      value={option.value}*/}
+        {/*    >*/}
+        {/*      {option.label}*/}
+        {/*    </option>*/}
+        {/*  ))}*/}
+        {/*</TextField>*/}
+        {/*<Button*/}
+        {/*  onClick={onAddClick}*/}
+        {/*  startIcon={(*/}
+        {/*    <SvgIcon>*/}
+        {/*      <PlusIcon />*/}
+        {/*    </SvgIcon>*/}
+        {/*  )}*/}
+        {/*  sx={{*/}
+        {/*    width: {*/}
+        {/*      xs: '100%',*/}
+        {/*      md: 'auto'*/}
+        {/*    }*/}
+        {/*  }}*/}
+        {/*  variant="contained"*/}
+        {/*>*/}
+        {/*  New Event*/}
+        {/*</Button>*/}
       </Stack>
     </Stack>
   );

@@ -189,7 +189,7 @@ export default function JobListPage() {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    py: 8
+                    py: 2
                 }}
             >
                 <Container maxWidth="xl">
