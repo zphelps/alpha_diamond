@@ -1,5 +1,5 @@
 import 'react'
-import {Button, SvgIcon} from "@mui/material";
+import {Button, SvgIcon, Typography} from "@mui/material";
 import PlusIcon from "@untitled-ui/icons-react/build/esm/Plus";
 import {usePopover} from "../hooks/use-popover";
 import { CreateContentPopover } from './create-popover';
@@ -12,18 +12,19 @@ export const CreateButton = () => {
             <Button
                 startIcon={(
                     <SvgIcon>
-                        <PlusIcon/>
+                        <PlusIcon fontSize={'small'}/>
                     </SvgIcon>
                 )}
                 variant="contained"
-                // sx={{
-                //     backgroundColor: (theme) => theme.palette.primary.alpha30,
-                //     color: (theme) => theme.palette.primary.darkest,
-                // }}
                 ref={popover.anchorRef}
                 onClick={popover.handleOpen}
             >
-                Create
+                <Typography
+                    fontWeight={'600'}
+                    fontSize={'0.85rem'}
+                >
+                    Create
+                </Typography>
             </Button>
             <CreateContentPopover
                 anchorEl={popover.anchorRef.current}

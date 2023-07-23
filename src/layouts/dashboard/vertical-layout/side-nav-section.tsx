@@ -122,8 +122,8 @@ export const SideNavSection: FC<SideNavSectionProps> = (props) => {
             fontSize: 12,
             fontWeight: 700,
             lineHeight: 1.66,
-            mb: 1,
-            ml: 1,
+            mb: 0,
+            ml: 0,
             textTransform: 'uppercase'
           }}
         >

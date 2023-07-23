@@ -8,6 +8,7 @@ import {
   Users03
 } from "@untitled-ui/icons-react";
 import { paths } from '../../paths';
+import {Business, Contacts} from "@mui/icons-material";
 
 export interface Item {
   disabled?: boolean;
@@ -31,6 +32,7 @@ export const useSections = () => {
     () => {
       return [
         {
+          subheader: "Main",
           items: [
             {
               title: 'Home',
@@ -88,30 +90,34 @@ export const useSections = () => {
             },
           ]
         },
-        // {
-        //   subheader: "My Clubs",
-        //   items: (auth.user?.groupsMemberOf ?? []).filter(group => group.type === 'Club').map((group) => {
-        //     return {
-        //       title: group.name,
-        //       path: `${paths.groups.index}/${group.id}`,
-        //       icon: (
-        //           <Avatar sx={{m:0, p:0, width: '32px', height: '32px'}} src={group.profileImageURL} />
-        //       ),
-        //     }
-        //   }),
-        // },
-        // {
-        //   subheader: "My Teams",
-        //   items: (auth.user?.groupsMemberOf ?? []).filter(group => group.type === 'Team').map((group) => {
-        //     return {
-        //       title: group.name,
-        //       path: `${paths.groups.index}/${group.id}`,
-        //       icon: (
-        //           <Avatar sx={{m:0, p:0, width: '32px', height: '32px'}} src={group.profileImageURL} />
-        //       ),
-        //     }
-        //   }),
-        // },
+        {
+          subheader: "CRM",
+          items: [
+            {
+              title: "Leads",
+              path: `/leads`,
+              icon: (
+                  <SvgIcon fontSize="small">
+                    <Contacts />
+                  </SvgIcon>
+              ),
+            }
+          ]
+        },
+        {
+          subheader: "Settings",
+          items: [
+            {
+              title: "Organization",
+              path: `/organization`,
+              icon: (
+                  <SvgIcon fontSize="small">
+                    <Business />
+                  </SvgIcon>
+              ),
+            }
+          ]
+        },
       ];
     },
     []

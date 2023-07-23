@@ -31,6 +31,7 @@ import {Status} from "../../utils/status.ts";
 import {ClientBasicDetails} from "../../sections/clients/client-basic-details.tsx";
 import {ClientLocation} from "../../sections/clients/client-location.tsx";
 import {ClientContact} from "../../sections/clients/client-contact.tsx";
+import {ClientPricingDetails} from "../../sections/clients/client-pricing-details.tsx";
 
 const tabs = [
     {label: "Details", value: "details"},
@@ -129,7 +130,7 @@ export const ClientDetailsPage = () => {
             >
                 <Container maxWidth="xl">
                     <Stack spacing={4}>
-                        <Stack spacing={4}>
+                        <Stack spacing={2}>
                             <div>
                                 <Link
                                     color="text.primary"
@@ -216,7 +217,6 @@ export const ClientDetailsPage = () => {
                                     indicatorColor="primary"
                                     onChange={handleTabsChange}
                                     scrollButtons="auto"
-                                    sx={{mt: 3}}
                                     textColor="primary"
                                     value={currentTab}
                                     variant="scrollable"
@@ -236,37 +236,30 @@ export const ClientDetailsPage = () => {
                             <div>
                                 <Grid
                                     container
-                                    spacing={4}
+                                    spacing={2}
                                 >
                                     <Grid
                                         xs={12}
                                         lg={4}
                                     >
-                                        <ClientBasicDetails
-                                            name={client.name}
-                                            country={client.country}
-                                            type={client.type.name}
-                                            status={client.status}
-                                        />
-                                        {client.primary_location && <ClientLocation
-                                            street_address={client.primary_location.street_address}
-                                            city={client.primary_location.city}
-                                            state={client.primary_location.state}
-                                            zip={client.primary_location.zip}
-                                            name={client.primary_location.name}
-                                        />}
-                                        {client.primary_contact && <ClientContact
-                                            first_name={client.primary_contact.first_name}
-                                            last_name={client.primary_contact.last_name}
-                                            email={client.primary_contact.email}
-                                            phone_number={client.primary_contact.phone_number}
-                                        />}
+                                        <Stack spacing={2}>
+                                            <ClientBasicDetails
+                                                name={client.name}
+                                                country={client.country}
+                                                type={client.type.name}
+                                                status={client.status}
+                                            />
+                                            <ClientPricingDetails
+                                                recurring_charge={client.recurring_charge.toString()}
+                                                on_demand_charge={client.on_demand_charge.toString()}
+                                            />
+                                        </Stack>
                                     </Grid>
                                     <Grid
                                         xs={12}
                                         lg={8}
                                     >
-                                        <Stack spacing={4}>
+                                        <Stack spacing={2}>
                                             {client.primary_location && <ClientLocation
                                                 street_address={client.primary_location.street_address}
                                                 city={client.primary_location.city}

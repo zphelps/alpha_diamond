@@ -11,7 +11,7 @@ import {SideNavSection} from "./side-nav-section";
 import {CreateButton} from "../../../components/create-button";
 import Logo from "../../../assets/Logo.png";
 
-const SIDE_NAV_WIDTH = 220;
+const SIDE_NAV_WIDTH = 210;
 
 const useCssVars = (color: NavColor): Record<string, string> => {
     const theme = useTheme();
