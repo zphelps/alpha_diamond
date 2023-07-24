@@ -119,7 +119,7 @@ const useJobsSearch = () => {
     };
 };
 
-const useJobsStore = (searchState: JobsSearchState) => {
+const useJobsStore = (searchState: JobsSearchState, setLoading) => {
     const isMounted = useMounted();
     const dispatch = useDispatch();
 
@@ -138,6 +138,7 @@ const useJobsStore = (searchState: JobsSearchState) => {
                 console.error(err);
                 dispatch(setJobsStatus(Status.ERROR));
             }
+            setLoading(false);
         },
         [searchState, isMounted]
     );
@@ -151,37 +152,53 @@ const useJobsStore = (searchState: JobsSearchState) => {
     );
 };
 
-const useJobIds = (clients: Client[] = []) => {
+const useJobIds = (jobs: Job[] = []) => {
     return useMemo(
         () => {
-            return Object.keys(clients);
-        },
-        [clients]
-    );
-};
-
-const useFilteredJobs = (jobs: Job[] = []) => {
-    return useMemo(
-        () => {
-            return Object.values(jobs);
+            return Object.keys(jobs);
         },
         [jobs]
     );
 };
 
+const useFilteredJobs = (jobs: Job[] = [], query) => {
+    return useMemo(
+        () => {
+            if (query && jobs.length > 0) {
+                return jobs.filter((job) => {
+                    return job.client.name.toLowerCase().includes(query.toLowerCase())
+                });
+            }
+            return Object.values(jobs);
+        },
+        [jobs, query]
+    );
+};
+
 export default function JobListPage() {
     const jobsSearch = useJobsSearch();
-    useJobsStore(jobsSearch.state);
 
     // @ts-ignore
     const jobsStore = useSelector((state) => state.jobs);
 
+    const [loading, setLoading] = useState(jobsStore.jobsCount === 0);
+    useJobsStore(jobsSearch.state, setLoading);
+
     const jobIds = useJobIds(jobsStore.filteredJobs);
     const jobsSelection = useSelection<string>(jobIds);
 
-    const filteredJobs = useFilteredJobs(jobsStore.filteredJobs);
+    const filteredJobs = useFilteredJobs(jobsStore.filteredJobs, jobsSearch.state.filters.query);
 
-    // @ts-ignore
+    useEffect(() => {
+        setLoading(true);
+    }, [jobsSearch.state])
+
+    useEffect(() => {
+        if ((filteredJobs ?? []).length > 0 && jobsSearch.state.filters.query) {
+            filteredJobs.filter((job) => job.client.name.toLowerCase().includes(jobsSearch.state.filters.query.toLowerCase()))
+        }
+    }, [jobsSearch.state.filters.query])
+
     return (
         <>
             <Seo title="Jobs"/>
@@ -231,6 +248,7 @@ export default function JobListPage() {
                             />
 
                             <JobListTable
+                                loading={loading}
                                 count={jobsStore.jobsCount}
                                 items={filteredJobs}
                                 onDeselectAll={jobsSelection.handleDeselectAll}

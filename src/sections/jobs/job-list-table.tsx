@@ -26,6 +26,7 @@ import {useCallback} from "react";
 import Skeleton from "@mui/material/Skeleton";
 
 interface JobListTableProps {
+    loading?: boolean;
   count?: number;
   items?: Job[];
   onDeselectAll?: () => void;
@@ -41,6 +42,7 @@ interface JobListTableProps {
 
 export const JobListTable: FC<JobListTableProps> = (props) => {
   const {
+    loading,
     count = 0,
     items = [],
     onDeselectAll,
@@ -73,67 +75,10 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
 
   return (
     <Box sx={{ position: 'relative' }}>
-      {enableBulkActions && (
-        <Stack
-          direction="row"
-          spacing={2}
-          sx={{
-            alignItems: 'center',
-            backgroundColor: (theme) => theme.palette.mode === 'dark'
-              ? 'neutral.800'
-              : 'neutral.50',
-            display: enableBulkActions ? 'flex' : 'none',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            px: 2,
-            py: 0.5,
-            zIndex: 10
-          }}
-        >
-          <Checkbox
-            checked={selectedAll}
-            indeterminate={selectedSome}
-            onChange={(event) => {
-              if (event.target.checked) {
-                onSelectAll?.();
-              } else {
-                onDeselectAll?.();
-              }
-            }}
-          />
-          <Button
-            color="inherit"
-            size="small"
-          >
-            Delete
-          </Button>
-          <Button
-            color="inherit"
-            size="small"
-          >
-            Edit
-          </Button>
-        </Stack>
-      )}
       <Scrollbar>
         <Table sx={{ minWidth: 1000 }}>
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox
-                  checked={selectedAll}
-                  indeterminate={selectedSome}
-                  onChange={(event) => {
-                    if (event.target.checked) {
-                      onSelectAll?.();
-                    } else {
-                      onDeselectAll?.();
-                    }
-                  }}
-                />
-              </TableCell>
               <TableCell>
                 Name
               </TableCell>
@@ -152,11 +97,8 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {(!items || items.length === 0) && [...Array(5)].map((_, rowIndex) => (
+            {(!items || items.length === 0 || loading) && [...Array(5)].map((_, rowIndex) => (
                 <TableRow key={rowIndex} sx={{px: 2, mx:2}}>
-                  <TableCell sx={{pl: 3.5, m:0}}>
-                    <Skeleton variant={'rectangular'} width={18} height={18} sx={{borderRadius: 0.75}}  />
-                  </TableCell>
                   <TableCell sx={{pl: 2, m:0}}>
                     <Skeleton variant="text" width="80%" height={24} />
                     <Skeleton variant="text" width="60%" height={24} />
@@ -178,7 +120,7 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
                   </TableCell>
                 </TableRow>
             ))}
-            {items.map((job) => {
+            {!loading && items && items.map((job) => {
               const isSelected = selected.includes(job.id);
 
               return (
@@ -187,19 +129,6 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
                   key={job.id}
                   selected={isSelected}
                 >
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={isSelected}
-                      onChange={(event: ChangeEvent<HTMLInputElement>): void => {
-                        if (event.target.checked) {
-                          onSelectOne?.(job.id);
-                        } else {
-                          onDeselectOne?.(job.id);
-                        }
-                      }}
-                      value={isSelected}
-                    />
-                  </TableCell>
                   <TableCell>
                     <Stack
                       alignItems="center"

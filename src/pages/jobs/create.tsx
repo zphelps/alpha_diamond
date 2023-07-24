@@ -35,6 +35,7 @@ import {Client} from "../../types/client.ts";
 import {jobsApi} from "../../api/jobs";
 import {useAuth} from "../../hooks/use-auth.ts";
 import {uuid} from "@supabase/supabase-js/dist/main/lib/helpers";
+import {SelectDateAndDuration} from "../../sections/jobs/create/select-date-and-duration";
 
 const steps = ['Service Type', 'Client', 'Client Details', 'Job Details', 'Schedule', 'Review'];
 
@@ -305,7 +306,7 @@ export const CreateJobPage = () => {
                                         handleDriverNotesChange={handleDriverNotesChange}
                                     />
                                 )}
-                                {activeStep === 4 && (
+                                {activeStep === 4 && formik.values.service_type === 'Recurring' && (
                                     <Stack>
                                         <SelectDuration duration={formik.values.duration} setFieldValue={formik.setFieldValue}/>
                                         <Divider sx={{mt: 2, mb: 3.5}} />
@@ -322,6 +323,12 @@ export const CreateJobPage = () => {
                                             setFieldValue={formik.setFieldValue}
                                         />
                                         <Divider sx={{mt: 2, mb: 1.5}} />
+                                    </Stack>
+                                )}
+                                {activeStep === 4 && formik.values.service_type !== 'Recurring' && (
+                                    <Stack>
+                                        <SelectDateAndDuration duration={formik.values.duration} setFieldValue={formik.setFieldValue}/>
+                                        <Divider sx={{mt: 2.5, mb: 1}} />
                                     </Stack>
                                 )}
                                 {activeStep === 5 && (

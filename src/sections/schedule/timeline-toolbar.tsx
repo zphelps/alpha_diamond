@@ -15,6 +15,7 @@ import {
   Typography,
   useMediaQuery
 } from '@mui/material';
+import {AutoAwesome} from "@mui/icons-material";
 
 export type TimelineView =
     | 'resourceTimeGridWeek'
@@ -124,48 +125,48 @@ export const TimelineToolbar: FC<CalendarToolbarProps> = (props) => {
             <ChevronRightIcon />
           </SvgIcon>
         </IconButton>
-        {/*<TextField*/}
-        {/*  label="View"*/}
-        {/*  name="view"*/}
-        {/*  onChange={handleViewChange}*/}
-        {/*  select*/}
-        {/*  SelectProps={{ native: true }}*/}
-        {/*  size="small"*/}
-        {/*  sx={{*/}
-        {/*    minWidth: 120,*/}
-        {/*    order: {*/}
-        {/*      xs: -1,*/}
-        {/*      md: 0*/}
-        {/*    }*/}
-        {/*  }}*/}
-        {/*  value={view}*/}
-        {/*>*/}
-        {/*  {viewOptions.map((option) => (*/}
-        {/*    <option*/}
-        {/*      key={option.value}*/}
-        {/*      value={option.value}*/}
-        {/*    >*/}
-        {/*      {option.label}*/}
-        {/*    </option>*/}
-        {/*  ))}*/}
-        {/*</TextField>*/}
-        {/*<Button*/}
-        {/*  onClick={onAddClick}*/}
-        {/*  startIcon={(*/}
-        {/*    <SvgIcon>*/}
-        {/*      <PlusIcon />*/}
-        {/*    </SvgIcon>*/}
-        {/*  )}*/}
-        {/*  sx={{*/}
-        {/*    width: {*/}
-        {/*      xs: '100%',*/}
-        {/*      md: 'auto'*/}
-        {/*    }*/}
-        {/*  }}*/}
-        {/*  variant="contained"*/}
-        {/*>*/}
-        {/*  New Event*/}
-        {/*</Button>*/}
+        <TextField
+          label="View"
+          name="view"
+          onChange={handleViewChange}
+          select
+          SelectProps={{ native: true }}
+          size="small"
+          sx={{
+            minWidth: 120,
+            order: {
+              xs: -1,
+              md: 0
+            }
+          }}
+          value={view}
+        >
+          {viewOptions.map((option) => (
+            <option
+              key={option.value}
+              value={option.value}
+            >
+              {option.label}
+            </option>
+          ))}
+        </TextField>
+        <Button
+          onClick={onAddClick}
+          startIcon={(
+            <SvgIcon>
+              <AutoAwesome />
+            </SvgIcon>
+          )}
+          sx={{
+            width: {
+              xs: '100%',
+              md: 'auto'
+            }
+          }}
+          variant="contained"
+        >
+          Optimize Recurring Jobs
+        </Button>
       </Stack>
     </Stack>
   );

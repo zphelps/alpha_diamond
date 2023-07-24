@@ -11,6 +11,7 @@ import {SplashScreen} from "./components/splash-screen";
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import {AuthConsumer, AuthProvider} from "./contexts/auth/supabase-context.tsx";
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 function App() {
 

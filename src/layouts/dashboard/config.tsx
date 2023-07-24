@@ -81,7 +81,7 @@ export const useSections = () => {
             },
             {
               title: 'Trucks',
-              path: paths.forms,
+              path: paths.fleet,
               icon: (
                   <SvgIcon fontSize="small">
                     <Truck02 />

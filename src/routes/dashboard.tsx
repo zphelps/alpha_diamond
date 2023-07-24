@@ -10,6 +10,7 @@ import {ServiceDetailsPage} from "../pages/services/detail.tsx";
 import {CreateJobPage} from "../pages/jobs/create.tsx";
 import {SchedulePage} from "../pages/schedule";
 import {HomePage} from "../pages/home";
+import {FleetPage} from "../pages/trucks/fleet.tsx";
 
 export const dashboardRoutes: RouteObject[] = [
     {
@@ -78,15 +79,15 @@ export const dashboardRoutes: RouteObject[] = [
                     }
                 ]
             },
-            // {
-            //     path: 'calendar',
-            //     children: [
-            //         {
-            //             index: true,
-            //             element: <EventsCalendar/>
-            //         }
-            //     ]
-            // },
+            {
+                path: 'fleet',
+                children: [
+                    {
+                        index: true,
+                        element: <FleetPage />
+                    }
+                ]
+            },
             // {
             //     path: 'groups',
             //     children: [

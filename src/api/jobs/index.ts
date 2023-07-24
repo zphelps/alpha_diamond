@@ -58,9 +58,10 @@ class JobsApi {
 
         if (typeof filters !== "undefined") {
 
-            if (typeof filters.query !== "undefined" && filters.query !== "") {
-                query.ilike("client.name", `%${filters.query}%`);
-            }
+            // if (typeof filters.query !== "undefined" && filters.query !== "") {
+            //     // query.ilike("client.name", `%${filters.query}%`);
+            //     query.textSearch("client.name", filters.query)
+            // }
 
             if (typeof filters.open !== "undefined") {
                 query.eq("status", "open");

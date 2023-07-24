@@ -15,6 +15,7 @@ export const paths = {
   },
   schedule: '/schedule',
   events: '/events',
+  fleet: '/fleet',
   groups: {
     index: '/groups',
     create: '/groups/create',
