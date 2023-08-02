@@ -11,7 +11,7 @@ import {ScheduleEvent} from "../../types/schedule-event.ts";
 import {useDispatch, useSelector} from "react-redux";
 import {Truck01} from "@untitled-ui/icons-react";
 import interactionPlugin from "@fullcalendar/interaction";
-import {addMinutes, format, startOfWeek} from "date-fns"; // needed for dayClick
+import {addMinutes, format, setSeconds, startOfWeek} from "date-fns"; // needed for dayClick
 import ReactTooltip from 'react-tooltip';
 import {usePopover} from "../../hooks/use-popover.tsx";
 import {CreateContentPopover} from "../../components/create-popover.tsx";
@@ -49,8 +49,6 @@ const useServicesStore = () => {
             try {
                 const response = await servicesApi.getServices();
 
-                console.log(response.data);
-
                 if (isMounted()) {
                     dispatch(upsertManyServices(response.data));
                     dispatch(setServicesStatus(Status.SUCCESS));
@@ -75,13 +73,9 @@ const useServicesStore = () => {
 const useScheduleServices = (services: Service[] = []) => {
     return useMemo(
         () => {
-            console.log(services)
             return Object.values(services).map((service) => {
-                console.log(service)
-                const start = new Date(service.timestamp);
-                const end = addMinutes(start, service.duration);
-                console.log("Start: " + start.toISOString());
-                console.log("After adding " + service.duration + " minutes: " + end.toISOString());
+                const start = setSeconds(new Date(service.timestamp), 0);
+                const end = setSeconds(addMinutes(start, service.duration), 0);
                 return {
                     id: service.id,
                     title: service.client.name,
@@ -127,13 +121,7 @@ export const SchedulePage = () => {
 
     const [generatedServices, setGeneratedServices] = useState<Service[]>([]);
 
-    const services = useScheduleServices(generatedServices); //useScheduleServices(servicesStore.services);
-
-    // const [services, setServices] = useState([
-    //     { title: 'Event 1', startStr: '2023-07-11T10:30:00', endStr: '2023-07-11T11:00:00', resourceId: '8285d475-6114-4e62-b865-7168a6d2cc0a' },
-    //     { title: 'Event 2', start: '2023-07-12T12:00:00', resourceId: '8285d475-6114-4e62-b865-7168a6d2cc0a' },
-    //     { title: 'Event 3', start: '2023-07-13T14:00:00', resourceId: '8285d475-6114-4e62-b865-7168a6d2cc0a' }
-    // ]);
+    const services = useScheduleServices(servicesStore.services); // useScheduleServices(generatedServices); (for testing)
 
     const mdUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
     const [date, setDate] = useState<Date>(new Date());
@@ -249,21 +237,6 @@ export const SchedulePage = () => {
                 console.log(res)
 
                 setGeneratedServices(res.scheduledServices);
-
-
-                // setServices([
-                //     { title: 'Event 1', start: '2023-07-11T10:30:00', end: '2023-07-11T11:00:00', resourceId: '8285d475-6114-4e62-b865-7168a6d2cc0a' },
-                //     { title: 'Event 2', start: '2023-07-12T12:00:00', resourceId: '8285d475-6114-4e62-b865-7168a6d2cc0a' },
-                //     { title: 'Event 3', start: '2023-07-13T14:00:00', resourceId: '8285d475-6114-4e62-b865-7168a6d2cc0a' }
-                // ])
-
-                // const calendarEl = calendarRef.current;
-                //
-                // if (calendarEl) {
-                //     const calendarApi = calendarEl.getApi();
-                //
-                //     calendarApi.refetchEvents();
-                // }
 
                 toast.dismiss()
                 toast.success('Successfully created schedule services')
@@ -463,14 +436,14 @@ export const SchedulePage = () => {
                                     select={handleRangeSelect}
                                     selectable
                                     allDaySlot={false}
-                                    weekends={false}
+                                    weekends={true}
                                     businessHours={{
-                                        daysOfWeek: [1, 2, 3, 4, 5],
-                                        startTime: '08:00',
-                                        endTime: '21:00',
+                                        daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+                                        startTime: '06:00',
+                                        endTime: '22:00',
                                     }}
-                                    slotMinTime={'08:00'}
-                                    slotMaxTime={'21:00'}
+                                    slotMinTime={'06:00'}
+                                    slotMaxTime={'22:00'}
                                     dayHeaderFormat={{
 
                                     }}
@@ -500,7 +473,6 @@ export const SchedulePage = () => {
                                         )
                                     }}
                                     // resourceAreaWidth={'15%'}
-
                                     resourceAreaHeaderContent={() => (
                                         <Stack direction={'row'}>
                                             <Truck01/>
@@ -510,12 +482,7 @@ export const SchedulePage = () => {
                                     resourceLabelContent={(arg) => {
                                         const resource = arg.resource;
                                         return (
-                                            // <Stack paddingY={'25px'} justifyContent={'center'}>
-                                            <Stack justifyContent={'center'}>
-                                                <Typography variant={'subtitle2'}>{resource.title}</Typography>
-                                                <Typography variant={'caption'}>Driver: {resource.extendedProps.driver}</Typography>
-                                            </Stack>
-
+                                            <Typography variant={'caption'} fontWeight={'600'}>{resource.title}</Typography>
                                         )
                                     }}
                                 />

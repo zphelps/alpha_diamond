@@ -4,6 +4,7 @@ import jobsReducer from "../slices/jobs"
 import servicesReducer from "../slices/services"
 import clientLocationsReducer from "../slices/client-locations"
 import clientUsersReducer from "../slices/client-users"
+import trucksReducer from "../slices/trucks"
 
 export const store = configureStore({
     reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
         services: servicesReducer,
         clientLocations: clientLocationsReducer,
         clientUsers: clientUsersReducer,
+        trucks: trucksReducer,
         // groupFeed: groupFeedReducer,
         // announcements: announcementsReducer,
         // calendarEvents: calendarEventsReducer,

@@ -4,6 +4,15 @@ import {useAuth} from "../../hooks/use-auth.ts";
 import {Job} from "../../types/job.ts";
 import {number, string} from "yup";
 
+type UpdateJobRequest = {
+    id: string;
+    updated_fields: NonNullable<unknown>;
+};
+
+type UpdateJobResponse = Promise<{
+    success: boolean;
+}>;
+
 type GetJobsRequest = {
     filters?: {
         query?: string;
@@ -29,22 +38,23 @@ type GetJobsResponse = Promise<{
     count: number;
 }>;
 
-type CreateJobRequest = {
-    organization_id: string;
-    // franchise_id: string;
-    location_id: string;
+export type NewJobRequest = {
+    id: string;
     client_id: string;
+    organization_id: string;
     summary: string;
-    start_time_window: string;
-    end_time_window: string;
-    duration: number;
     service_type: string;
-    on_site_contact_id: string;
     status: string;
-    days_of_week: number[];
-    services_per_week: number;
+    timestamp?: string;
+    start_time_window?: string;
+    end_time_window?: string;
+    duration: number;
+    location_id: string;
+    services_per_week?: number;
+    days_of_week?: number[];
+    on_site_contact_id: string;
     driver_notes: string;
-};
+}
 
 type CreateJobResponse = Promise<{
     success: boolean;
@@ -52,6 +62,18 @@ type CreateJobResponse = Promise<{
 }>;
 
 class JobsApi {
+    async updateJob(request: UpdateJobRequest): Promise<UpdateJobResponse> {
+        const {id, updated_fields} = request;
+
+        const {error} = await supabase.from("client_jobs").update(updated_fields).eq('id', id);
+
+        if (error) {
+            return Promise.resolve({success: false});
+        }
+
+        return Promise.resolve({success: true});
+    }
+
     async getJobs(request: GetJobsRequest = {}): GetJobsResponse {
         const {filters, page, rowsPerPage, sortBy, sortDir} = request;
         const query = supabase.from("client_jobs").select("*, client:client_id(id, name), location:location_id(*), on_site_contact:on_site_contact_id(*)", {count: "exact"});
@@ -99,13 +121,13 @@ class JobsApi {
     async getJob(request?: GetJobRequest): GetJobResponse {
         const res = await supabase
             .from("client_jobs")
-            .select("*, client:client_id(id, name), on_site_contact:on_site_contact_id(*)")
+            .select("*, client:client_id(id, name), location:location_id(*), on_site_contact:on_site_contact_id(*)")
             .eq('id', request.id)
             .single();
         return Promise.resolve(res.data as Job);
     }
 
-    async createJob(job: CreateJobRequest): CreateJobResponse {
+    async createJob(job: NewJobRequest): CreateJobResponse {
         const res = await supabase.from("client_jobs").insert(job);
         return Promise.resolve({
             success: res.error === null,

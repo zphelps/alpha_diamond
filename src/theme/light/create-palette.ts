@@ -1,7 +1,7 @@
 import type { PaletteOptions } from '@mui/material';
 import { common } from '@mui/material/colors';
 import { alpha } from '@mui/material/styles';
-import { error, info, neutral, success, warning } from '../colors';
+import {error, info, neutral, purple, success, warning} from "../colors";
 import type { ColorPreset, Contrast } from '../index';
 import { getPrimary } from '../utils';
 
@@ -32,6 +32,7 @@ export const createPalette = (config: Config): PaletteOptions => {
     mode: 'light',
     neutral,
     primary: getPrimary(colorPreset),
+    secondary: purple,
     success,
     text: {
       primary: neutral[900],

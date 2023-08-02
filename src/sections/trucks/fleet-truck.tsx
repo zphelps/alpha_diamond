@@ -68,13 +68,13 @@ export const FleetTruck: FC<FleetTruckProps> = (props) => {
         </Avatar>
         <div>
           <Typography>
-            {truck.id}
+            {truck.name}
           </Typography>
           <Typography
             color="text.secondary"
             variant="body2"
           >
-            {truck.location}
+            {`${truck.driver.first_name} ${truck.driver.last_name}`}
           </Typography>
         </div>
       </ButtonBase>

@@ -8,7 +8,7 @@ import {
   Users03
 } from "@untitled-ui/icons-react";
 import { paths } from '../../paths';
-import {Business, Contacts} from "@mui/icons-material";
+import {Business, Contacts, ContactsOutlined} from "@mui/icons-material";
 
 export interface Item {
   disabled?: boolean;
@@ -98,7 +98,7 @@ export const useSections = () => {
               path: `/leads`,
               icon: (
                   <SvgIcon fontSize="small">
-                    <Contacts />
+                    <ContactsOutlined />
                   </SvgIcon>
               ),
             }

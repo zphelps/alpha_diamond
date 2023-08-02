@@ -190,23 +190,23 @@ export const SideNav: FC<SideNavProps> = (props) => {
                         spacing={1.5}
                         sx={{pt: 3, px: 4}}
                     >
-                        {/*<img style={{height: "80px", width: "150px"}} src={Logo}></img>*/}
-                        <Stack direction={'row'}>
-                            <Typography
-                                variant={'h5'}
-                                fontWeight={'900'}
-                                color={'primary.main'}
-                            >
-                                Alpha
-                            </Typography>
-                            <Typography
-                                variant={'h5'}
-                                fontWeight={'900'}
-                                color={'text.secondary'}
-                            >
-                                Diamond
-                            </Typography>
-                        </Stack>
+                        <img style={{height: "60px", width: "120px"}} src={Logo}></img>
+                        {/*<Stack direction={'row'}>*/}
+                        {/*    <Typography*/}
+                        {/*        variant={'h5'}*/}
+                        {/*        fontWeight={'900'}*/}
+                        {/*        color={'primary.main'}*/}
+                        {/*    >*/}
+                        {/*        Alpha*/}
+                        {/*    </Typography>*/}
+                        {/*    <Typography*/}
+                        {/*        variant={'h5'}*/}
+                        {/*        fontWeight={'900'}*/}
+                        {/*        color={'text.secondary'}*/}
+                        {/*    >*/}
+                        {/*        Diamond*/}
+                        {/*    </Typography>*/}
+                        {/*</Stack>*/}
 
                     </Stack>
                     <Divider sx={{height: 2, mt: 2, mb: 2, background: (theme) => theme.palette.grey.A100}}/>

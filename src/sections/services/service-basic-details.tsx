@@ -1,6 +1,6 @@
 import type {FC} from "react";
 import PropTypes from "prop-types";
-import {Button, Card, CardActions, CardHeader, Link, Typography} from "@mui/material";
+import {Button, capitalize, Card, CardActions, CardHeader, Link, Typography} from "@mui/material";
 import {PropertyList} from "../../components/property-list.tsx";
 import {PropertyListItem} from "../../components/property-list-item.tsx";
 import {SeverityPill} from "../../components/severity-pill.tsx";
@@ -70,16 +70,12 @@ export const ServiceBasicDetails: FC<ServiceBasicDetailsProps> = (props) => {
                 <PropertyListItem
                     divider
                     label="Status"
-                    value={status}
-                >
-                    <SeverityPill color={getSeverityColor(status)}>
-                        {status}
-                    </SeverityPill>
-                </PropertyListItem>
+                    value={capitalize(status)}
+                />
                 <PropertyListItem
                     divider
                     label="Service Type"
-                    value={serviceType}
+                    value={capitalize(serviceType)}
                 />
                 <PropertyListItem
                     divider

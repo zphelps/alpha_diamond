@@ -10,12 +10,11 @@ interface ServiceLogisticsDetailsProps {
     city?: string;
     state?: string;
     zip?: string;
-    start?: string;
-    end?: string;
+    timestamp?: string;
     duration?: number;
 }
 export const ServiceLogisticsDetails: FC<ServiceLogisticsDetailsProps> = (props) => {
-  const {street_address, end, zip, duration, start, city, state} = props;
+  const {street_address, zip, duration, timestamp, city, state} = props;
   const mdUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('md'));
 
   const align = mdUp ? 'horizontal' : 'vertical';
@@ -33,14 +32,8 @@ export const ServiceLogisticsDetails: FC<ServiceLogisticsDetailsProps> = (props)
         <PropertyListItem
           align={align}
           divider
-          label="Start"
-          value={format(new Date(start), 'MM/dd/yyyy h:mm a')}
-        />
-        <PropertyListItem
-          align={align}
-          divider
-          label="End"
-          value={format(new Date(end), 'MM/dd/yyyy h:mm a')}
+          label="Scheduled For"
+          value={format(new Date(timestamp), 'MM/dd/yyyy h:mm a')}
         />
           <PropertyListItem
               align={align}

@@ -40,7 +40,7 @@ export const JobDetails: FC<JobDetailsProps> = (props) => {
                     multiline
                     minRows={5}
                     onChange={handleSummaryChange}
-                    label={"Summary"}
+                    label={"Job Summary"}
                 />
                 <TextField
                     required
@@ -48,7 +48,7 @@ export const JobDetails: FC<JobDetailsProps> = (props) => {
                     multiline
                     minRows={5}
                     onChange={handleDriverNotesChange}
-                    label={"Driver Notes"}
+                    label={"Driver Instructions"}
                 />
             </Stack>
             <Divider sx={{my: 3}}/>

@@ -1,5 +1,6 @@
 import {ChangeEvent, FC, useCallback, useEffect, useMemo, useState} from "react";
 import {
+    Box,
     Button,
     Card,
     CardContent, CardHeader, Divider, FormControl,
@@ -19,6 +20,8 @@ import {PropertyListItem} from "../../../../components/property-list-item.tsx";
 import {SeverityPill} from "../../../../components/severity-pill.tsx";
 import {CreateJobFormValues} from "../../../../pages/jobs/create.tsx";
 import {daysOfWeek} from "../select-recurrence";
+import {schedulerApi} from "../../../../api/scheduler";
+import {Job} from "../../../../types/job.ts";
 
 interface ReviewProps {
     formValues: CreateJobFormValues;
@@ -26,8 +29,15 @@ interface ReviewProps {
 
 export const Review: FC<ReviewProps> = (props) => {
     const {formValues} = props;
+    const [loading, setLoading] = useState(false);
 
-    return (
+    return loading ? (
+        <Stack>
+            <Typography>
+                Finalizing job...
+            </Typography>
+        </Stack>
+        ) : (
         <Stack>
             <Typography
                 variant={'h6'}
@@ -71,10 +81,10 @@ export const Review: FC<ReviewProps> = (props) => {
                             // @ts-ignore
                             value={`${formValues.on_site_contact.first_name} ${formValues.on_site_contact.last_name}`}
                         />
-                        <PropertyListItem
+                        {formValues.service_type !== 'Demo' && <PropertyListItem
                             label="Price"
-                            value={`$${formValues.recurring_charge}`}
-                        />
+                            value={formValues.service_type === "Recurring" ? `$${formValues.recurring_charge}` : `$${formValues.on_demand_charge}`}
+                        />}
                     </PropertyList>
                 </Card>
 
@@ -91,16 +101,16 @@ export const Review: FC<ReviewProps> = (props) => {
                             label="Days of Week"
                             value={`${formValues.days_of_week.map((d) => daysOfWeek[d-1].label).join(' | ')}`}
                         />}
-                        {(formValues.days_of_week ?? []).length === 0 && <PropertyListItem
+                        {formValues.services_per_week && <PropertyListItem
                             divider
                             label="Services Per Week"
                             value={formValues.services_per_week.toString()}
                         />}
-                        <PropertyListItem
+                        {formValues.service_type === 'Recurring' && <PropertyListItem
                             divider
                             label="Time Window"
-                            value={!formValues.start_time_window ? 'Any' : `${formValues.start_time_window} - ${formValues.end_time_window}`}
-                        />
+                            value={!formValues.start_time_window ? "Any" : `${formValues.start_time_window} - ${formValues.end_time_window}`}
+                        />}
                         <PropertyListItem
                             divider
                             label="Summary"

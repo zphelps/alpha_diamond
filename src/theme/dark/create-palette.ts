@@ -1,6 +1,6 @@
 import type { PaletteOptions } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import { error, info, neutral, success, warning } from '../colors';
+import {error, info, neutral, success, warning} from "../colors";
 import type { ColorPreset, Contrast } from '../index';
 import { getPrimary } from '../utils';
 
@@ -37,6 +37,6 @@ export const createPalette = (config: Config): PaletteOptions => {
       secondary: '#A0AEC0',
       disabled: 'rgba(255, 255, 255, 0.48)'
     },
-    warning
+    warning,
   };
 };

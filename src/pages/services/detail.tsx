@@ -40,6 +40,8 @@ import {setServicesStatus, upsertOneService} from "../../slices/services";
 import {ServiceBasicDetails} from "../../sections/services/service-basic-details.tsx";
 import {ServiceLogisticsDetails} from "../../sections/services/service-logistics-details.tsx";
 import {ServiceOnSiteContact} from "../../sections/services/service-on-site-contact.tsx";
+import {SeverityPill} from "../../components/severity-pill.tsx";
+import {getSeverityServiceTypeColor, getSeverityStatusColor} from "../../utils/severity-color.ts";
 
 const tabs = [
     {label: "Details", value: "details"},
@@ -101,17 +103,17 @@ export const ServiceDetailsPage = () => {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    py: 8
+                    py: 2
                 }}
             >
                 <Container maxWidth="xl">
-                    <Stack spacing={4}>
-                        <Stack spacing={4}>
+                    <Stack spacing={3}>
+                        <Stack spacing={2}>
                             <div>
                                 <Link
                                     color="text.primary"
-                                    // component={RouterLink}
-                                    // href={paths.jobs.index}
+                                    component={RouterLink}
+                                    href={paths.schedule}
                                     sx={{
                                         alignItems: "center",
                                         display: "inline-flex"
@@ -149,13 +151,9 @@ export const ServiceDetailsPage = () => {
                                             direction="row"
                                             spacing={1}
                                         >
-                                            <Typography variant="subtitle2">
-                                                Client:
-                                            </Typography>
-                                            <Chip
-                                                label={service.client.name}
-                                                size="small"
-                                            />
+                                            <SeverityPill color={getSeverityStatusColor(service.status)}>
+                                                {service.status}
+                                            </SeverityPill>
                                         </Stack>
                                     </Stack>
                                 </Stack>
@@ -193,7 +191,6 @@ export const ServiceDetailsPage = () => {
                                     indicatorColor="primary"
                                     onChange={handleTabsChange}
                                     scrollButtons="auto"
-                                    sx={{mt: 3}}
                                     textColor="primary"
                                     value={currentTab}
                                     variant="scrollable"
@@ -239,8 +236,7 @@ export const ServiceDetailsPage = () => {
                                                 city={service.location.city}
                                                 state={service.location.state}
                                                 zip={service.location.zip}
-                                                start={service.start}
-                                                end={service.end}
+                                                timestamp={service.timestamp}
                                                 duration={service.duration}
                                             />
                                             {/*{service.service_type === 'Recurring' && <JobRecurrenceDetails*/}

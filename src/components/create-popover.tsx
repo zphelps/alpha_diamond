@@ -4,16 +4,18 @@ import {
     Avatar,
     Box,
     ListItem,
-    Popover,
+    Popover, SvgIcon,
     Typography
-} from '@mui/material';
+} from "@mui/material";
 import EventIcon from "@mui/icons-material/Event";
 import GroupIcon from "@mui/icons-material/Group";
-import {PostAdd} from "@mui/icons-material";
+import {AttachMoney, Contacts, ContactsOutlined, People, PeopleOutlined, PostAdd, Schedule} from "@mui/icons-material";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import {useDialog} from "../hooks/use-dialog";
 import {useCallback} from "react";
 import { useNavigate } from 'react-router-dom';
+import {Truck02} from "@untitled-ui/icons-react";
+import {RouterLink} from "./router-link.tsx";
 
 interface CreateContentPopoverProps {
     anchorEl: null | Element;
@@ -77,6 +79,10 @@ export const CreateContentPopover: FC<CreateContentPopoverProps> = (props) => {
             >
                 <Box sx={{ px: 1, py: 2 }}>
                     <ListItem
+                        onClick={() => {
+                            navigate('jobs/create')
+                            onClose?.();
+                        }}
                         sx={{
                             px: 1,
                             borderRadius: 2.5,
@@ -89,15 +95,17 @@ export const CreateContentPopover: FC<CreateContentPopoverProps> = (props) => {
                         <Avatar
                             sx={{
                                 backgroundColor: '#FFEBEE',
-                                mr: 2,
+                                mr: 1.5,
+                                width: 36,
+                                height: 36,
                             }}
                         >
-                            <CampaignIcon fontSize={'small'} sx={{ color: '#F44336'}}/>
+                            <Schedule fontSize={'small'} sx={{ color: '#F44336'}}/>
                         </Avatar>
                         <Typography
-                            variant={'subtitle1'}
+                            variant={'subtitle2'}
                         >
-                            Announcement
+                            Job
                         </Typography>
                     </ListItem>
                     <ListItem
@@ -114,15 +122,17 @@ export const CreateContentPopover: FC<CreateContentPopoverProps> = (props) => {
                         <Avatar
                             sx={{
                                 backgroundColor: '#E3F2FD',
-                                mr: 2,
+                                mr: 1.5,
+                                width: 36,
+                                height: 36,
                             }}
                         >
-                            <PostAdd fontSize={'small'} sx={{ color: '#2196F3'}}/>
+                            <AttachMoney fontSize={'small'} sx={{ color: '#2196F3'}}/>
                         </Avatar>
                         <Typography
-                            variant={'subtitle1'}
+                            variant={'subtitle2'}
                         >
-                            Post
+                            Invoice
                         </Typography>
                     </ListItem>
                     <ListItem
@@ -139,15 +149,19 @@ export const CreateContentPopover: FC<CreateContentPopoverProps> = (props) => {
                         <Avatar
                             sx={{
                                 backgroundColor: '#E8F5E9',
-                                mr: 2,
+                                mr: 1.5,
+                                width: 36,
+                                height: 36,
                             }}
                         >
-                            <EventIcon fontSize={'small'} sx={{ color: '#4CAF50' }}/>
+                            <SvgIcon fontSize={'small'}>
+                                <Truck02 color={'#4CAF50'}/>
+                            </SvgIcon>
                         </Avatar>
                         <Typography
-                            variant={'subtitle1'}
+                            variant={'subtitle2'}
                         >
-                            Event
+                            Truck
                         </Typography>
                     </ListItem>
                     <ListItem
@@ -164,15 +178,44 @@ export const CreateContentPopover: FC<CreateContentPopoverProps> = (props) => {
                         <Avatar
                             sx={{
                                 backgroundColor: '#FFF3E0',
-                                mr: 2,
+                                mr: 1.5,
+                                width: 36,
+                                height: 36,
                             }}
                         >
-                            <GroupIcon fontSize={'small'} sx={{ color: '#FF9800' }}/>
+                            <ContactsOutlined fontSize={'small'} sx={{ color: '#FF9800' }}/>
                         </Avatar>
                         <Typography
-                            variant={'subtitle1'}
+                            variant={'subtitle2'}
                         >
-                            Group
+                            Lead
+                        </Typography>
+                    </ListItem>
+                    <ListItem
+                        onClick={handleAddGroupClick}
+                        sx={{
+                            px: 1,
+                            borderRadius: 2.5,
+                            cursor: 'pointer',
+                            '&:hover': {
+                                backgroundColor: 'action.hover'
+                            },
+                        }}
+                    >
+                        <Avatar
+                            sx={{
+                                backgroundColor: '#F3E5F5',
+                                mr: 1.5,
+                                width: 36,
+                                height: 36,
+                            }}
+                        >
+                            <PeopleOutlined fontSize={'small'} sx={{ color: '#9C27B0' }}/>
+                        </Avatar>
+                        <Typography
+                            variant={'subtitle2'}
+                        >
+                            Client
                         </Typography>
                     </ListItem>
                 </Box>

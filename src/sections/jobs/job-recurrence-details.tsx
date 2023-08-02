@@ -7,6 +7,7 @@ import {format, parse, parseISO} from "date-fns";
 import PropTypes from "prop-types";
 import {JobBasicDetails} from "./job-basic-details.tsx";
 import {AutoAwesome} from "@mui/icons-material";
+import {daysOfWeek} from "./create/select-recurrence";
 
 interface JobRecurrenceDetailsProps {
     services_per_week?: number;
@@ -34,8 +35,8 @@ export const JobRecurrenceDetails: FC<JobRecurrenceDetailsProps> = (props) => {
                 <PropertyListItem
                     divider
                     align={align}
-                    label="Days of Week"
-                    value={(days_of_week && days_of_week.length > 0) && days_of_week.join(" | ")}
+                    label="Day(s) of Week"
+                    value={(days_of_week && days_of_week.length > 0) && days_of_week.map((d) => daysOfWeek[parseInt(d) - 1].label).join(" | ")}
                 >
                     {(!days_of_week || days_of_week.length === 0) &&
                         <Tooltip title={"Days are automatically selected to optimize service schedule"}

@@ -24,6 +24,7 @@ import {SeverityPill} from "../../components/severity-pill.tsx";
 import {Job} from "../../types/job.ts";
 import {useCallback} from "react";
 import Skeleton from "@mui/material/Skeleton";
+import {getSeverityServiceTypeColor, getSeverityStatusColor} from "../../utils/severity-color.ts";
 
 interface JobListTableProps {
     loading?: boolean;
@@ -60,23 +61,10 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
   const selectedAll = (items.length > 0) && (selected.length === items.length);
   const enableBulkActions = selected.length > 0;
 
-  const getSeverityColor = useCallback((status: string) => {
-    switch (status) {
-      case 'open':
-        return 'success';
-      case 'completed':
-        return 'warning';
-      case 'cancelled':
-        return 'error';
-      default:
-        return 'info';
-    }
-  }, []);
-
   return (
     <Box sx={{ position: 'relative' }}>
-      <Scrollbar>
-        <Table sx={{ minWidth: 1000 }}>
+      {/*<Scrollbar>*/}
+        <Table sx={{ minWidth: 1000 }} size={'small'}>
           <TableHead>
             <TableRow>
               <TableCell>
@@ -129,7 +117,7 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
                   key={job.id}
                   selected={isSelected}
                 >
-                  <TableCell>
+                  <TableCell sx={{py: 1}}>
                     <Stack
                       alignItems="center"
                       direction="row"
@@ -156,15 +144,17 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
                   <TableCell>
                     {job.summary}
                   </TableCell>
-                  <TableCell>
-                    {job.service_type}
+                  <TableCell sx={{height: 50}}>
+                    <SeverityPill color={getSeverityServiceTypeColor(job.service_type)}>
+                      {job.service_type}
+                    </SeverityPill>
                   </TableCell>
                   <TableCell>
-                    <SeverityPill color={getSeverityColor(job.status)}>
+                    <SeverityPill color={getSeverityStatusColor(job.status)}>
                         {job.status}
                     </SeverityPill>
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right" sx={{py: 0}}>
                     <IconButton
                       // component={RouterLink}
                       // href={paths.dashboard.customers.edit}
@@ -187,7 +177,7 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
             })}
           </TableBody>
         </Table>
-      </Scrollbar>
+      {/*</Scrollbar>*/}
       <TablePagination
         component="div"
         count={count}
@@ -195,7 +185,7 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
         onRowsPerPageChange={onRowsPerPageChange}
         page={page}
         rowsPerPage={rowsPerPage}
-        rowsPerPageOptions={[5, 10, 25]}
+        rowsPerPageOptions={[25, 50, 100]}
       />
     </Box>
   );

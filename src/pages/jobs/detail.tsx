@@ -36,6 +36,10 @@ import {JobRecurrenceDetails} from "../../sections/jobs/job-recurrence-details.t
 import {Service} from "../../types/service.ts";
 import {servicesApi} from "../../api/services";
 import {JobServices} from "../../sections/jobs/job-services.tsx";
+import {SeverityPill} from "../../components/severity-pill.tsx";
+import {getSeverityServiceTypeColor, getSeverityStatusColor} from "../../utils/severity-color.ts";
+import {format} from "date-fns";
+import {JobServiceDetails} from "../../sections/jobs/job-service-details.tsx";
 
 const tabs = [
     {label: "Details", value: "details"},
@@ -147,13 +151,19 @@ export const JobDetailsPage = () => {
                                             direction="row"
                                             spacing={1}
                                         >
-                                            <Typography variant="subtitle2">
-                                                Client:
-                                            </Typography>
-                                            <Chip
-                                                label={job.client.name}
-                                                size="small"
-                                            />
+                                            {/*<Typography variant="subtitle2">*/}
+                                            {/*    Client:*/}
+                                            {/*</Typography>*/}
+                                            <SeverityPill color={getSeverityStatusColor(job.status)}>
+                                                {job.status}
+                                            </SeverityPill>
+                                            <SeverityPill color={getSeverityServiceTypeColor(job.service_type)}>
+                                                {job.service_type}
+                                            </SeverityPill>
+                                            {/*<Chip*/}
+                                            {/*    label={job.client.name}*/}
+                                            {/*    size="small"*/}
+                                            {/*/>*/}
                                         </Stack>
                                     </Stack>
                                 </Stack>
@@ -211,7 +221,7 @@ export const JobDetailsPage = () => {
                             <div>
                                 <Grid
                                     container
-                                    spacing={4}
+                                    spacing={3}
                                 >
                                     <Grid
                                         xs={12}
@@ -219,9 +229,11 @@ export const JobDetailsPage = () => {
                                     >
                                         <JobBasicDetails
                                             clientName={job.client.name}
+                                            clientID={job.client.id}
                                             status={job.status}
                                             serviceType={job.service_type}
                                             summary={job.summary}
+                                            driver_notes={job.driver_notes}
                                         />
                                         {/*{job.primary_contact && <ClientContact*/}
                                         {/*    first_name={job.primary_contact.first_name}*/}
@@ -234,7 +246,15 @@ export const JobDetailsPage = () => {
                                         xs={12}
                                         lg={8}
                                     >
-                                        <Stack spacing={4}>
+                                        <Stack spacing={3}>
+                                            {job.service_type === 'On-Demand' && <JobServiceDetails
+                                                contact_name={`${job.on_site_contact.first_name} ${job.on_site_contact.last_name}`}
+                                                duration={job.duration}
+                                                city={job.location.city}
+                                                state={job.location.state}
+                                                timestamp={job.timestamp}
+                                                street_address={job.location.street_address}
+                                            />}
                                             <JobBookingDetails
                                                 origin={job.origin}
                                                 created_at={job.created_at}
@@ -257,6 +277,12 @@ export const JobDetailsPage = () => {
                                         </Stack>
                                     </Grid>
                                 </Grid>
+                                {/*<Typography*/}
+                                {/*    variant={'caption'}*/}
+                                {/*    color={'text.secondary'}*/}
+                                {/*>*/}
+                                {/*    Origin: {job.origin}  |  Created on {format(new Date(job.created_at), 'MM/dd/yyyy h:mm a')}  |  Last updated on {format(new Date(job.updated_on), 'MM/dd/yyyy h:mm a')}.*/}
+                                {/*</Typography>*/}
                             </div>
                         )}
                         {currentTab === 'services' && <JobServices jobID={job.id} clientID={job.client.id} />}
