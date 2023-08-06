@@ -3,6 +3,7 @@ import {supabase} from "../../config.ts";
 import {useAuth} from "../../hooks/use-auth.ts";
 import {Job} from "../../types/job.ts";
 import {number, string} from "yup";
+import {addDays} from "date-fns";
 
 type UpdateJobRequest = {
     id: string;

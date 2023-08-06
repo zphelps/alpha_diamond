@@ -85,7 +85,7 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {(!items || items.length === 0 || loading) && [...Array(5)].map((_, rowIndex) => (
+            {(!items || items.length === 0 || loading) && [...Array(15)].map((_, rowIndex) => (
                 <TableRow key={rowIndex} sx={{px: 2, mx:2}}>
                   <TableCell sx={{pl: 2, m:0}}>
                     <Skeleton variant="text" width="80%" height={24} />
@@ -185,7 +185,7 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
         onRowsPerPageChange={onRowsPerPageChange}
         page={page}
         rowsPerPage={rowsPerPage}
-        rowsPerPageOptions={[25, 50, 100]}
+        rowsPerPageOptions={[15, 30, 60]}
       />
     </Box>
   );

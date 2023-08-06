@@ -263,8 +263,8 @@ export const JobDetailsPage = () => {
                                             {job.service_type === 'Recurring' && <JobRecurrenceDetails
                                                 services_per_week={job.services_per_week}
                                                 days_of_week={job.days_of_week}
-                                                start_window={job.start_window}
-                                                end_window={job.end_window}
+                                                start_time_window={job.start_time_window}
+                                                end_time_window={job.end_time_window}
                                             />}
                                             {/*{job.primary_contact && <ClientContact*/}
                                             {/*    first_name={job.primary_contact.first_name}*/}

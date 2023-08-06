@@ -19,7 +19,7 @@ import {ClientListSearch} from "../../sections/clients/client-list-search.tsx";
 import {ClientListTable} from "../../sections/clients/client-list-table.tsx";
 import {useDispatch, useSelector} from "react-redux";
 import {Status} from "../../utils/status.ts";
-import {setFilteredJobs, setJobsStatus} from "../../slices/jobs";
+import {setFilteredJobs, setJobCount, setJobsStatus} from "../../slices/jobs";
 import {jobsApi} from "../../api/jobs";
 import {JobListSearch} from "../../sections/jobs/job-list-search.tsx";
 import {JobListTable} from "../../sections/jobs/job-list-table.tsx";
@@ -63,7 +63,7 @@ const useJobsSearch = () => {
             type: undefined,
         },
         page: 0,
-        rowsPerPage: 25,
+        rowsPerPage: 15,
         sortBy: 'updatedAt',
         sortDir: 'desc'
     });
@@ -131,6 +131,7 @@ const useJobsStore = (searchState: JobsSearchState, setLoading) => {
 
                 if (isMounted()) {
                     dispatch(setFilteredJobs(response.data));
+                    dispatch(setJobCount(response.count));
                     dispatch(setJobsStatus(Status.SUCCESS));
                 }
             } catch (err) {
@@ -188,8 +189,6 @@ export default function JobListPage() {
 
     const filteredJobs = useFilteredJobs(jobsStore.filteredJobs, jobsSearch.state.filters.query);
 
-    const [count, setCount] = useState(filteredJobs.length);
-
     useEffect(() => {
         setLoading(true);
     }, [jobsSearch.state])
@@ -200,10 +199,6 @@ export default function JobListPage() {
         }
     }, [jobsSearch.state.filters.query])
 
-    useEffect(() => {
-        setCount(filteredJobs.length)
-    }, [filteredJobs])
-
     return (
         <>
             <Seo title="Jobs"/>
@@ -211,11 +206,11 @@ export default function JobListPage() {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    py: 2
+                    py: 1
                 }}
             >
                 <Container maxWidth="xl">
-                    <Stack spacing={4}>
+                    <Stack spacing={2.5}>
                         <Stack
                             direction="row"
                             justifyContent="space-between"
@@ -245,7 +240,7 @@ export default function JobListPage() {
                         </Stack>
                         <Card>
                             <JobListSearch
-                                resultsCount={jobsStore.filteredJobsCount}
+                                resultsCount={jobsStore.jobCount}
                                 onFiltersChange={jobsSearch.handleFiltersChange}
                                 onSortChange={jobsSearch.handleSortChange}
                                 sortBy={jobsSearch.state.sortBy}
@@ -254,7 +249,7 @@ export default function JobListPage() {
 
                             <JobListTable
                                 loading={loading}
-                                count={count}
+                                count={jobsStore.jobCount}
                                 items={filteredJobs}
                                 onDeselectAll={jobsSelection.handleDeselectAll}
                                 onDeselectOne={jobsSelection.handleDeselectOne}

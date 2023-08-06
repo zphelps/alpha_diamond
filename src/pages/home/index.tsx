@@ -2,13 +2,53 @@ import {Seo} from "../../components/seo.tsx";
 import {Button} from "@mui/material";
 import {sampleRecurringJobs, sampleServices} from "../../utils/testing/service-data.ts";
 import {formatDate} from "fullcalendar";
-import {format} from "date-fns";
+import {addMinutes, differenceInMinutes, format, isAfter, isBefore, parse, set} from "date-fns";
 import {createWeekOfServices, Schedule} from "../../utils/testing/algorithms.ts";
+import {isEqual} from "lodash";
 export const HomePage = () => {
+
+    function doesNewJobConflict(jobs, newJob) {
+        // Convert jobs to windows with duration
+        const windows = jobs.filter(j => j.start_time_window && j.end_time_window).map((job) => ({
+            start: set(new Date(), {hours: job.start_time_window.split(':')[0], minutes: job.start_time_window.split(':')[0], seconds: 0}),
+            end: addMinutes(set(new Date(), {hours: job.start_time_window.split(':')[0], minutes: job.start_time_window.split(':')[0], seconds: 0}), job.duration),
+        }));
+
+        // Convert new job to window with duration
+        const newWindow = {
+            start: set(new Date(), {hours: newJob.start_time_window.split(':')[0], minutes: newJob.start_time_window.split(':')[0], seconds: 0}),
+            end: addMinutes(set(new Date(), {hours: newJob.start_time_window.split(':')[0], minutes: newJob.start_time_window.split(':')[0], seconds: 0}), newJob.duration),
+        };
+
+        let conflicts = 0;
+
+        for (let i = newWindow.start; isBefore(i, newWindow.end) || isEqual(i, newWindow.end); i = addMinutes(i, 1)) {
+            console.log("i", i);
+            const jobsRunning = windows.filter(
+                (window) => (isAfter(i, window.start) || isEqual(i, window.start)) && isBefore(i, window.end),
+            ).length;
+
+            if (jobsRunning >= 2) {
+                conflicts++;
+            }
+        }
+
+        return conflicts > 0;
+    }
+
 
     const handleClick = () => {
 
-        createWeekOfServices(sampleRecurringJobs)
+        const existingJobs = [
+            { start_time_window: '15:00:00', end_time_window: '15:30:00', duration: 30 },
+            { start_time_window: '15:00:00', end_time_window: '16:00:00', duration: 30 },
+
+            // ... more jobs
+        ];
+
+        const newJob = { start_time_window: '15:00', end_time_window: '15:30', duration: 30 };
+
+        console.log(doesNewJobConflict(existingJobs, newJob));
 
 
         // console.log(distributeServices(schedule, sampleRecurringJobs[1], sampleRecurringJobs[1].services_per_week));

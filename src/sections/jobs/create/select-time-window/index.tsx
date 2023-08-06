@@ -14,46 +14,48 @@ import {
 import {ArrowDropDown, Check} from "@mui/icons-material";
 import {_clientTypes} from "../select-client";
 import Checkbox from "@mui/material/Checkbox";
+import {addMinutes, format, formatRelative, isAfter, isBefore, set} from "date-fns";
 
 
 const _startTimeOptions = [
-    new Date(2000, 1, 1, 7, 0).toLocaleTimeString(),
-    new Date(2000, 1, 1, 7, 30).toLocaleTimeString(),
-    new Date(2000, 1, 1, 8, 0).toLocaleTimeString(),
-    new Date(2000, 1, 1, 8, 30).toLocaleTimeString(),
-    new Date(2000, 1, 1, 9, 0).toLocaleTimeString(),
-    new Date(2000, 1, 1, 9, 30).toLocaleTimeString(),
-    new Date(2000, 1, 1, 10, 0).toLocaleTimeString(),
-    new Date(2000, 1, 1, 10, 30).toLocaleTimeString(),
-    new Date(2000, 1, 1, 11, 0).toLocaleTimeString(),
-    new Date(2000, 1, 1, 11, 30).toLocaleTimeString(),
-    new Date(2000, 1, 1, 12, 0).toLocaleTimeString(),
-    new Date(2000, 1, 1, 12, 30).toLocaleTimeString(),
-    new Date(2000, 1, 1, 13, 0).toLocaleTimeString(),
-    new Date(2000, 1, 1, 13, 30).toLocaleTimeString(),
-    new Date(2000, 1, 1, 14, 0).toLocaleTimeString(),
-    new Date(2000, 1, 1, 14, 30).toLocaleTimeString(),
-    new Date(2000, 1, 1, 15, 0).toLocaleTimeString(),
-    new Date(2000, 1, 1, 15, 30).toLocaleTimeString(),
-    new Date(2000, 1, 1, 16, 0).toLocaleTimeString(),
-    new Date(2000, 1, 1, 16, 30).toLocaleTimeString(),
-    new Date(2000, 1, 1, 17, 0).toLocaleTimeString(),
-    new Date(2000, 1, 1, 17, 30).toLocaleTimeString(),
-    new Date(2000, 1, 1, 18, 0).toLocaleTimeString(),
-    new Date(2000, 1, 1, 18, 30).toLocaleTimeString(),
-    new Date(2000, 1, 1, 19, 0).toLocaleTimeString(),
-    new Date(2000, 1, 1, 19, 30).toLocaleTimeString(),
-    new Date(2000, 1, 1, 20, 0).toLocaleTimeString(),
+    set(new Date(), {hours: 7, minutes: 0}),
+    set(new Date(), {hours: 7, minutes: 30}),
+    set(new Date(), {hours: 8, minutes: 0}),
+    set(new Date(), {hours: 8, minutes: 30}),
+    set(new Date(), {hours: 9, minutes: 0}),
+    set(new Date(), {hours: 9, minutes: 30}),
+    set(new Date(), {hours: 10, minutes: 0}),
+    set(new Date(), {hours: 10, minutes: 30}),
+    set(new Date(), {hours: 11, minutes: 0}),
+    set(new Date(), {hours: 11, minutes: 30}),
+    set(new Date(), {hours: 12, minutes: 0}),
+    set(new Date(), {hours: 12, minutes: 30}),
+    set(new Date(), {hours: 13, minutes: 0}),
+    set(new Date(), {hours: 13, minutes: 30}),
+    set(new Date(), {hours: 14, minutes: 0}),
+    set(new Date(), {hours: 14, minutes: 30}),
+    set(new Date(), {hours: 15, minutes: 0}),
+    set(new Date(), {hours: 15, minutes: 30}),
+    set(new Date(), {hours: 16, minutes: 0}),
+    set(new Date(), {hours: 16, minutes: 30}),
+    set(new Date(), {hours: 17, minutes: 0}),
+    set(new Date(), {hours: 17, minutes: 30}),
+    set(new Date(), {hours: 18, minutes: 0}),
+    set(new Date(), {hours: 18, minutes: 30}),
+    set(new Date(), {hours: 19, minutes: 0}),
+    set(new Date(), {hours: 19, minutes: 30}),
+    set(new Date(), {hours: 20, minutes: 0}),
 ];
 interface SelectTimeWindowProps {
     start_time_window: string;
     end_time_window: string;
     any_time: boolean;
+    duration: number;
     setFieldValue: (field: string, value: any) => void;
 }
 
 export const SelectTimeWindow: FC<SelectTimeWindowProps> = (props) => {
-    const {start_time_window, end_time_window, setFieldValue, any_time} = props;
+    const {start_time_window, end_time_window, duration, setFieldValue, any_time} = props;
     const [autoSelect, setAutoSelect] = useState(any_time);
 
     return (
@@ -100,14 +102,14 @@ export const SelectTimeWindow: FC<SelectTimeWindowProps> = (props) => {
                     }}
                 >
                     {_startTimeOptions.map((option) => (
-                        <MenuItem key={option} value={option}>
-                            {`${option}`}
+                        <MenuItem key={option.toLocaleTimeString()} value={format(Date.parse(option.toISOString()), 'HH:mm')}>
+                            {`${format(Date.parse(option.toISOString()), 'hh:mm a')}`}
                         </MenuItem>
                     ))}
                 </Select>
                 <Select
                     fullWidth
-                    disabled={autoSelect}
+                    disabled={autoSelect || !start_time_window}
                     value={end_time_window ?? ''}
                     onChange={(e) => setFieldValue('end_time_window', e.target.value)}
                     input={<OutlinedInput />}
@@ -127,9 +129,14 @@ export const SelectTimeWindow: FC<SelectTimeWindowProps> = (props) => {
                         },
                     }}
                 >
-                    {_startTimeOptions.filter((e, i) => i > _startTimeOptions.indexOf(start_time_window)).map((option) => (
-                        <MenuItem key={option} value={option}>
-                            {`${option}`}
+                    {_startTimeOptions.filter((e, i) => !start_time_window ||
+                        isAfter(e, addMinutes(set(new Date(), {
+                                        hours: parseInt(start_time_window.split(':')[0]),
+                                        minutes: parseInt(start_time_window.split(':')[1]),
+                                        seconds: 0
+                                    }), duration))).map((option) => (
+                        <MenuItem key={option.toLocaleTimeString()} value={format(Date.parse(option.toISOString()), 'HH:mm')}>
+                            {`${format(Date.parse(option.toISOString()), 'hh:mm a')}`}
                         </MenuItem>
                     ))}
                 </Select>

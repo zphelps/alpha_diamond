@@ -2,7 +2,9 @@ import {Client} from "../../types/client.ts";
 import {supabase} from "../../config.ts";
 import {useAuth} from "../../hooks/use-auth.ts";
 import {Service} from "../../types/service.ts";
-import {addDays, addMinutes, formatISO, isToday, setMinutes, startOfDay} from "date-fns";
+import {addDays, addMinutes, format, formatISO, isToday, setMinutes, startOfDay} from "date-fns";
+import {ScheduleServiceConstraints} from "../scheduler";
+import {Job} from "../../types/job.ts";
 
 type UpdateServiceRequest = {
     id: string;
@@ -20,6 +22,13 @@ type GetServicesRequest = {
 };
 
 type GetServiceResponse = Promise<Service>;
+
+type GetScheduleServicesForWeekRequest = {
+    beginning_of_week: string;
+    service_type?: string;
+};
+
+type GetScheduleServicesForWeekResponse = Promise<ScheduleServiceConstraints[]>;
 
 type GetServiceRequest = {
     id: string;
@@ -64,7 +73,7 @@ class ServicesApi {
     async createService(request: NewServiceRequest): CreateNewServiceResponse {
         const {data, error} = await supabase
             .from("client_services")
-            .insert(request);
+            .upsert(request);
         return Promise.resolve({
             success: error === null,
             message: error?.message ?? "",
@@ -143,6 +152,50 @@ class ServicesApi {
             data: (res.data as Service[]) ?? [],
             count: res.count ?? 0,
         });
+    }
+
+    /**
+     * Get all services for a given week
+     * @param request
+     */
+    async getScheduleServicesForWeek(request: GetScheduleServicesForWeekRequest): GetScheduleServicesForWeekResponse {
+        const {beginning_of_week, service_type} = request;
+        const query = supabase
+            .from("client_services")
+            .select("id, timestamp, start_time_window, end_time_window, truck_id, job:job_id(*, location:location_id(*), on_site_contact:on_site_contact_id(*), client:client_id(id, name))", {count: "exact"});
+
+        if (typeof beginning_of_week !== "undefined") {
+            query.gte("timestamp", beginning_of_week);
+            query.lte("timestamp", addDays(Date.parse(beginning_of_week), 7).toISOString());
+        }
+
+        query.order("timestamp", {ascending: false});
+
+        const res = await query;
+
+        console.log(res)
+        console.log(res.data);
+
+        if (typeof service_type !== "undefined" && res.data) {
+            // @ts-ignore
+            res.data = res.data.filter((service) => service.job.service_type === service_type);
+        }
+
+        console.log(res)
+        console.log(res.data);
+
+        return Promise.resolve(res.data.map((service) => {
+            return {
+                id: service.id,
+                date: format(Date.parse(service.timestamp), "yyyy-MM-dd"),
+                truck_id: service.truck_id,
+                timestamp: service.timestamp,
+                start_time_window: service.start_time_window,
+                end_time_window: service.end_time_window,
+                // @ts-ignore
+                job: service.job as Job,
+            };
+        }) as ScheduleServiceConstraints[]);
     }
 
 

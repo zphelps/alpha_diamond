@@ -124,8 +124,8 @@ const useInitialValues = (
                 on_site_contact: null,
                 driver_notes: null,
                 status: "open",
-                days_of_week: null,
-                services_per_week: null,
+                days_of_week: [1],
+                services_per_week: 1,
                 submit: null,
             };
         },
@@ -185,15 +185,17 @@ export const CreateJobPage = () => {
                     }
                 } else {
                     toast.loading("Creating Recurring Job...");
-                    const recurringRes = await jobsApi.createJob(data);
+                    // @ts-ignore
+                    const res = await schedulerApi.insertRecurringJob({job: formik.values as Job});
 
-                    console.log(recurringRes);
+                    // const recurringRes = await jobsApi.createJob(data);
+
+                    console.log(res);
                     toast.dismiss();
 
-                    if (recurringRes.success) {
-                        navigate(`/jobs/${data.id}`);
+                    if (res.success) {
+                        navigate(`/jobs/${formik.values.id}`);
                         toast.success("Job created");
-
                     }
                 }
             } catch (err) {
@@ -384,6 +386,7 @@ export const CreateJobPage = () => {
                                             start_time_window={formik.values.start_time_window}
                                             end_time_window={formik.values.end_time_window}
                                             any_time={formik.values.any_time_window}
+                                            duration={formik.values.duration}
                                             setFieldValue={formik.setFieldValue}
                                         />
                                         <Divider sx={{mt: 2, mb: 1.5}}/>

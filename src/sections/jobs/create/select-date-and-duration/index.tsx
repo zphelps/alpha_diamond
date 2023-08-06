@@ -15,7 +15,7 @@ import {ArrowDropDown} from "@mui/icons-material";
 import {_clientTypes} from "../select-client";
 import Checkbox from "@mui/material/Checkbox";
 import {DatePicker, DateTimePicker, TimePicker} from "@mui/x-date-pickers";
-import {addMinutes, format, set, startOfDay} from "date-fns";
+import {addDays, addMinutes, format, isToday, set, startOfDay} from "date-fns";
 
 
 const _durationOptions = [15, 30, 45, 60, 75, 90, 105, 120];
@@ -69,6 +69,7 @@ export const SelectDateAndDuration: FC<SelectDurationProps> = (props) => {
                         disabled={!timestamp}
                         sx={{width: '100%'}}
                         label="Date"
+                        disablePast={true}
                         onChange={(e) => {
                             setFieldValue('timestamp', e.toISOString());
                             setFieldValue('start_time_window', format(e, 'HH:mm'));
@@ -115,6 +116,8 @@ export const SelectDateAndDuration: FC<SelectDurationProps> = (props) => {
                         disabled={anytimeChecked || asSoonAsPossibleChecked}
                         sx={{width: '100%'}}
                         label="Time"
+
+                        disablePast={isToday(Date.parse(timestamp))}
                         onChange={(e) => {
                             setFieldValue('start_time_window', format(e, 'HH:mm'));
                             setFieldValue('end_time_window', format(addMinutes(e, duration), 'HH:mm'));
@@ -122,7 +125,7 @@ export const SelectDateAndDuration: FC<SelectDurationProps> = (props) => {
                         slots={{
                             textField: TextField,
                         }}
-                        value={timestamp ? new Date(timestamp) : startOfDay(new Date())}
+                        value={timestamp ? addMinutes(new Date(timestamp), 60) : startOfDay(addDays(new Date(), 1))}
                     />
                     <Stack direction={'row'} alignItems={'center'}>
                         <Checkbox

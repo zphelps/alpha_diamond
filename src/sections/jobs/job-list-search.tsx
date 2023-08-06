@@ -244,7 +244,7 @@ export const JobListSearch: FC<JobListSearchProps> = (props) => {
                 direction="row"
                 flexWrap="wrap"
                 spacing={2}
-                sx={{p: 3}}
+                sx={{p: 2}}
             >
                 <FormControl
                     sx={{

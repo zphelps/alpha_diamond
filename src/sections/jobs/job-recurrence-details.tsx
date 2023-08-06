@@ -12,12 +12,12 @@ import {daysOfWeek} from "./create/select-recurrence";
 interface JobRecurrenceDetailsProps {
     services_per_week?: number;
     days_of_week?: string[];
-    start_window?: string;
-    end_window?: string;
+    start_time_window?: string;
+    end_time_window?: string;
 }
 
 export const JobRecurrenceDetails: FC<JobRecurrenceDetailsProps> = (props) => {
-    const {services_per_week, days_of_week, start_window, end_window} = props;
+    const {services_per_week, days_of_week, start_time_window, end_time_window} = props;
     const mdUp = useMediaQuery((theme: Theme) => theme.breakpoints.up("md"));
 
     const align = mdUp ? "horizontal" : "vertical";
@@ -45,21 +45,21 @@ export const JobRecurrenceDetails: FC<JobRecurrenceDetailsProps> = (props) => {
                             <AutoAwesome fontSize={"sm"} sx={{mr: 1.5, color: "text.secondary"}}/>
                         </Tooltip>}
                 </PropertyListItem>
-                {(!start_window || !end_window) && <PropertyListItem
+                {(!start_time_window || !end_time_window) && <PropertyListItem
                     align={align}
                     label="Time of Day"
                     value={"Any"}
                 />}
-                {start_window && end_window && <PropertyListItem
+                {start_time_window && end_time_window && <PropertyListItem
                     align={align}
                     divider
                     label="Start Window"
-                    value={format(parseISO(`2000-01-01T${start_window}.000`), "h:mm a")}
+                    value={format(parseISO(`2000-01-01T${start_time_window}.000`), "h:mm a")}
                 />}
-                {start_window && end_window && <PropertyListItem
+                {start_time_window && end_time_window && <PropertyListItem
                     align={align}
                     label="End Window"
-                    value={format(parseISO(`2000-01-01T${end_window}.000`), "h:mm a")}
+                    value={format(parseISO(`2000-01-01T${end_time_window}.000`), "h:mm a")}
                 />}
             </PropertyList>
         </Card>

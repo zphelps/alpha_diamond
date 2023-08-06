@@ -36,7 +36,10 @@ export const SelectDuration: FC<SelectDurationProps> = (props) => {
             <Select
                 fullWidth
                 value={duration}
-                onChange={(e) => setFieldValue('duration', e.target.value)}
+                onChange={(e) => {
+                    setFieldValue('duration', e.target.value)
+                    setFieldValue('end_time_window', null);
+                }}
                 input={<OutlinedInput />}
                 endAdornment={(
                     <InputAdornment position="end">

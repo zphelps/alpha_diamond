@@ -7,6 +7,7 @@ const jobsSlice = createSlice({
         jobs: {},
         filteredJobs: [],
         status: Status.IDLE,
+        jobCount: 0,
     },
     reducers: {
         upsertManyJobs: (state, action) => {
@@ -18,6 +19,9 @@ const jobsSlice = createSlice({
         upsertOneJob: (state, action) => {
             const job = action.payload;
             state.jobs[job.id] = Object.assign({}, state.jobs[job.id], job);
+        },
+        setJobCount: (state, action) => {
+            state.jobCount = action.payload;
         },
         setFilteredJobs: (state, action) => {
             state.filteredJobs = action.payload;
@@ -33,6 +37,7 @@ export const {
     upsertManyJobs,
     upsertOneJob,
     setFilteredJobs,
+    setJobCount,
     setJobsStatus
 } = jobsSlice.actions;
 export default jobsSlice.reducer;

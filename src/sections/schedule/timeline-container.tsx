@@ -70,7 +70,7 @@ export const TimelineContainer = styled("div")(
         //     // lineHeight: "40px !important"
         // },
         ".fc-timegrid-slot": {
-            height: "50px",
+            height: "35px",
             fontWeight: '600',
             fontSize: "13px",
             // lineHeight: "40px !important"

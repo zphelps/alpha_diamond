@@ -4,7 +4,7 @@ import {AddBusiness, AddBusinessOutlined, AdsClick, Repeat} from "@mui/icons-mat
 
 interface SelectServiceTypeProps {
     serviceType: string;
-    setFieldValue: (field: string, value: string) => void;
+    setFieldValue: (field: string, value: any) => void;
 }
 export const SelectServiceType: FC<SelectServiceTypeProps> = (props) => {
     const {serviceType, setFieldValue} = props;
@@ -22,6 +22,8 @@ export const SelectServiceType: FC<SelectServiceTypeProps> = (props) => {
                     onClick={() => {
                         setFieldValue('status', 'open');
                         setFieldValue('service_type', 'Recurring')
+                        setFieldValue('days_of_week', [1]);
+                        setFieldValue('services_per_week', 1);
                     }}
                     variant={'outlined'}
                     sx={{
@@ -43,8 +45,10 @@ export const SelectServiceType: FC<SelectServiceTypeProps> = (props) => {
                     variant={'outlined'}
                     onClick={() => {
                         setFieldValue('status', 'scheduled');
-                        setFieldValue('service_type', 'On-Demand')}
-                    }
+                        setFieldValue('service_type', 'On-Demand');
+                        setFieldValue('days_of_week', null);
+                        setFieldValue('services_per_week', null);
+                    }}
                     sx={{
                         width: '100%',
                         height: '120px',
@@ -63,8 +67,10 @@ export const SelectServiceType: FC<SelectServiceTypeProps> = (props) => {
                 <Button
                     onClick={() => {
                         setFieldValue('status', 'scheduled');
-                        setFieldValue('service_type', 'Demo')}
-                    }
+                        setFieldValue('service_type', 'Demo')
+                        setFieldValue('days_of_week', null);
+                        setFieldValue('services_per_week', null);
+                    }}
                     variant={'outlined'}
                     sx={{
                         width: '100%',

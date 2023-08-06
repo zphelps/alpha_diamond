@@ -11,7 +11,7 @@ import {ScheduleEvent} from "../../types/schedule-event.ts";
 import {useDispatch, useSelector} from "react-redux";
 import {Truck01} from "@untitled-ui/icons-react";
 import interactionPlugin from "@fullcalendar/interaction";
-import {addMinutes, format, setSeconds, startOfWeek} from "date-fns"; // needed for dayClick
+import {addDays, addMinutes, format, set, setSeconds, startOfWeek} from "date-fns"; // needed for dayClick
 import ReactTooltip from 'react-tooltip';
 import {usePopover} from "../../hooks/use-popover.tsx";
 import {CreateContentPopover} from "../../components/create-popover.tsx";
@@ -26,19 +26,58 @@ import {date} from "yup";
 import {TimelineToolbar, TimelineView} from "../../sections/schedule/timeline-toolbar.tsx";
 import {schedulerApi} from "../../api/scheduler";
 import toast from "react-hot-toast";
+import {trucksApi} from "../../api/trucks";
+import {setTruckStatus, upsertManyTrucks} from "../../slices/trucks";
+import {Truck} from "../../types/truck.ts";
+import {useAuth} from "../../hooks/use-auth.ts";
+import {ServicePreviewPreviewDialog} from "../../sections/services/service-preview-dialog.tsx";
 
-interface CreateDialogData {
-    range?: {
-        start: number;
-        end: number;
-    };
+interface PreviewDialogData {
+    serviceId?: string;
 }
 
-interface UpdateDialogData {
-    eventId?: string;
+interface TrucksSearchState {
+    organization_id: string;
 }
 
+const useTrucksStore = (searchState: TrucksSearchState) => {
+    const isMounted = useMounted();
+    const dispatch = useDispatch();
 
+    const handleTrucksGet = useCallback(
+        async () => {
+            try {
+                const response = await trucksApi.getTrucks(searchState);
+
+                if (isMounted()) {
+                    dispatch(upsertManyTrucks(response.data));
+                    dispatch(setTruckStatus(Status.SUCCESS));
+                }
+            } catch (err) {
+                console.error(err);
+                dispatch(setTruckStatus(Status.ERROR));
+            }
+        },
+        [searchState, isMounted]
+    );
+
+    useEffect(
+        () => {
+            handleTrucksGet();
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [searchState]
+    );
+};
+
+const useTrucks = (trucks: Truck[] = []) => {
+    return useMemo(
+        () => {
+            return Object.values(trucks);
+        },
+        [trucks]
+    );
+};
 
 const useServicesStore = () => {
     const isMounted = useMounted();
@@ -94,25 +133,35 @@ const useScheduleServices = (services: Service[] = []) => {
     );
 };
 
-const useCurrentEvent = (
-    events: ScheduleEvent[],
-    dialogData?: UpdateDialogData
-): ScheduleEvent | undefined => {
+const useCurrentService = (
+    services: Service[],
+    dialogData?: PreviewDialogData
+): Service | undefined => {
     return useMemo(
-        (): ScheduleEvent | undefined => {
+        (): Service | undefined => {
             if (!dialogData) {
                 return undefined;
             }
-
-            return events.find((event) => event.id === dialogData!.eventId);
+            return services.find((event) => event.id === dialogData!.serviceId);
         },
-        [dialogData, events]
+        [dialogData, services]
     );
 };
 
 export const SchedulePage = () => {
     const dispatch = useDispatch();
     const calendarRef = useRef<Calendar | null>(null);
+
+    const auth = useAuth();
+    const [trucksSearchState, setTrucksSearchState] = useState<TrucksSearchState>({
+        organization_id: auth.user.organizationID,
+    });
+
+    useTrucksStore(trucksSearchState);
+
+    const trucksStore = useSelector((state: any) => state.trucks);
+
+    const trucks = useTrucks(trucksStore.trucks)
 
     // Fetch services
     useServicesStore();
@@ -126,9 +175,9 @@ export const SchedulePage = () => {
     const mdUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
     const [date, setDate] = useState<Date>(new Date());
     const [view, setView] = useState<TimelineView>(mdUp ? 'resourceTimeGridWeek' : 'resourceTimeGrid');
-    const createDialog = useDialog<CreateDialogData>();
-    const updateDialog = useDialog<UpdateDialogData>();
-    // const updatingEvent = useCurrentEvent(events, updateDialog.data);
+    const previewDialog = useDialog<PreviewDialogData>();
+
+    const currentService = useCurrentService(Object.values(servicesStore.services), previewDialog.data);
 
     const [anchorEl, setAnchorEl] = useState(null);
 
@@ -226,17 +275,15 @@ export const SchedulePage = () => {
     const handleAddClick = useCallback(
         async (): Promise<void> => {
             // createDialog.handleOpen();
-
             try {
                 toast.loading('Creating schedule services')
-                console.log('Beginning of Week: ', startOfWeek(new Date()));
-                const res = await schedulerApi.createScheduleServices({
-                    beginningOfWeek: startOfWeek(new Date()),
+                console.log('Beginning of Week: ', startOfWeek(addDays(new Date(), 3)));
+
+                const res = await schedulerApi.insertRecurringJobServicesForWeek({
+                    beginningOfWeek: startOfWeek(addDays(new Date(), 3)),
                 })
 
                 console.log(res)
-
-                setGeneratedServices(res.scheduledServices);
 
                 toast.dismiss()
                 toast.success('Successfully created schedule services')
@@ -245,37 +292,28 @@ export const SchedulePage = () => {
             }
 
         },
-        [createDialog]
-    );
-
-    const handleRangeSelect = useCallback(
-        (arg: DateSelectArg): void => {
-            const calendarEl = calendarRef.current;
-
-            if (calendarEl) {
-                const calendarApi = calendarEl.getApi();
-
-                calendarApi.unselect();
-            }
-
-            createDialog.handleOpen({
-                range: {
-                    start: arg.start.getTime(),
-                    end: arg.end.getTime()
-                }
-            });
-        },
-        [createDialog]
+        [previewDialog]
     );
 
     const handleEventSelect = useCallback(
         (arg: EventClickArg): void => {
-            // updateDialog.handleOpen({
-            //     eventId: arg.event.id
-            // });
+            previewDialog.handleOpen({
+                serviceId: arg.event.id
+            });
         },
         []
     );
+
+    // @ts-ignore
+    function handleEventMouseEnter(eventInfo) {
+        eventInfo.el.style.cursor = 'pointer';
+    }
+
+    // @ts-ignore
+    function handleEventMouseLeave(eventInfo) {
+        eventInfo.el.style.cursor = 'default';
+    }
+
 
     // const handleEventResize = useCallback(
     //     async (arg: EventResizeDoneArg): Promise<void> => {
@@ -340,42 +378,20 @@ export const SchedulePage = () => {
                         <Card>
                             <TimelineContainer>
                                 <Calendar
+                                    eventMouseEnter={handleEventMouseEnter}
+                                    eventMouseLeave={handleEventMouseLeave}
                                     nowIndicator
                                     resourceOrder="title"
-                                    resources={[
-                                        {
-                                            id: '8285d475-6114-4e62-b865-7168a6d2cc0a',
-                                            title: 'Truck #1',
-                                            extendedProps: {
-                                                driver: 'Elon Musk',
-                                            },
+                                    resources={[...trucks.map((truck) => ({
+                                        id: truck.id,
+                                        title: truck.name,
+                                        extendedProps: {
+                                            driver: truck.driver.first_name + ' ' + truck.driver.last_name,
                                         },
-                                        {
-                                            id: '7740f3c9-9b30-42e8-a870-498518ecc98d',
-                                            title: 'Truck #2',
-                                            extendedProps: {
-                                                driver: 'Mark Zuckerberg',
-                                            },
-                                        },
-                                        {
-                                            id: 'c',
-                                            title: 'Truck #3',
-                                            extendedProps: {
-                                                driver: 'Jeff Bezos',
-                                            },
-                                        },
-                                        {
-                                            id: 'd',
-                                            title: 'Truck #4',
-                                            extendedProps: {
-                                                driver: 'Bill Gates',
-                                            },
-                                        },
-                                    ]}
+                                    }))]}
                                     // allDayMaintainDuration
-                                    // dayMaxEventRows={3}
-                                    droppable
-                                    editable
+                                    // droppable
+                                    // editable
                                     eventContent={(event) => (
                                         <Box>
                                             <Stack>
@@ -388,9 +404,9 @@ export const SchedulePage = () => {
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
                                                     display: '-webkit-box',
-                                                    WebkitLineClamp: 2,
+                                                    WebkitLineClamp: 1,
                                                     WebkitBoxOrient: 'vertical',
-                                                }} fontSize={'0.85em'} lineHeight={1.1} fontWeight={'600'}>{event.event.title}</Typography>
+                                                }} fontSize={'0.85em'} lineHeight={1.2} fontWeight={'600'}>{event.event.title}</Typography>
                                             </Stack>
                                         </Box>
                                     )}
@@ -400,29 +416,7 @@ export const SchedulePage = () => {
                                     // eventDrop={handleEventDrop}
                                     eventResizableFromStart
                                     // eventResize={handleEventResize}
-                                    // events={[
-                                    //     // {
-                                    //     //     allDay: true,
-                                    //     //     color: colors.red[500],
-                                    //     //     end: new Date(2023, 7, 11, 16),
-                                    //     //     start: new Date(2023, 7, 11, 14),
-                                    //     //     title: 'All Day Event',
-                                    //     //     resourceId: 'a',
-                                    //     // },
-                                    //     // {
-                                    //     //     allDay: false,
-                                    //     //     color: colors.green[500],
-                                    //     //     end: new Date(2021, 5, 30, 12, 30).to,
-                                    //     //     start: new Date(2021, 5, 30, 10, 0),
-                                    //     //     title: 'Meeting'
-                                    //     // }
-                                    //     { title: 'Event 1', start: '2023-07-11T10:30:00', end: '2023-07-11T11:00:00', resourceId: 'a' },
-                                    //     { title: 'Event 2', start: '2023-07-12T12:00:00', resourceId: 'b' },
-                                    //     { title: 'Event 3', start: '2023-07-13T14:00:00', resourceId: 'c' }
-                                    // ]}
-
                                     events={services}
-                                    // headerToolbar={false}
                                     height={'88vh'}
                                     initialDate={date}
                                     initialView={view}
@@ -433,7 +427,6 @@ export const SchedulePage = () => {
                                     ]}
                                     ref={calendarRef}
                                     rerenderDelay={10}
-                                    select={handleRangeSelect}
                                     selectable
                                     allDaySlot={false}
                                     weekends={true}
@@ -444,9 +437,6 @@ export const SchedulePage = () => {
                                     }}
                                     slotMinTime={'06:00'}
                                     slotMaxTime={'22:00'}
-                                    dayHeaderFormat={{
-
-                                    }}
                                     dayHeaderContent={(arg) => {
                                         const date = arg.date;
                                         return (
@@ -503,6 +493,11 @@ export const SchedulePage = () => {
                     </Stack>
                 </Container>
             </Box>
+            {currentService && <ServicePreviewPreviewDialog
+                onClose={previewDialog.handleClose}
+                open={previewDialog.open}
+                service={currentService}
+            />}
             {/*<CalendarEventDialog*/}
             {/*    action="create"*/}
             {/*    onAddComplete={createDialog.handleClose}*/}
