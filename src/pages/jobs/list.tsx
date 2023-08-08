@@ -185,7 +185,6 @@ export default function JobListPage() {
     useJobsStore(jobsSearch.state, setLoading);
 
     const jobIds = useJobIds(jobsStore.filteredJobs);
-    const jobsSelection = useSelection<string>(jobIds);
 
     const filteredJobs = useFilteredJobs(jobsStore.filteredJobs, jobsSearch.state.filters.query);
 
@@ -206,7 +205,7 @@ export default function JobListPage() {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    py: 1
+                    py: 3
                 }}
             >
                 <Container maxWidth="xl">
@@ -251,15 +250,10 @@ export default function JobListPage() {
                                 loading={loading}
                                 count={jobsStore.jobCount}
                                 items={filteredJobs}
-                                onDeselectAll={jobsSelection.handleDeselectAll}
-                                onDeselectOne={jobsSelection.handleDeselectOne}
                                 onPageChange={jobsSearch.handlePageChange}
                                 onRowsPerPageChange={jobsSearch.handleRowsPerPageChange}
-                                onSelectAll={jobsSelection.handleSelectAll}
-                                onSelectOne={jobsSelection.handleSelectOne}
                                 page={jobsSearch.state.page}
                                 rowsPerPage={jobsSearch.state.rowsPerPage}
-                                selected={jobsSelection.selected}
                             />
                         </Card>
                     </Stack>

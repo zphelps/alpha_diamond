@@ -44,5 +44,5 @@ export interface Service {
             last_name: string;
         }
     }
-    total: number;
+    charge?: number;
 }

@@ -1,42 +1,41 @@
 import type {ChangeEvent, FC, MouseEvent} from "react";
+import {format} from "date-fns";
+import numeral from "numeral";
 import PropTypes from "prop-types";
 import ArrowRightIcon from "@untitled-ui/icons-react/build/esm/ArrowRight";
-import Edit02Icon from "@untitled-ui/icons-react/build/esm/Edit02";
 import {
-    Box,
-    Button,
-    Checkbox, CircularProgress,
-    IconButton,
-    Link,
+    Avatar, Box,
+    Card,
+    IconButton, Link,
     Stack,
     SvgIcon,
     Table,
     TableBody,
-    TableCell,
-    TableHead,
+    TableCell, TableHead,
     TablePagination,
     TableRow,
     Typography
 } from "@mui/material";
-import {Scrollbar} from "../../components/scrollbar.tsx";
+import {Invoice, InvoiceStatus} from "../../types/invoice.ts";
+import {SeverityPill, SeverityPillColor} from "../../components/severity-pill.tsx";
 import {RouterLink} from "../../components/router-link.tsx";
-import {SeverityPill} from "../../components/severity-pill.tsx";
-import {Job} from "../../types/job.ts";
-import {useCallback} from "react";
+import {Scrollbar} from "../../components/scrollbar.tsx";
 import Skeleton from "@mui/material/Skeleton";
 import {getSeverityServiceTypeColor, getSeverityStatusColor} from "../../utils/severity-color.ts";
+import Edit02Icon from "@untitled-ui/icons-react/build/esm/Edit02";
 
-interface JobListTableProps {
+interface InvoiceListTableProps {
     loading?: boolean;
     count?: number;
-    items?: Job[];
+    group?: boolean;
+    items?: Invoice[];
     onPageChange?: (event: MouseEvent<HTMLButtonElement> | null, newPage: number) => void;
     onRowsPerPageChange?: (event: ChangeEvent<HTMLInputElement>) => void;
     page?: number;
     rowsPerPage?: number;
 }
 
-export const JobListTable: FC<JobListTableProps> = (props) => {
+export const InvoiceListTable: FC<InvoiceListTableProps> = (props) => {
     const {
         loading,
         count = 0,
@@ -49,21 +48,24 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
     } = props;
 
     return count === 0 && !loading ? <Typography>
-        No jobs found
+        No invoices found
     </Typography> : (
         <Box sx={{position: "relative"}}>
             {/*<Scrollbar>*/}
             <Table sx={{minWidth: 1000}} size={"small"}>
                 <TableHead>
                     <TableRow>
+                        <TableCell sx={{pl: 3}}>
+                            Issued
+                        </TableCell>
                         <TableCell>
                             Name
                         </TableCell>
                         <TableCell>
-                            Summary
+                            Due
                         </TableCell>
                         <TableCell>
-                            Service Type
+                            Total
                         </TableCell>
                         <TableCell>
                             Status
@@ -74,7 +76,7 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {(!items || items.length === 0 || loading) && [...Array(15)].map((_, rowIndex) => (
+                    {(!items || items.length === 0 || loading) && [...Array(10)].map((_, rowIndex) => (
                         <TableRow key={rowIndex} sx={{px: 2, mx: 2}}>
                             <TableCell sx={{pl: 2, m: 0}}>
                                 <Skeleton variant="text" width="80%" height={24}/>
@@ -89,6 +91,9 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
                             <TableCell sx={{pl: 2, m: 0}}>
                                 <Skeleton variant="text" width="50%" height={24}/>
                             </TableCell>
+                            <TableCell sx={{pl: 2, m: 0}}>
+                                <Skeleton variant="text" width="50%" height={24}/>
+                            </TableCell>
                             <TableCell align="right" sx={{pr: 3, m: 0}}>
                                 <Stack direction={"row"} justifyContent={"right"}>
                                     <Skeleton variant="rectangular" width={30} height={30} sx={{borderRadius: 2}}/>
@@ -98,13 +103,38 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
                             </TableCell>
                         </TableRow>
                     ))}
-                    {!loading && items && items.map((job) => {
+                    {!loading && items && items.map((invoice) => {
                         return (
                             <TableRow
                                 hover
-                                key={job.id}
+                                key={invoice.id}
                             >
-                                <TableCell sx={{py: 1}}>
+                                <TableCell sx={{pl: 3}} width={100}>
+                                    <Box
+                                        sx={{
+                                            backgroundColor: (theme) => theme.palette.mode === 'dark'
+                                                ? 'neutral.800'
+                                                : 'neutral.200',
+                                            borderRadius: 2,
+                                            maxWidth: 'fit-content',
+                                            p: 1
+                                        }}
+                                    >
+                                        <Typography
+                                            align="center"
+                                            variant="subtitle2"
+                                        >
+                                            {format(new Date(invoice.issued_on), "LLL").toUpperCase()}
+                                        </Typography>
+                                        <Typography
+                                            align="center"
+                                            variant="h6"
+                                        >
+                                            {format(new Date(invoice.issued_on), "d")}
+                                        </Typography>
+                                    </Box>
+                                </TableCell>
+                                <TableCell>
                                     <Stack
                                         alignItems="center"
                                         direction="row"
@@ -114,34 +144,32 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
                                             <Link
                                                 color="inherit"
                                                 component={RouterLink}
-                                                href={`/jobs/${job.id}`}
+                                                href={`/jobs/${invoice.id}`}
                                                 variant="subtitle2"
                                             >
-                                                {job.client.name}
+                                                {invoice.client.name}
                                             </Link>
                                             <Typography
                                                 color="text.secondary"
                                                 variant="body2"
                                             >
-                                                JOB-{job.id.split("-").shift().toString().toUpperCase()}
+                                                INV-{invoice.id.split("-").shift().toString().toUpperCase()}
                                             </Typography>
                                         </div>
                                     </Stack>
                                 </TableCell>
-                                <TableCell>
-                                    {job.summary}
+                                <TableCell width={150}>
+                                    {invoice.due_on ? format(new Date(invoice.issued_on), "dd MMM yyyy") : "N/A"}
                                 </TableCell>
-                                <TableCell sx={{height: 50}}>
-                                    <SeverityPill color={getSeverityServiceTypeColor(job.service_type)}>
-                                        {job.service_type}
+                                <TableCell width={150}>
+                                    {invoice.amount_due ? numeral(invoice.amount_due).format("$0,0.00") : "N/A"}
+                                </TableCell>
+                                <TableCell sx={{height: 50}} width={100}>
+                                    <SeverityPill color={getSeverityStatusColor(invoice.status)}>
+                                        {invoice.status}
                                     </SeverityPill>
                                 </TableCell>
-                                <TableCell>
-                                    <SeverityPill color={getSeverityStatusColor(job.status)}>
-                                        {job.status}
-                                    </SeverityPill>
-                                </TableCell>
-                                <TableCell align="right" sx={{py: 0}}>
+                                <TableCell align="right" sx={{py: 0}} width={175}>
                                     <IconButton
                                         // component={RouterLink}
                                         // href={paths.dashboard.customers.edit}
@@ -152,7 +180,7 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
                                     </IconButton>
                                     <IconButton
                                         component={RouterLink}
-                                        href={`/jobs/${job.id}`}
+                                        href={`/jobs/${invoice.id}`}
                                     >
                                         <SvgIcon>
                                             <ArrowRightIcon/>
@@ -178,11 +206,12 @@ export const JobListTable: FC<JobListTableProps> = (props) => {
     );
 };
 
-JobListTable.propTypes = {
+InvoiceListTable.propTypes = {
     count: PropTypes.number,
+    group: PropTypes.bool,
     items: PropTypes.array,
     onPageChange: PropTypes.func,
     onRowsPerPageChange: PropTypes.func,
     page: PropTypes.number,
-    rowsPerPage: PropTypes.number,
+    rowsPerPage: PropTypes.number
 };

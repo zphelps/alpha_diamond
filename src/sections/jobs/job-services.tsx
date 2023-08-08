@@ -24,6 +24,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {Status} from "../../utils/status.ts";
 import {servicesApi} from "../../api/services";
 import {setServicesStatus, upsertManyServices} from "../../slices/services";
+import {getSeverityStatusColor} from "../../utils/severity-color.ts";
 
 interface JobServicesSearchState {
     jobID: string;
@@ -138,7 +139,7 @@ export const JobServices: FC<JobServicesProps> = (props) => {
                                 Summary
                             </TableCell>
                             <TableCell>
-                                Date/Time
+                                Scheduled For
                             </TableCell>
                             <TableCell>
                                 Location
@@ -153,26 +154,7 @@ export const JobServices: FC<JobServicesProps> = (props) => {
                     </TableHead>
                     <TableBody>
                         {filteredJobServices.map((service) => {
-                            const issueDate = format(new Date(service.issued_on), "MM/dd/yyyy h:mm a");
-                            let statusColor = "info";
-
-                            switch (service.status) {
-                                case "scheduled":
-                                    statusColor = "warning";
-                                    break;
-                                case "in-progress":
-                                    statusColor = "info";
-                                    break;
-                                case "completed":
-                                    statusColor = "success";
-                                    break;
-                                case "cancelled":
-                                    statusColor = "error";
-                                    break;
-                                default:
-                                    statusColor = "info";
-                                    break;
-                            }
+                            const issueDate = format(new Date(service.timestamp), "MM/dd/yyyy h:mm a");
 
                             return (
                                 <TableRow key={service.id}>
@@ -196,7 +178,7 @@ export const JobServices: FC<JobServicesProps> = (props) => {
                                     </TableCell>
                                     <TableCell>
                                         {/*@ts-ignore*/}
-                                        <SeverityPill color={statusColor}>
+                                        <SeverityPill color={getSeverityStatusColor(service.status)}>
                                             {service.status}
                                         </SeverityPill>
                                     </TableCell>

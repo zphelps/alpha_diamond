@@ -31,6 +31,16 @@ export const SelectDateAndDuration: FC<SelectDurationProps> = (props) => {
 
     const [anytimeChecked, setAnytimeChecked] = useState(false);
 
+    useEffect(() => {
+        if (timestamp) {
+            setFieldValue('start_time_window', format(addMinutes(new Date(timestamp), 60), 'HH:mm'));
+            setFieldValue('end_time_window', format(addMinutes(new Date(timestamp), duration + 60), 'HH:mm'));
+        } else {
+            setFieldValue('start_time_window', null);
+            setFieldValue('end_time_window', null);
+        }
+    }, [timestamp, duration])
+
     return (
         <Stack>
             <Typography
@@ -72,8 +82,8 @@ export const SelectDateAndDuration: FC<SelectDurationProps> = (props) => {
                         disablePast={true}
                         onChange={(e) => {
                             setFieldValue('timestamp', e.toISOString());
-                            setFieldValue('start_time_window', format(e, 'HH:mm'));
-                            setFieldValue('end_time_window', format(addMinutes(e, duration), 'HH:mm'));
+                            // setFieldValue('start_time_window', format(e, 'HH:mm'));
+                            // setFieldValue('end_time_window', format(addMinutes(e, duration), 'HH:mm'));
                         }}
                         slots={{
                             textField: TextField,
@@ -91,14 +101,14 @@ export const SelectDateAndDuration: FC<SelectDurationProps> = (props) => {
                                 if (e.target.checked) {
                                     setAsSoonAsPossibleChecked(true);
                                     setFieldValue('timestamp', null);
-                                    setFieldValue('start_time_window', null);
-                                    setFieldValue('end_time_window', null);
+                                    // setFieldValue('start_time_window', null);
+                                    // setFieldValue('end_time_window', null);
                                 } else {
                                     setAsSoonAsPossibleChecked(false);
                                     const date = new Date();
                                     setFieldValue('timestamp', date.toISOString());
-                                    setFieldValue('start_time_window', format(date, 'HH:mm'));
-                                    setFieldValue('end_time_window', format(addMinutes(date, duration), 'HH:mm'));
+                                    // setFieldValue('start_time_window', format(date, 'HH:mm'));
+                                    // setFieldValue('end_time_window', format(addMinutes(date, duration), 'HH:mm'));
                                 }
                             }}
                         />
@@ -138,7 +148,7 @@ export const SelectDateAndDuration: FC<SelectDurationProps> = (props) => {
                                     setFieldValue('end_time_window', null);
                                 } else {
                                     setAnytimeChecked(false);
-                                    const date = new Date();
+                                    const date = addMinutes(new Date(), 60);
                                     setFieldValue('start_time_window', format(date, 'HH:mm'));
                                     setFieldValue('end_time_window', format(addMinutes(date, duration), 'HH:mm'));
                                 }

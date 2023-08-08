@@ -1,4 +1,4 @@
-import {ChangeEvent, FC, useState} from "react";
+import {ChangeEvent, FC, useCallback, useEffect, useState} from "react";
 import {
     Button,
     Card,
@@ -8,22 +8,52 @@ import {
     Grid, InputAdornment,
     InputLabel,
     OutlinedInput,
-    Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField,
+    Stack, Table, TableBody, TableCell, TableFooter, TableHead, TableRow, TextField,
     Typography
 } from "@mui/material";
 import {AddBusiness, AddBusinessOutlined, AdsClick, Repeat} from "@mui/icons-material";
 import Skeleton from "@mui/material/Skeleton";
+import {addMinutes, format} from "date-fns";
+import {PriceModel} from "../../../../types/job.ts";
 
 interface JobDetailsProps {
-    description: string;
+    price_model: string;
     price: number;
-    handlePriceChange: (e: never) => void;
+    recurring_charge: number;
+    on_demand_charge: number;
+    setFieldValue: (field: string, value: any) => void;
     handleSummaryChange: (e: never) => void;
     handleDriverNotesChange: (e: never) => void;
 }
 
 export const JobDetails: FC<JobDetailsProps> = (props) => {
-    const {description, price, handlePriceChange, handleSummaryChange, handleDriverNotesChange} = props;
+    const {recurring_charge, on_demand_charge, price_model, price, setFieldValue, handleSummaryChange, handleDriverNotesChange} = props;
+
+    const [checked, setChecked] = useState(false);
+
+    const getPriceDescription = () => {
+        if (price_model === PriceModel.MONTHLY) {
+            return `Monthly Charge`;
+        } else if (price_model === PriceModel.ON_DEMAND) {
+            return `On-Demand Charge`;
+        } else if (price_model === PriceModel.ROUTED_ON_DEMAND) {
+            return `Charge Per Service Performed`;
+        } else if (price_model === PriceModel.VALUE) {
+            return `Charge Per Service Performed`;
+        }
+    }
+
+    useEffect(() => {
+        if (price_model === PriceModel.VALUE) {
+            setFieldValue('price', null);
+        } else if (price_model === PriceModel.MONTHLY) {
+            setFieldValue('price', recurring_charge);
+        } else if (price_model === PriceModel.ON_DEMAND) {
+            setFieldValue('price', on_demand_charge);
+        } else if (price_model === PriceModel.ROUTED_ON_DEMAND) {
+            setFieldValue('price', on_demand_charge);
+        }
+    }, [on_demand_charge, price_model, recurring_charge])
 
     return (
         <Stack>
@@ -72,29 +102,54 @@ export const JobDetails: FC<JobDetailsProps> = (props) => {
                 <TableBody>
                     <TableRow>
                         <TableCell>
-                            {description}
+                            {getPriceDescription()}
                         </TableCell>
                         <TableCell align={'right'}>
-                            <OutlinedInput
+                            {price_model !== PriceModel.VALUE && price && <OutlinedInput
                                 value={price}
-                                onChange={handlePriceChange}
+                                onChange={(e) => setFieldValue("price", parseInt(e.target.value))}
                                 sx={{width: 175}}
-                                type={'number'}
+                                type={"number"}
                                 startAdornment={
-                                    <InputAdornment position={'start'}>
-                                        <Typography variant={'body1'}>$</Typography>
+                                    <InputAdornment position={"start"}>
+                                        <Typography variant={"body1"}>$</Typography>
                                     </InputAdornment>
                                 }
                                 endAdornment={
-                                <InputAdornment position={'end'}>
-                                    <Typography variant={'body2'}>/ month</Typography>
-                                </InputAdornment>
+                                    <InputAdornment position={"end"}>
+                                        <Typography variant={"body2"}>/ month</Typography>
+                                    </InputAdornment>
                                 }
-                            />
+                            />}
+                            {price_model === PriceModel.VALUE && <Typography
+                                sx={{py: 2}}
+                                variant={"body2"}
+                            >
+                                CLIENT HAUL RATE * PERCENT COMPACTION
+                            </Typography>}
                         </TableCell>
                     </TableRow>
                 </TableBody>
             </Table>
+            {price_model !== PriceModel.ON_DEMAND && <Stack direction={"row"} alignItems={"center"}>
+                <Checkbox
+                    value={checked}
+                    onChange={(e) => {
+                        if (e.target.checked) {
+                            setChecked(true);
+                            setFieldValue("price_model", PriceModel.VALUE);
+                        } else {
+                            setChecked(false);
+                            setFieldValue("price_model", PriceModel.MONTHLY);
+                        }
+                    }}
+                />
+                <Typography
+                    variant={"body2"}
+                >
+                    Value-Based Pricing
+                </Typography>
+            </Stack>}
         </Stack>
     );
 };

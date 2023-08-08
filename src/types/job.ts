@@ -39,4 +39,13 @@ export interface Job {
     status: string;
     services_per_week: number;
     days_of_week: number[];
+    price_model: string;
+    price: number;
+}
+
+export enum PriceModel {
+    MONTHLY = "Monthly",
+    VALUE = "Value",
+    ON_DEMAND = "On-Demand",
+    ROUTED_ON_DEMAND = "Routed On-Demand",
 }

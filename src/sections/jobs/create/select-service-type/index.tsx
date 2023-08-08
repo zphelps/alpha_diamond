@@ -1,6 +1,7 @@
 import {FC} from "react";
 import {Button, Card, CardContent, Grid, Stack, Typography} from "@mui/material";
 import {AddBusiness, AddBusinessOutlined, AdsClick, Repeat} from "@mui/icons-material";
+import {PriceModel} from "../../../../types/job.ts";
 
 interface SelectServiceTypeProps {
     serviceType: string;
@@ -22,6 +23,8 @@ export const SelectServiceType: FC<SelectServiceTypeProps> = (props) => {
                     onClick={() => {
                         setFieldValue('status', 'open');
                         setFieldValue('service_type', 'Recurring')
+                        setFieldValue('timestamp', null)
+                        setFieldValue('price_model', PriceModel.MONTHLY)
                         setFieldValue('days_of_week', [1]);
                         setFieldValue('services_per_week', 1);
                     }}
@@ -46,6 +49,8 @@ export const SelectServiceType: FC<SelectServiceTypeProps> = (props) => {
                     onClick={() => {
                         setFieldValue('status', 'scheduled');
                         setFieldValue('service_type', 'On-Demand');
+                        setFieldValue('timestamp', new Date().toISOString())
+                        setFieldValue('price_model', PriceModel.ON_DEMAND)
                         setFieldValue('days_of_week', null);
                         setFieldValue('services_per_week', null);
                     }}
@@ -68,6 +73,7 @@ export const SelectServiceType: FC<SelectServiceTypeProps> = (props) => {
                     onClick={() => {
                         setFieldValue('status', 'scheduled');
                         setFieldValue('service_type', 'Demo')
+                        setFieldValue('price_model', null)
                         setFieldValue('days_of_week', null);
                         setFieldValue('services_per_week', null);
                     }}

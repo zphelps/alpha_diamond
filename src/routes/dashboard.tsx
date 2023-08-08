@@ -11,6 +11,7 @@ import {CreateJobPage} from "../pages/jobs/create.tsx";
 import {SchedulePage} from "../pages/schedule";
 import {HomePage} from "../pages/home";
 import {FleetPage} from "../pages/trucks/fleet.tsx";
+import {InvoicesPage} from "../pages/invoices/list.tsx";
 
 export const dashboardRoutes: RouteObject[] = [
     {
@@ -88,23 +89,23 @@ export const dashboardRoutes: RouteObject[] = [
                     }
                 ]
             },
-            // {
-            //     path: 'groups',
-            //     children: [
-            //         {
-            //             index: true,
-            //             element: <Groups/>
-            //         },
-            //         {
-            //             path: ':groupId/:tab',
-            //             element: <GroupProfile />
-            //         },
-            //         {
-            //             path: ':groupId',
-            //             element: <GroupProfile />
-            //         },
-            //     ]
-            // },
+            {
+                path: 'invoices',
+                children: [
+                    {
+                        index: true,
+                        element: <InvoicesPage/>
+                    },
+                    // {
+                    //     path: ':groupId/:tab',
+                    //     element: <GroupProfile />
+                    // },
+                    // {
+                    //     path: ':groupId',
+                    //     element: <GroupProfile />
+                    // },
+                ]
+            },
             // {
             //     path: 'conversations',
             //     element: <Conversations />

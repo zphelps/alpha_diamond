@@ -5,7 +5,7 @@ import {Service} from "../../types/service.ts";
 import {Route} from "../../types/route.ts";
 import {
     addDays,
-    addMinutes,
+    addMinutes, addWeeks,
     differenceInMinutes,
     format, isAfter, isBefore,
     isSameDay,
@@ -372,6 +372,7 @@ class SchedulerApi {
             const route = await routeOptimizerApi.getOptimizedRoute({
                 // @ts-ignore
                 services,
+                organization_id: services[0].job.organization_id,
                 date: addDays(startOfWeek(new Date()), i - 1).toISOString(),
             });
 
@@ -405,8 +406,28 @@ class SchedulerApi {
                 services_per_week: job.services_per_week,
             })
 
+            if (!res.success) {
+                return Promise.resolve({
+                    success: false,
+                });
+            }
+
+            // Insert recurring job services for the next 3 weeks
+            for (let i = 1; i <= 3; i++) {
+                const updateFutureWeeksServicesRes = await schedulerApi.insertRecurringJobServicesForWeek({
+                    beginningOfWeek: startOfWeek(addWeeks(new Date(), i)),
+                })
+
+                if (!updateFutureWeeksServicesRes.success) {
+                    return Promise.resolve({
+                        success: false,
+                    });
+                }
+            }
+
+
             return Promise.resolve({
-                success: res.success,
+                success: true,
             });
         }
 
@@ -451,6 +472,7 @@ class SchedulerApi {
             const route = await routeOptimizerApi.getOptimizedRoute({
                 // @ts-ignore
                 services,
+                organization_id: services[0].job.organization_id,
                 date: addDays(request.beginningOfWeek, i).toISOString(),
             });
 

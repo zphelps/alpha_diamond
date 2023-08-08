@@ -72,7 +72,7 @@ export const useSections = () => {
             },
             {
               title: 'Invoices',
-              path: paths.conversations,
+              path: paths.invoices,
               icon: (
                 <SvgIcon fontSize="small">
                   <CurrencyDollar />

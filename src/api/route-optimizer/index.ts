@@ -11,6 +11,7 @@ import {uuid} from "@supabase/supabase-js/dist/main/lib/helpers";
 
 type GetOptimizedRouteRequest = {
     date: string;
+    organization_id: string;
     services: ScheduleServiceConstraints[];
 };
 
@@ -37,9 +38,14 @@ type GetReOptimizedRouteRequest = {
 type GetReOptimizedRouteResponse = Promise<Route>;
 class RouteOptimizerApi {
     async getOptimizedRoute(request: GetOptimizedRouteRequest): GetOptimizedRouteResponse {
-        const {services, date} = request;
+        const {services, date, organization_id} = request;
 
         console.log(services)
+
+        // Get trucks
+        const trucks = await trucksApi.getTrucks({
+            organization_id: organization_id,
+        });
 
         // Create a new delivery
         const body = {
@@ -59,26 +65,38 @@ class RouteOptimizerApi {
                 }
                 return obj;
             }, {}),
-            "fleet": {
-                "8285d475-6114-4e62-b865-7168a6d2cc0a": {
+            "fleet": trucks.data.reduce((obj, truck) => {
+                obj[truck.id] = {
                     "start_location": {
                         "id": "depot",
                         "lat": 39.97308,
                         "lng": -86.24601
                     },
-                    "shift_start": "7:00",
-                    "shift_end": "21:00",
-                },
-                "7740f3c9-9b30-42e8-a870-498518ecc98d": {
-                    "start_location": {
-                        "id": "depot",
-                        "lat": 39.97308,
-                        "lng": -86.24601
-                    },
-                    "shift_start": "7:00",
+                    "shift_start": "6:00",
                     "shift_end": "21:00",
                 }
-            }
+                return obj;
+            }, {}),
+            // "fleet": {
+            //     "8285d475-6114-4e62-b865-7168a6d2cc0a": {
+            //         "start_location": {
+            //             "id": "depot",
+            //             "lat": 39.97308,
+            //             "lng": -86.24601
+            //         },
+            //         "shift_start": "7:00",
+            //         "shift_end": "21:00",
+            //     },
+            //     "7740f3c9-9b30-42e8-a870-498518ecc98d": {
+            //         "start_location": {
+            //             "id": "depot",
+            //             "lat": 39.97308,
+            //             "lng": -86.24601
+            //         },
+            //         "shift_start": "7:00",
+            //         "shift_end": "21:00",
+            //     }
+            // }
         };
 
         try {
@@ -187,7 +205,7 @@ class RouteOptimizerApi {
                             ? (most_recent_services.find(s => s.truck_id === truck.id)?.location.lng ?? -86.24601)
                             : -86.24601
                     },
-                    "shift_start": start_shift ?? "7:00",
+                    "shift_start": start_shift ?? "6:00",
                     "shift_end": "21:00",
                 }
                 return obj;

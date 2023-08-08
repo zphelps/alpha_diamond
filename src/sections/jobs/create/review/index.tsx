@@ -21,7 +21,9 @@ import {SeverityPill} from "../../../../components/severity-pill.tsx";
 import {CreateJobFormValues} from "../../../../pages/jobs/create.tsx";
 import {daysOfWeek} from "../select-recurrence";
 import {schedulerApi} from "../../../../api/scheduler";
-import {Job} from "../../../../types/job.ts";
+import {Job, PriceModel} from "../../../../types/job.ts";
+import {getSeverityServiceTypeColor} from "../../../../utils/severity-color.ts";
+import {format} from "date-fns";
 
 interface ReviewProps {
     formValues: CreateJobFormValues;
@@ -51,7 +53,8 @@ export const Review: FC<ReviewProps> = (props) => {
                 variant={'subtitle2'}
                 sx={{mb: 3}}
             >
-                Confirm the details of your job before submitting.
+                Confirm the details of your job before submitting. You can always edit the details of the job later.
+                {formValues.service_type === 'Recurring' && ` **NOTE: Services for this recurring job will not begin until the next calendar week.**`}
             </Typography>
 
             <Stack direction={'row'} spacing={2}>
@@ -61,8 +64,12 @@ export const Review: FC<ReviewProps> = (props) => {
                         <PropertyListItem
                             divider
                             label="Type"
-                            value={formValues.service_type}
-                        />
+                            // value={formValues.service_type}
+                        >
+                            <SeverityPill color={getSeverityServiceTypeColor(formValues.service_type)}>
+                                {formValues.service_type}
+                            </SeverityPill>
+                        </PropertyListItem>
                         <PropertyListItem
                             divider
                             label="Client"
@@ -81,16 +88,40 @@ export const Review: FC<ReviewProps> = (props) => {
                             // @ts-ignore
                             value={`${formValues.on_site_contact.first_name} ${formValues.on_site_contact.last_name}`}
                         />
-                        {formValues.service_type !== 'Demo' && <PropertyListItem
+                        {formValues.price_model === PriceModel.MONTHLY && <PropertyListItem
+                            label="Monthly Charge"
+                            value={`$${formValues.price}`}
+                        />}
+                        {formValues.price_model === PriceModel.VALUE && <PropertyListItem
+                            label="Pricing"
+                            value={`Value Based`}
+                        />}
+                        {formValues.price_model === PriceModel.ON_DEMAND && <PropertyListItem
                             label="Price"
-                            value={formValues.service_type === "Recurring" ? `$${formValues.recurring_charge}` : `$${formValues.on_demand_charge}`}
+                            value={`$${formValues.price}`}
+                        />}
+                        {formValues.price_model === PriceModel.ROUTED_ON_DEMAND && <PropertyListItem
+                            label="Price"
+                            value={`$${formValues.price}`}
                         />}
                     </PropertyList>
                 </Card>
 
                 <Card variant={'outlined'} sx={{pb: 2, width: '100%'}}>
-                    <CardHeader title="Logistics" />
+                    <CardHeader title={formValues.service_type === 'Recurring' ? 'Recurrence Logistics' : 'Service Logistics'} />
                     <PropertyList>
+                        {formValues.timestamp && <PropertyListItem
+                            divider
+                            label="Scheduled For"
+                            value={formValues.start_time_window
+                                ? format(new Date(formValues.timestamp), "MM/dd/yyyy HH:mm a")
+                                : `Any time on ${format(new Date(formValues.timestamp), "MM/dd/yyyy")}`}
+                        />}
+                        {!formValues.timestamp && formValues.service_type !== 'Recurring' && <PropertyListItem
+                            divider
+                            label="Scheduled For"
+                            value={'ASAP'}
+                        />}
                         <PropertyListItem
                             divider
                             label="Duration"
@@ -101,7 +132,7 @@ export const Review: FC<ReviewProps> = (props) => {
                             label="Days of Week"
                             value={`${formValues.days_of_week.map((d) => daysOfWeek[d-1].label).join(' | ')}`}
                         />}
-                        {formValues.services_per_week && <PropertyListItem
+                        {formValues.services_per_week && (formValues.days_of_week ?? []).length <= 0 && <PropertyListItem
                             divider
                             label="Services Per Week"
                             value={formValues.services_per_week.toString()}
@@ -117,7 +148,7 @@ export const Review: FC<ReviewProps> = (props) => {
                             value={formValues.summary}
                         />
                         <PropertyListItem
-                            label="Driver Notes"
+                            label="Driver Instructions"
                             value={formValues.driver_notes}
                         />
                     </PropertyList>

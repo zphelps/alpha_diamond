@@ -26,7 +26,7 @@ import {SelectClient} from "../../sections/jobs/create/select-client";
 import {SelectClientLocation} from "../../sections/jobs/create/select-client-location";
 import {SelectContact} from "../../sections/jobs/create/select-contact";
 import {JobDetails} from "../../sections/jobs/create/job-details";
-import {Job} from "../../types/job.ts";
+import {Job, PriceModel} from "../../types/job.ts";
 import {SelectDuration} from "../../sections/jobs/create/select-duration";
 import {SelectRecurrence} from "../../sections/jobs/create/select-recurrence";
 import {SelectTimeWindow} from "../../sections/jobs/create/select-time-window";
@@ -66,6 +66,8 @@ export interface CreateJobFormValues {
     recurring_charge: number;
     on_demand_charge: number;
     driver_notes: string;
+    price?: number;
+    price_model: string;
     submit: null;
 }
 
@@ -99,6 +101,8 @@ const useInitialValues = (
                     driver_notes: job.driver_notes,
                     days_of_week: job.days_of_week,
                     services_per_week: job.services_per_week,
+                    price: job.price,
+                    price_model: job.price_model,
                     submit: null
                 };
             }
@@ -116,7 +120,7 @@ const useInitialValues = (
                 service_type: "Recurring",
                 start_time_window: null,
                 end_time_window: null,
-                timestamp: new Date().toISOString(),
+                timestamp: null,
                 recurring_charge: null,
                 on_demand_charge: null,
                 any_time_window: false,
@@ -126,6 +130,8 @@ const useInitialValues = (
                 status: "open",
                 days_of_week: [1],
                 services_per_week: 1,
+                price: null,
+                price_model: PriceModel.MONTHLY,
                 submit: null,
             };
         },
@@ -169,9 +175,10 @@ export const CreateJobPage = () => {
                     services_per_week: values.services_per_week,
                 };
 
+                toast.loading("Creating job...");
+
                 // Insert New On-Demand Job
                 if (values.service_type !== "Recurring") {
-                    toast.loading("Checking for conflicts...");
                     // @ts-ignore
                     const onDemandRes = await schedulerApi.insertNewOnDemandJob({job: formik.values as Job});
 
@@ -184,11 +191,8 @@ export const CreateJobPage = () => {
                         setConflict(true);
                     }
                 } else {
-                    toast.loading("Creating Recurring Job...");
                     // @ts-ignore
                     const res = await schedulerApi.insertRecurringJob({job: formik.values as Job});
-
-                    // const recurringRes = await jobsApi.createJob(data);
 
                     console.log(res);
                     toast.dismiss();
@@ -235,13 +239,6 @@ export const CreateJobPage = () => {
 
     const handleDriverNotesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         formik.setFieldValue("driver_notes", event.target.value);
-    };
-    const handleServicePriceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (formik.values.service_type === "On-Demand") {
-            formik.setFieldValue("on_demand_charge", event.target.value ?? 0);
-        } else if (formik.values.service_type === "Recurring") {
-            formik.setFieldValue("recurring_charge", event.target.value ?? 0);
-        }
     };
 
     useEffect(() => {
@@ -360,13 +357,11 @@ export const CreateJobPage = () => {
                                 )}
                                 {activeStep === 3 && (
                                     <JobDetails
-                                        price={formik.values.service_type === "Recurring"
-                                            ? formik.values.recurring_charge
-                                            : formik.values.on_demand_charge}
-                                        description={formik.values.service_type === "Recurring"
-                                            ? "Recurring Monthly Charge"
-                                            : "On-Demand Charge"}
-                                        handlePriceChange={handleServicePriceChange}
+                                        price={formik.values.price}
+                                        recurring_charge={formik.values.recurring_charge}
+                                        on_demand_charge={formik.values.on_demand_charge}
+                                        price_model={formik.values.price_model}
+                                        setFieldValue={formik.setFieldValue}
                                         handleSummaryChange={handleSummaryChange}
                                         handleDriverNotesChange={handleDriverNotesChange}
                                     />
