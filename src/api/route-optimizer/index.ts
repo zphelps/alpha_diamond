@@ -3,7 +3,7 @@ import {supabase} from "../../config.ts";
 import {useAuth} from "../../hooks/use-auth.ts";
 import {Service} from "../../types/service.ts";
 import {Route} from "../../types/route.ts";
-import {addMinutes, format, isAfter, isBefore, isToday} from "date-fns";
+import {addMinutes, format, isAfter, isBefore, isToday, set, setMinutes} from "date-fns";
 import {SampleService} from "../../utils/testing/service-data.ts";
 import {ScheduleServiceConstraints} from "../scheduler";
 import {trucksApi} from "../trucks";
@@ -12,7 +12,13 @@ import {uuid} from "@supabase/supabase-js/dist/main/lib/helpers";
 type GetOptimizedRouteRequest = {
     date: string;
     organization_id: string;
+    franchise_id: string;
     services: ScheduleServiceConstraints[];
+    operating_hours: {
+        start: string;
+        end: string;
+    }
+    operating_days: number[];
 };
 
 type GetOptimizedRouteResponse = Promise<Route>;
@@ -33,18 +39,25 @@ type GetReOptimizedRouteRequest = {
         truck_id?: string;
     }[];
     organization_id: string;
+    franchise_id: string;
+    operating_hours: {
+        start: string;
+        end: string;
+    }
+    operating_days: number[];
 };
 
 type GetReOptimizedRouteResponse = Promise<Route>;
 class RouteOptimizerApi {
     async getOptimizedRoute(request: GetOptimizedRouteRequest): GetOptimizedRouteResponse {
-        const {services, date, organization_id} = request;
+        const {services, date, organization_id, franchise_id, operating_hours, operating_days} = request;
 
         console.log(services)
 
         // Get trucks
         const trucks = await trucksApi.getTrucks({
             organization_id: organization_id,
+            franchise_id: franchise_id,
         });
 
         // Create a new delivery
@@ -72,31 +85,11 @@ class RouteOptimizerApi {
                         "lat": 39.97308,
                         "lng": -86.24601
                     },
-                    "shift_start": "6:00",
-                    "shift_end": "21:00",
+                    "shift_start": operating_hours.start,//"6:00",
+                    "shift_end": operating_hours.end, //"21:00",
                 }
                 return obj;
             }, {}),
-            // "fleet": {
-            //     "8285d475-6114-4e62-b865-7168a6d2cc0a": {
-            //         "start_location": {
-            //             "id": "depot",
-            //             "lat": 39.97308,
-            //             "lng": -86.24601
-            //         },
-            //         "shift_start": "7:00",
-            //         "shift_end": "21:00",
-            //     },
-            //     "7740f3c9-9b30-42e8-a870-498518ecc98d": {
-            //         "start_location": {
-            //             "id": "depot",
-            //             "lat": 39.97308,
-            //             "lng": -86.24601
-            //         },
-            //         "shift_start": "7:00",
-            //         "shift_end": "21:00",
-            //     }
-            // }
         };
 
         try {
@@ -127,7 +120,7 @@ class RouteOptimizerApi {
 
 
     async getReOptimizedRoute(request: GetReOptimizedRouteRequest): GetReOptimizedRouteResponse {
-        const {services, date, organization_id} = request;
+        const {services, date, organization_id, franchise_id, operating_hours, operating_days} = request;
 
         console.log(services)
 
@@ -160,8 +153,6 @@ class RouteOptimizerApi {
                         isAfter(addMinutes(Date.parse(b.timestamp), b.duration), addMinutes(Date.parse(b.timestamp), b.duration)) ? -1 : 1);
                 most_recent_service = most_recent_services[0];
 
-                console.log(most_recent_services)
-
                 const start_shift_timestamp = addMinutes(Date.parse(most_recent_service.timestamp), most_recent_service.duration);
                 if (isBefore(start_shift_timestamp, new Date())) {
                     start_shift = format(new Date(), "HH:mm");
@@ -169,11 +160,21 @@ class RouteOptimizerApi {
                     start_shift = format(start_shift_timestamp, "HH:mm");
                 }
             }
+
+            const [hours, minutes] = start_shift.split(':');
+            const [operating_hours_end_hours, operating_hours_end_minutes] = operating_hours.end.split(':');
+
+            if (isAfter(set(new Date(), {hours: Number(hours), minutes: Number(minutes), seconds: 0}),
+                        set(new Date(), {hours: Number(operating_hours_end_hours), minutes: Number(operating_hours_end_minutes), seconds: 0}))) {
+                console.log("start_shift after start of operating hours")
+                return Promise.resolve({error: "start_shift after end of operating hours"} as Route);
+            }
         }
 
         // Get trucks
         const trucks = await trucksApi.getTrucks({
             organization_id: organization_id,
+            franchise_id: franchise_id,
         });
 
         // Create a new delivery
@@ -205,17 +206,18 @@ class RouteOptimizerApi {
                             ? (most_recent_services.find(s => s.truck_id === truck.id)?.location.lng ?? -86.24601)
                             : -86.24601
                     },
-                    "shift_start": start_shift ?? "6:00",
-                    "shift_end": "21:00",
+                    "shift_start": start_shift ?? operating_hours.start,
+                    "shift_end": operating_hours.end,
                 }
                 return obj;
             }, {}),
-            solution: {
-                "8285d475-6114-4e62-b865-7168a6d2cc0a": upcoming_services.filter(service => (service.truck_id ?? '') === "8285d475-6114-4e62-b865-7168a6d2cc0a")
-                    .sort((a, b) => isBefore(Date.parse(a.timestamp), Date.parse(b.timestamp)) ? -1 : 1).map(service => service.id),
-                "7740f3c9-9b30-42e8-a870-498518ecc98d": upcoming_services.filter(service => (service.truck_id ?? '') === "7740f3c9-9b30-42e8-a870-498518ecc98d")
-                    .sort((a, b) => isBefore(Date.parse(a.timestamp), Date.parse(b.timestamp)) ? -1 : 1).map(service => service.id),
-            },
+            solution: trucks.data.reduce((obj, truck) => {
+                obj[truck.id] = upcoming_services
+                    .filter(service => (service.truck_id ?? '') === truck.id)
+                    .sort((a, b) => isBefore(Date.parse(a.timestamp), Date.parse(b.timestamp)) ? -1 : 1)
+                    .map(service => service.id);
+                return obj;
+            }, {}),
             unserved: upcoming_services.filter(service => !service.truck_id).map(service => service.id),
         };
 

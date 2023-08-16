@@ -16,7 +16,12 @@ export const paths = {
   schedule: '/schedule',
   events: '/events',
   fleet: '/fleet',
-  invoices: '/invoices',
+  invoices: {
+    index: '/invoices',
+    create: '/invoices/create',
+    edit: (invoiceId: string) => `/invoices/${invoiceId}/edit`,
+    details: (invoiceId: string) => `/invoices/${invoiceId}`,
+  },
   groups: {
     index: '/groups',
     create: '/groups/create',

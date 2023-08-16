@@ -109,7 +109,10 @@ export const CreateContentPopover: FC<CreateContentPopoverProps> = (props) => {
                         </Typography>
                     </ListItem>
                     <ListItem
-                        onClick={handleAddPostClick}
+                        onClick={() => {
+                            navigate('invoices/create')
+                            onClose?.();
+                        }}
                         sx={{
                             px: 1,
                             borderRadius: 2.5,

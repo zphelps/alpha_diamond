@@ -31,7 +31,7 @@ interface Filters {
     status?: InvoiceStatus;
 }
 
-type TabValue = "all" | "paid" | "pending" | "cancelled";
+type TabValue = "all" | "paid" | "pending" | "cancelled" | "draft";
 
 interface TabOption {
     label: string;
@@ -55,6 +55,10 @@ const tabs: TabOption[] = [
         label: "Cancelled",
         value: "cancelled"
     },
+    {
+        label: "Draft",
+        value: "draft"
+    }
 ];
 
 interface InvoiceListSearchProps {
@@ -204,6 +208,7 @@ export const InvoiceListSearch: FC<InvoiceListSearchProps> = (props) => {
             >
                 {tabs.map((tab) => (
                     <Tab
+                        sx={{fontWeight: 600}}
                         key={tab.value}
                         label={tab.label}
                         value={tab.value}
@@ -266,7 +271,10 @@ export const InvoiceListSearch: FC<InvoiceListSearchProps> = (props) => {
                 </Box>
 
                 <Stack flexGrow={1} spacing={1} direction="row" flexWrap="wrap" alignItems="center">
-                    {(filters.status === InvoiceStatus.PAID || filters.status === InvoiceStatus.PENDING || filters.status === InvoiceStatus.CANCELLED) && (
+                    {(filters.status === InvoiceStatus.PAID
+                        || filters.status === InvoiceStatus.PENDING
+                        || filters.status === InvoiceStatus.CANCELLED
+                        || filters.status === InvoiceStatus.DRAFT) && (
                         <Block label="Status:">
                             <Chip size="small" label={filters.status}
                                   onDelete={handleRemoveStatus}/>

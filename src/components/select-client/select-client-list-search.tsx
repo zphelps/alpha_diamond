@@ -16,7 +16,7 @@ import {Trash01} from "@untitled-ui/icons-react";
 import {StackProps} from "@mui/material/Stack";
 import Checkbox from "@mui/material/Checkbox";
 import {ArrowDropDown} from "@mui/icons-material";
-import {useUpdateEffect} from "../../../../hooks/use-update-effect.ts";
+import {useUpdateEffect} from "../../hooks/use-update-effect.ts";
 import {_clientTypes} from "./index.tsx";
 
 interface Filters {

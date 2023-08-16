@@ -12,4 +12,6 @@ export interface Truck {
     startedAt: string;
     departedAt: string;
     arrivedAt: string;
+    organization_id: string;
+    franchise_id: string;
 }

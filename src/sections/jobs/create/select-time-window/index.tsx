@@ -12,7 +12,7 @@ import {
     Typography
 } from "@mui/material";
 import {ArrowDropDown, Check} from "@mui/icons-material";
-import {_clientTypes} from "../select-client";
+import {_clientTypes} from "../../../../components/select-client";
 import Checkbox from "@mui/material/Checkbox";
 import {addMinutes, format, formatRelative, isAfter, isBefore, set} from "date-fns";
 

@@ -95,7 +95,7 @@ const useInvoicesStore = (searchState: InvoicesSearchState, setLoading) => {
     const handleInvoicesGet = useCallback(
         async () => {
             try {
-
+                setLoading(true);
                 dispatch(setInvoicesStatus(Status.LOADING));
                 const response = await invoicesApi.getInvoices(searchState);
 
@@ -200,7 +200,7 @@ export const InvoicesPage = () => {
                             >
                                 <Button
                                     component={RouterLink}
-                                    href={paths.jobs.create}
+                                    href={paths.invoices.create}
                                     startIcon={(
                                         <SvgIcon>
                                             <PlusIcon/>

@@ -4,7 +4,7 @@ import {useAuth} from "../../hooks/use-auth.ts";
 import {Job} from "../../types/job.ts";
 import {number, string} from "yup";
 import {addDays, startOfDay} from "date-fns";
-import {Invoice, InvoiceStatus} from "../../types/invoice.ts";
+import {Invoice, InvoiceItem, InvoiceStatus} from "../../types/invoice.ts";
 
 type GetInvoicesRequest = {
     filters?: {
@@ -21,6 +21,22 @@ type GetInvoicesRequest = {
 
 type GetInvoiceResponse = Promise<Job>;
 
+export type UpdateInvoiceRequest = {
+    id: string;
+    items?: InvoiceItem[];
+    issued_on?: string;
+    due_on?: string;
+    status?: string;
+    summary?: string;
+    amount_paid?: number;
+    discount?: number;
+    total?: number;
+};
+
+type UpdateInvoiceResponse = Promise<{
+    success: boolean;
+}>;
+
 type GetInvoiceRequest = {
     id: string;
 };
@@ -30,12 +46,25 @@ type GetInvoicesResponse = Promise<{
     count: number;
 }>;
 
-export type NewInvoiceRequest = {
-    id: string;
+
+export type CreateInvoiceRequest = {
+    id?: string;
+    items?: InvoiceItem[];
+    franchise_id: string;
     client_id: string;
+    organization_id: string;
+    issued_on?: string;
+    due_on?: string;
+    status?: string;
+    summary?: string;
+    amount_paid?: number;
+    discount?: number;
+    total?: number;
 }
 
-
+type CreateInvoiceResponse = Promise<{
+    success: boolean;
+}>;
 class InvoicesApi {
 
     async getInvoices(request: GetInvoicesRequest = {}): GetInvoicesResponse {
@@ -47,7 +76,7 @@ class InvoicesApi {
         if (typeof filters !== "undefined") {
 
             if (typeof filters.query !== "undefined" && filters.query !== "") {
-                query.ilike("id", `%${filters.query}%`);
+                // query.ilike("id", `%${filters.query}%`);
                 // query.textSearch("client.name", filters.query)
             }
 
@@ -80,13 +109,87 @@ class InvoicesApi {
 
     async getInvoice(request?: GetInvoiceRequest): GetInvoiceResponse {
         const res = await supabase
-            .from("client_jobs")
-            .select("*, client:client_id(id, name), location:location_id(*), on_site_contact:on_site_contact_id(*)")
+            .from("client_invoices")
+            .select("*, client:client_id(id, name)")
             .eq('id', request.id)
             .single();
         return Promise.resolve(res.data as Job);
     }
 
+    async createInvoice(request: CreateInvoiceRequest): CreateInvoiceResponse {
+        for (const item of request.items) {
+            for (const service_id of item.service_ids) {
+                const res = await supabase
+                    .from("client_services")
+                    .update({
+                        invoice_id: null,
+                    })
+                    .eq("id", service_id)
+                    .single();
+                if (res.error) {
+                    return Promise.reject(res.error);
+                }
+            }
+        }
+
+        const res = await supabase
+            .from("client_invoices")
+            .insert(request)
+            .single();
+        if (res.error) {
+            return Promise.reject(res.error);
+        }
+        return Promise.resolve({success: true});
+    }
+
+    async updateInvoice(request: UpdateInvoiceRequest): UpdateInvoiceResponse {
+        const {data: ids, error} = await supabase
+            .from("client_services")
+            .select("id")
+            .eq("invoice_id", request.id);
+        if (error) {
+            return Promise.reject(error);
+        }
+
+        for (const service of ids) {
+            const res = await supabase
+                .from("client_services")
+                .update({
+                    invoice_id: null,
+                })
+                .eq("id", service.id)
+                .single();
+            if (res.error) {
+                return Promise.reject(res.error);
+            }
+        }
+
+        for (const item of request.items) {
+            for (const service_id of item.service_ids) {
+                const res = await supabase
+                    .from("client_services")
+                    .update({
+                        invoice_id: request.id,
+                    })
+                    .eq("id", service_id)
+                    .single();
+                if (res.error) {
+                    return Promise.reject(res.error);
+                }
+            }
+        }
+
+        console.log(request);
+        const res = await supabase
+            .from("client_invoices")
+            .update(request)
+            .eq('id', request.id)
+            .single();
+        if (res.error) {
+            return Promise.reject(res.error);
+        }
+        return Promise.resolve({success: true});
+    }
 }
 
 export const invoicesApi = new InvoicesApi();

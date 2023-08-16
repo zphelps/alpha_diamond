@@ -217,13 +217,16 @@ export const ServiceDetailsPage = () => {
                                         lg={4}
                                     >
                                         <ServiceBasicDetails
+                                            price_model={service.job.price_model}
+                                            monthly_charge={service.job.monthly_charge}
+                                            on_demand_charge={service.job.on_demand_charge}
+                                            hourly_charge={service.job.hourly_charge}
                                             clientID={service.client.id}
                                             jobID={service.job.id}
                                             clientName={service.client.name}
                                             status={service.status}
                                             serviceType={service.job.service_type}
                                             summary={service.summary}
-                                            total={service.total}
                                         />
                                     </Grid>
                                     <Grid
@@ -232,6 +235,7 @@ export const ServiceDetailsPage = () => {
                                     >
                                         <Stack spacing={4}>
                                             <ServiceLogisticsDetails
+                                                driver_notes={service.driver_notes}
                                                 street_address={service.location.street_address}
                                                 city={service.location.city}
                                                 state={service.location.state}

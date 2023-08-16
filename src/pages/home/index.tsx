@@ -5,6 +5,7 @@ import {formatDate} from "fullcalendar";
 import {addMinutes, differenceInMinutes, format, isAfter, isBefore, parse, set} from "date-fns";
 import {createWeekOfServices, Schedule} from "../../utils/testing/algorithms.ts";
 import {isEqual} from "lodash";
+import {supabase} from "../../config.ts";
 export const HomePage = () => {
 
     function doesNewJobConflict(jobs, newJob) {
@@ -37,18 +38,22 @@ export const HomePage = () => {
     }
 
 
-    const handleClick = () => {
+    const handleClick = async () => {
 
-        const existingJobs = [
-            { start_time_window: '15:00:00', end_time_window: '15:30:00', duration: 30 },
-            { start_time_window: '15:00:00', end_time_window: '16:00:00', duration: 30 },
+        // const {data, error} = await supabase.auth.updateUser({
+        //     data: {franchise_id: '59edd07b-dbcb-4f37-93a6-0f4c478c3315'}
+        // })
 
-            // ... more jobs
-        ];
-
-        const newJob = { start_time_window: '15:00', end_time_window: '15:30', duration: 30 };
-
-        console.log(doesNewJobConflict(existingJobs, newJob));
+        // const existingJobs = [
+        //     { start_time_window: '15:00:00', end_time_window: '15:30:00', duration: 30 },
+        //     { start_time_window: '15:00:00', end_time_window: '16:00:00', duration: 30 },
+        //
+        //     // ... more jobs
+        // ];
+        //
+        // const newJob = { start_time_window: '15:00', end_time_window: '15:30', duration: 30 };
+        //
+        // console.log(doesNewJobConflict(existingJobs, newJob));
 
 
         // console.log(distributeServices(schedule, sampleRecurringJobs[1], sampleRecurringJobs[1].services_per_week));

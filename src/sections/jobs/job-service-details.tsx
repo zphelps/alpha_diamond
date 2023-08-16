@@ -14,10 +14,11 @@ interface JobServiceDetailsProps {
     state?: string;
     duration?: number;
     contact_name?: string;
+    driver_notes?: string;
 }
 
 export const JobServiceDetails: FC<JobServiceDetailsProps> = (props) => {
-    const {timestamp, street_address, contact_name, duration, state, city} = props;
+    const {driver_notes, timestamp, street_address, contact_name, duration, state, city} = props;
     const mdUp = useMediaQuery((theme: Theme) => theme.breakpoints.up("md"));
 
     const align = mdUp ? "horizontal" : "vertical";
@@ -45,9 +46,15 @@ export const JobServiceDetails: FC<JobServiceDetailsProps> = (props) => {
                     value={`${duration} minutes`}
                 />
                 <PropertyListItem
+                    divider
                     align={align}
                     label="On-Site Contact"
                     value={contact_name}
+                />
+                <PropertyListItem
+                    align={align}
+                    label="Driver Instructions"
+                    value={driver_notes}
                 />
             </PropertyList>
         </Card>

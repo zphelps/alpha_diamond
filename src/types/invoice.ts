@@ -19,20 +19,28 @@ export interface Invoice {
     issued_on: string;
     due_on: string;
     status: string;
-    line_items: {
-        id: string;
-        description: string;
-        quantity: number;
-        unit_price: number;
-        total_price: number;
-        job_id: string;
-    }
+    items: InvoiceItem[];
     amount_paid: number;
-    amount_due: number;
+    discount: number;
+    total: number;
 }
 
 export enum InvoiceStatus {
     CANCELLED = 'cancelled',
     PAID = 'paid',
     PENDING = 'pending',
+    DRAFT = 'draft',
+}
+
+export interface InvoiceItem {
+    id: string;
+    date: string;
+    service_type: string;
+    charge_per_unit: number;
+    charge_unit: string;
+    num_units?: number;
+    description: string;
+    job_id: string;
+    service_ids: string[];
+    total: number;
 }

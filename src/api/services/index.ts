@@ -16,7 +16,13 @@ type UpdateServiceResponse = Promise<{
 }>;
 
 type GetServicesRequest = {
+    completed?: boolean;
+    invoiced?: boolean;
+    exclude_ids?: string[];
+    clientID?: string;
     jobID?: string;
+    organization_id: string;
+    franchise_id: string;
     page?: number;
     rowsPerPage?: number;
 };
@@ -41,6 +47,8 @@ type GetServicesResponse = Promise<{
 
 type GetServicesOnDateRequest = {
     date: string;
+    organization_id: string;
+    franchise_id: string;
 };
 
 type GetServicesOnDateResponse = Promise<{
@@ -52,20 +60,24 @@ export type NewServiceRequest = {
     id: string;
     client_id: string;
     organization_id: string;
+    franchise_id: string;
     location_id: string;
     job_id: string;
     truck_id: string;
     summary: string;
+    driver_notes: string;
     on_site_contact_id: string;
     status: string;
     timestamp?: string;
     start_time_window?: string;
     end_time_window?: string;
     duration: number;
+    num_units_to_charge?: number;
 }
 
 type CreateNewServiceResponse = Promise<{
     success: boolean;
+    message: string;
 }>;
 
 class ServicesApi {
@@ -103,7 +115,7 @@ class ServicesApi {
      * @param request
      */
     async getServicesOnDate(request: GetServicesOnDateRequest): GetServicesOnDateResponse {
-        const {date} = request;
+        const {date, organization_id, franchise_id} = request;
         const query = supabase
             .from("client_services")
             .select("*, client:client_id(id, name), job:job_id(*), location:location_id(*), truck:truck_id(*)", {count: "exact"});
@@ -116,6 +128,9 @@ class ServicesApi {
 
         query.gte('timestamp', formatISO(startDate))
         query.lt('timestamp', formatISO(endDate));
+
+        query.eq('organization_id', organization_id);
+        query.eq('franchise_id', franchise_id);
 
         query.order("timestamp", {ascending: false});
 
@@ -134,17 +149,42 @@ class ServicesApi {
      * Get all services
      * @param request
      */
-    async getServices(request: GetServicesRequest = {}): GetServicesResponse {
-        const {jobID, page, rowsPerPage} = request;
+    async getServices(request: GetServicesRequest): GetServicesResponse {
+        const {exclude_ids, jobID, clientID, page, rowsPerPage, completed, invoiced, organization_id, franchise_id} = request;
         const query = supabase
             .from("client_services")
-            .select("*, client:client_id(id, name), on_site_contact:on_site_contact_id(*), job:job_id(id, service_type), location:location_id(*), truck:truck_id(*)", {count: "exact"});
+            .select("*, client:client_id(id, name), on_site_contact:on_site_contact_id(*), job:job_id(*), location:location_id(*), truck:truck_id(*)", {count: "exact"});
 
         if (typeof jobID !== "undefined") {
             query.eq("job_id", jobID);
         }
 
+        if (typeof clientID !== "undefined") {
+            query.eq("client_id", clientID);
+        }
+
+        if (typeof completed !== "undefined") {
+            query.eq("status", "completed");
+        }
+
+        if (typeof invoiced !== "undefined" && !invoiced) {
+            query.is("invoice_id", null);
+        }
+
+        if (typeof exclude_ids !== "undefined") {
+            for (const id of exclude_ids) {
+                query.not("id", "eq", id);
+            }
+        }
+
+        query.eq('organization_id', organization_id);
+        query.eq('franchise_id', franchise_id);
+
         query.order("timestamp", {ascending: false});
+
+        if (typeof page !== "undefined" && typeof rowsPerPage !== "undefined") {
+            query.range(page * rowsPerPage, page * rowsPerPage + rowsPerPage - 1);
+        }
 
         const res = await query;
 
@@ -206,7 +246,7 @@ class ServicesApi {
     async getService(request?: GetServiceRequest): GetServiceResponse {
         const res = await supabase
             .from("client_services")
-            .select("*, client:client_id(id, name), on_site_contact:on_site_contact_id(*), job:job_id(id, service_type), location:location_id(*), truck:truck_id(*)")
+            .select("*, client:client_id(id, name), on_site_contact:on_site_contact_id(*), job:job_id(*), location:location_id(*), truck:truck_id(*)")
             .eq('id', request.id)
             .single();
         return Promise.resolve(res.data as Service);

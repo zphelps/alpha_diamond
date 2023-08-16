@@ -20,6 +20,6 @@ export interface Client {
         name: string;
         formatted_address: string;
     };
-    recurring_charge: number;
-    on_demand_charge: number;
+    default_monthly_charge: number;
+    default_on_demand_charge: number;
 }

@@ -5,7 +5,8 @@ import {Service} from "../../types/service.ts";
 import {Truck} from "../../types/truck.ts";
 
 type GetTrucksRequest = {
-    organization_id?: string;
+    organization_id: string;
+    franchise_id: string;
 };
 
 type GetTruckResponse = Promise<Truck>;
@@ -20,15 +21,18 @@ type GetTrucksResponse = Promise<{
 }>;
 
 class TrucksApi {
-    async getTrucks(request: GetTrucksRequest = {}): GetTrucksResponse {
-        const {organization_id} = request;
+    async getTrucks(request: GetTrucksRequest): GetTrucksResponse {
+        const {organization_id, franchise_id} = request;
         const query = supabase
             .from("trucks")
             .select("*, driver:driver_id(*)", {count: "exact"});
 
         query.eq('organization_id', organization_id);
+        query.eq('franchise_id', franchise_id);
 
         const res = await query;
+
+        console.log(res)
 
         return Promise.resolve({
             data: (res.data as Truck[]) ?? [],

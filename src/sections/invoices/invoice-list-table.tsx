@@ -23,6 +23,7 @@ import {Scrollbar} from "../../components/scrollbar.tsx";
 import Skeleton from "@mui/material/Skeleton";
 import {getSeverityServiceTypeColor, getSeverityStatusColor} from "../../utils/severity-color.ts";
 import Edit02Icon from "@untitled-ui/icons-react/build/esm/Edit02";
+import {paths} from "../../paths.ts";
 
 interface InvoiceListTableProps {
     loading?: boolean;
@@ -47,9 +48,7 @@ export const InvoiceListTable: FC<InvoiceListTableProps> = (props) => {
         rowsPerPage = 0,
     } = props;
 
-    return count === 0 && !loading ? <Typography>
-        No invoices found
-    </Typography> : (
+    return (
         <Box sx={{position: "relative"}}>
             {/*<Scrollbar>*/}
             <Table sx={{minWidth: 1000}} size={"small"}>
@@ -76,7 +75,7 @@ export const InvoiceListTable: FC<InvoiceListTableProps> = (props) => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {(!items || items.length === 0 || loading) && [...Array(10)].map((_, rowIndex) => (
+                    {(!items || items.length === 0 || loading) && [...Array(5)].map((_, rowIndex) => (
                         <TableRow key={rowIndex} sx={{px: 2, mx: 2}}>
                             <TableCell sx={{pl: 2, m: 0}}>
                                 <Skeleton variant="text" width="80%" height={24}/>
@@ -109,7 +108,7 @@ export const InvoiceListTable: FC<InvoiceListTableProps> = (props) => {
                                 hover
                                 key={invoice.id}
                             >
-                                <TableCell sx={{pl: 3}} width={100}>
+                                <TableCell sx={{pl: 3, py: 0}} width={100}>
                                     <Box
                                         sx={{
                                             backgroundColor: (theme) => theme.palette.mode === 'dark'
@@ -117,18 +116,19 @@ export const InvoiceListTable: FC<InvoiceListTableProps> = (props) => {
                                                 : 'neutral.200',
                                             borderRadius: 2,
                                             maxWidth: 'fit-content',
-                                            p: 1
+                                            px: 1,
+                                            py: 0.5,
                                         }}
                                     >
                                         <Typography
                                             align="center"
-                                            variant="subtitle2"
+                                            variant="caption"
                                         >
                                             {format(new Date(invoice.issued_on), "LLL").toUpperCase()}
                                         </Typography>
                                         <Typography
                                             align="center"
-                                            variant="h6"
+                                            variant="subtitle1"
                                         >
                                             {format(new Date(invoice.issued_on), "d")}
                                         </Typography>
@@ -144,7 +144,7 @@ export const InvoiceListTable: FC<InvoiceListTableProps> = (props) => {
                                             <Link
                                                 color="inherit"
                                                 component={RouterLink}
-                                                href={`/jobs/${invoice.id}`}
+                                                href={`/invoices/${invoice.id}`}
                                                 variant="subtitle2"
                                             >
                                                 {invoice.client.name}
@@ -159,20 +159,20 @@ export const InvoiceListTable: FC<InvoiceListTableProps> = (props) => {
                                     </Stack>
                                 </TableCell>
                                 <TableCell width={150}>
-                                    {invoice.due_on ? format(new Date(invoice.issued_on), "dd MMM yyyy") : "N/A"}
+                                    {invoice.due_on ? format(new Date(invoice.issued_on), "MM/dd/yyyy") : "N/A"}
                                 </TableCell>
                                 <TableCell width={150}>
-                                    {invoice.amount_due ? numeral(invoice.amount_due).format("$0,0.00") : "N/A"}
+                                    {invoice.total ? numeral(invoice.total).format("$0,0.00") : "N/A"}
                                 </TableCell>
-                                <TableCell sx={{height: 50}} width={100}>
+                                <TableCell width={100}>
                                     <SeverityPill color={getSeverityStatusColor(invoice.status)}>
                                         {invoice.status}
                                     </SeverityPill>
                                 </TableCell>
                                 <TableCell align="right" sx={{py: 0}} width={175}>
                                     <IconButton
-                                        // component={RouterLink}
-                                        // href={paths.dashboard.customers.edit}
+                                        component={RouterLink}
+                                        href={paths.invoices.edit(invoice.id)}
                                     >
                                         <SvgIcon>
                                             <Edit02Icon/>
@@ -180,7 +180,7 @@ export const InvoiceListTable: FC<InvoiceListTableProps> = (props) => {
                                     </IconButton>
                                     <IconButton
                                         component={RouterLink}
-                                        href={`/jobs/${invoice.id}`}
+                                        href={paths.invoices.details(invoice.id)}
                                     >
                                         <SvgIcon>
                                             <ArrowRightIcon/>

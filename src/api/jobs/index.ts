@@ -1,7 +1,7 @@
 import {Client} from "../../types/client.ts";
 import {supabase} from "../../config.ts";
 import {useAuth} from "../../hooks/use-auth.ts";
-import {Job} from "../../types/job.ts";
+import {ChargeUnit, Job} from "../../types/job.ts";
 import {number, string} from "yup";
 import {addDays} from "date-fns";
 
@@ -22,6 +22,8 @@ type GetJobsRequest = {
         cancelled?: boolean;
         type?: string[];
     };
+    franchise_id?: string;
+    organization_id?: string;
     page?: number;
     rowsPerPage?: number;
     sortBy?: string;
@@ -43,6 +45,7 @@ export type NewJobRequest = {
     id: string;
     client_id: string;
     organization_id: string;
+    franchise_id: string;
     summary: string;
     service_type: string;
     status: string;
@@ -55,6 +58,8 @@ export type NewJobRequest = {
     days_of_week?: number[];
     on_site_contact_id: string;
     driver_notes: string;
+    charge_unit: ChargeUnit;
+    charge_per_unit: number;
 }
 
 type CreateJobResponse = Promise<{
@@ -76,7 +81,7 @@ class JobsApi {
     }
 
     async getJobs(request: GetJobsRequest = {}): GetJobsResponse {
-        const {filters, page, rowsPerPage, sortBy, sortDir} = request;
+        const {filters, page, rowsPerPage, sortBy, sortDir, organization_id, franchise_id} = request;
         const query = supabase.from("client_jobs").select("*, client:client_id(id, name), location:location_id(*), on_site_contact:on_site_contact_id(*)", {count: "exact"});
 
         if (typeof filters !== "undefined") {
@@ -102,6 +107,9 @@ class JobsApi {
                 query.in("service_type", filters.type);
             }
         }
+        
+        query.eq('organization_id', organization_id);
+        query.eq('franchise_id', franchise_id);
 
         query.order("created_at", {ascending: false});
 

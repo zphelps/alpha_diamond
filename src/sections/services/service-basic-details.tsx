@@ -6,6 +6,7 @@ import {PropertyListItem} from "../../components/property-list-item.tsx";
 import {SeverityPill} from "../../components/severity-pill.tsx";
 import {useCallback} from "react";
 import {RouterLink} from "../../components/router-link.tsx";
+import {ChargeUnit} from "../../types/job.ts";
 
 interface ServiceBasicDetailsProps {
     jobID: string;
@@ -13,25 +14,13 @@ interface ServiceBasicDetailsProps {
     clientName?: string;
     status?: string;
     serviceType?: string;
-    total?: number;
     summary: string;
+    charge_per_unit: number;
+    charge_unit: ChargeUnit;
 }
 
 export const ServiceBasicDetails: FC<ServiceBasicDetailsProps> = (props) => {
-    const {jobID, clientID, total, clientName, status, serviceType, summary} = props;
-
-    const getSeverityColor = useCallback((status: string) => {
-        switch (status) {
-            case "completed":
-                return "success";
-            case "scheduled":
-                return "warning";
-            case "cancelled":
-                return "error";
-            default:
-                return "info";
-        }
-    }, []);
+    const {charge_unit, charge_per_unit, jobID, clientID, clientName, status, serviceType, summary} = props;
 
     return (
         <Card sx={{pb: 3}}>
@@ -77,11 +66,14 @@ export const ServiceBasicDetails: FC<ServiceBasicDetailsProps> = (props) => {
                     label="Service Type"
                     value={capitalize(serviceType)}
                 />
-                <PropertyListItem
-                    divider
-                    label="Total"
-                    value={`$${total}`}
-                />
+                {charge_unit === ChargeUnit.MONTH && <PropertyListItem
+                    label="Monthly Charge"
+                    value={`$${charge_per_unit}`}
+                />}
+                {charge_unit !== ChargeUnit.MONTH && <PropertyListItem
+                    label="Charge"
+                    value={`$${charge_per_unit} / ${charge_unit}`}
+                />}
                 <PropertyListItem
                     label="Summary"
                     value={summary}

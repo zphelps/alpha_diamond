@@ -19,10 +19,10 @@ import {
   Typography
 } from '@mui/material';
 import Skeleton from "@mui/material/Skeleton";
-import {Client} from "../../../../types/client.ts";
-import {Scrollbar} from "../../../../components/scrollbar.tsx";
-import {RouterLink} from "../../../../components/router-link.tsx";
-import {SeverityPill} from "../../../../components/severity-pill.tsx";
+import {Client} from "../../types/client.ts";
+import {Scrollbar} from "../scrollbar.tsx";
+import {RouterLink} from "../router-link.tsx";
+import {SeverityPill} from "../severity-pill.tsx";
 
 interface ClientListTableProps {
   count?: number;
@@ -59,50 +59,6 @@ export const SelectClientListTable: FC<ClientListTableProps> = (props) => {
 
   return (
     <Box sx={{ position: 'relative' }}>
-      {/*{enableBulkActions && (*/}
-      {/*  <Stack*/}
-      {/*    direction="row"*/}
-      {/*    spacing={2}*/}
-      {/*    sx={{*/}
-      {/*      alignItems: 'center',*/}
-      {/*      backgroundColor: (theme) => theme.palette.mode === 'dark'*/}
-      {/*        ? 'neutral.800'*/}
-      {/*        : 'neutral.50',*/}
-      {/*      display: enableBulkActions ? 'flex' : 'none',*/}
-      {/*      position: 'absolute',*/}
-      {/*      top: 0,*/}
-      {/*      left: 0,*/}
-      {/*      width: '100%',*/}
-      {/*      px: 2,*/}
-      {/*      py: 0.5,*/}
-      {/*      zIndex: 10*/}
-      {/*    }}*/}
-      {/*  >*/}
-      {/*    <Checkbox*/}
-      {/*      checked={selectedAll}*/}
-      {/*      indeterminate={selectedSome}*/}
-      {/*      onChange={(event) => {*/}
-      {/*        if (event.target.checked) {*/}
-      {/*          onSelectAll?.();*/}
-      {/*        } else {*/}
-      {/*          onDeselectAll?.();*/}
-      {/*        }*/}
-      {/*      }}*/}
-      {/*    />*/}
-      {/*    <Button*/}
-      {/*      color="inherit"*/}
-      {/*      size="small"*/}
-      {/*    >*/}
-      {/*      Delete*/}
-      {/*    </Button>*/}
-      {/*    <Button*/}
-      {/*      color="inherit"*/}
-      {/*      size="small"*/}
-      {/*    >*/}
-      {/*      Edit*/}
-      {/*    </Button>*/}
-      {/*  </Stack>*/}
-      {/*)}*/}
       {/*<Scrollbar>*/}
         <Table sx={{ minWidth: 700 }}>
           <TableHead>

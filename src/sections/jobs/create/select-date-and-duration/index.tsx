@@ -12,7 +12,7 @@ import {
     Typography
 } from "@mui/material";
 import {ArrowDropDown} from "@mui/icons-material";
-import {_clientTypes} from "../select-client";
+import {_clientTypes} from "../../../../components/select-client";
 import Checkbox from "@mui/material/Checkbox";
 import {DatePicker, DateTimePicker, TimePicker} from "@mui/x-date-pickers";
 import {addDays, addMinutes, format, isToday, set, startOfDay} from "date-fns";

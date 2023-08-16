@@ -39,13 +39,22 @@ export interface Job {
     status: string;
     services_per_week: number;
     days_of_week: number[];
-    price_model: string;
-    price: number;
+    charge_per_unit?: number;
+    charge_unit?: ChargeUnit;
 }
 
-export enum PriceModel {
-    MONTHLY = "Monthly",
-    VALUE = "Value",
-    ON_DEMAND = "On-Demand",
-    ROUTED_ON_DEMAND = "Routed On-Demand",
+// export enum PriceModel {
+//     MONTHLY_FLAT = "Monthly",
+//     PER_SMASH_VALUE = "Value",
+//     PER_SMASH_FLAT = "Per Smash",
+//     HOURLY = "Hourly",
+//     DEMO = "Demo Charge",
+//     TRIAL = "Trial Charge",
+// }
+
+export enum ChargeUnit {
+    BIN = "Bin",
+    HOUR = "Hour",
+    PERCENT_COMPACTED = "% Compacted",
+    MONTH = "Month",
 }

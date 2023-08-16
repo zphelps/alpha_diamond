@@ -12,6 +12,9 @@ import {SchedulePage} from "../pages/schedule";
 import {HomePage} from "../pages/home";
 import {FleetPage} from "../pages/trucks/fleet.tsx";
 import {InvoicesPage} from "../pages/invoices/list.tsx";
+import {InvoiceDetailsPage} from "../pages/invoices/detail.tsx";
+import {InvoiceEditPage} from "../pages/invoices/edit.tsx";
+import {CreateInvoicePage} from "../pages/invoices/create.tsx";
 
 export const dashboardRoutes: RouteObject[] = [
     {
@@ -96,14 +99,18 @@ export const dashboardRoutes: RouteObject[] = [
                         index: true,
                         element: <InvoicesPage/>
                     },
-                    // {
-                    //     path: ':groupId/:tab',
-                    //     element: <GroupProfile />
-                    // },
-                    // {
-                    //     path: ':groupId',
-                    //     element: <GroupProfile />
-                    // },
+                    {
+                        path: ':invoiceId',
+                        element: <InvoiceDetailsPage />
+                    },
+                    {
+                        path: ':invoiceId/edit',
+                        element: <InvoiceEditPage />
+                    },
+                    {
+                        path: 'create',
+                        element: <CreateInvoicePage />
+                    }
                 ]
             },
             // {

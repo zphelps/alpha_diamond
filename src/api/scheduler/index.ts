@@ -33,6 +33,11 @@ type GetScheduleResponse = Promise<Schedule>;
 
 type InsertRecurringJobRequest = {
     job: Job;
+    operating_hours: {
+        start: string;
+        end: string;
+    },
+    operating_days: number[];
 };
 
 type InsertRecurringJobResponse = Promise<{
@@ -46,6 +51,11 @@ type InsertRecurringJobResponse = Promise<{
 
 type InsertRecurringJobServicesForWeekRequest = {
     beginningOfWeek: Date;
+    operating_hours: {
+        start: string;
+        end: string;
+    },
+    operating_days: number[];
 };
 
 type InsertRecurringJobServicesForWeekResponse = Promise<{
@@ -88,16 +98,22 @@ export type Schedule = {
 
 type insertNewOnDemandJobRequest = {
     job: Job;
+    operating_hours: {
+        start: string;
+        end: string;
+    },
+    operating_days: number[];
 };
 
 type insertNewOnDemandJobResponse = Promise<{
     success: boolean;
+    conflict?: boolean;
 }>;
 
 class SchedulerApi {
 
     async insertNewOnDemandJob(request: insertNewOnDemandJobRequest): Promise<insertNewOnDemandJobResponse> {
-        const {job} = request;
+        const {job, operating_hours, operating_days} = request;
 
         const NUM_ATTEMPTS = 31;
 
@@ -113,6 +129,8 @@ class SchedulerApi {
 
             const {data: servicesOnDate, count} = await servicesApi.getServicesOnDate({
                 date: date.toISOString(),
+                organization_id: job.organization_id,
+                franchise_id: job.franchise_id,
             });
 
             const scheduleServicesOnDate = servicesOnDate.map(service => ({
@@ -151,6 +169,9 @@ class SchedulerApi {
                 services: scheduleServicesOnDate,
                 date: date.toISOString(),
                 organization_id: job.organization_id,
+                franchise_id: job.franchise_id,
+                operating_hours: operating_hours,
+                operating_days: operating_days,
             });
 
             // New job conflicts with existing jobs -> return false
@@ -158,6 +179,7 @@ class SchedulerApi {
                 if (job.timestamp) {
                     return Promise.resolve({
                         success: false,
+                        conflict: true,
                     });
                 }
             } else /* No conflicts */ {
@@ -198,15 +220,18 @@ class SchedulerApi {
                                 on_site_contact_id: job.on_site_contact.id,
                                 driver_notes: job.driver_notes,
                                 organization_id: job.organization_id,
+                                franchise_id: job.franchise_id,
                                 summary: job.summary,
+                                charge_unit: job.charge_unit,
+                                charge_per_unit: job.charge_per_unit,
                             });
                             if (!newJobRes.success) {
-                                if (job.timestamp) {
-                                    return Promise.resolve({
-                                        success: false,
-                                    });
-                                }
-                                continue;
+                                // if (job.timestamp) {
+                                //     return Promise.resolve({
+                                //         success: false,
+                                //     });
+                                // }
+                                return Promise.reject(newJobRes.message);
                             }
 
                             const newServiceRes = await servicesApi.createService({
@@ -222,15 +247,15 @@ class SchedulerApi {
                                 on_site_contact_id: job.on_site_contact.id,
                                 client_id: job.client.id,
                                 organization_id: job.organization_id,
-                                summary: job.summary
+                                franchise_id: job.franchise_id,
+                                summary: job.summary,
+                                driver_notes: job.driver_notes,
                             });
 
+                            console.log("New Service Res", newServiceRes)
+
                             if (!newServiceRes.success) {
-                                if (job.timestamp) {
-                                    return Promise.resolve({
-                                        success: true,
-                                    });
-                                }
+                                return Promise.reject(newServiceRes.message);
                             }
                         } else /* Existing Job/Service */ {
                             const [newHours, newMinutes] = visit.arrival_time.split(":");
@@ -259,6 +284,7 @@ class SchedulerApi {
                                 if ((!serviceUpdateRes.success || !jobUpdateRes.success) && job.timestamp) {
                                     return Promise.resolve({
                                         success: false,
+                                        conflict: false,
                                     });
                                 }
                             }
@@ -272,6 +298,9 @@ class SchedulerApi {
             }
 
         }
+        return Promise.resolve({
+            success: false,
+        });
     }
 
     /**
@@ -279,73 +308,7 @@ class SchedulerApi {
      * @param request
      */
     async insertRecurringJob(request: InsertRecurringJobRequest): InsertRecurringJobResponse {
-        // const {job} = request;
-        //
-        // const beginningOfWeek = startOfWeek(new Date());
-        //
-        // console.log("Beginning of week", beginningOfWeek)
-        //
-        // const existing_recurring_services = await servicesApi.getServicesForWeek({
-        //     beginning_of_week: beginningOfWeek.toISOString(),
-        //     service_type: "Recurring",
-        // });
-        //
-        // console.log("Existing recurring services", existing_recurring_services)
-        //
-        // // TODO: IMPROVE Big-O RUNTIME!!!
-        // const schedule: Schedule = {
-        //     unscheduledJobs: [],
-        //     0: [...existing_recurring_services.filter(service => isSameDay(Date.parse(service.date), addDays(beginningOfWeek, 0)))],
-        //     1: [...existing_recurring_services.filter(service => isSameDay(Date.parse(service.date), addDays(beginningOfWeek, 1)))],
-        //     2: [...existing_recurring_services.filter(service => isSameDay(Date.parse(service.date), addDays(beginningOfWeek, 2)))],
-        //     3: [...existing_recurring_services.filter(service => isSameDay(Date.parse(service.date), addDays(beginningOfWeek, 3)))],
-        //     4: [...existing_recurring_services.filter(service => isSameDay(Date.parse(service.date), addDays(beginningOfWeek, 4)))],
-        //     5: [...existing_recurring_services.filter(service => isSameDay(Date.parse(service.date), addDays(beginningOfWeek, 5)))],
-        //     6: [...existing_recurring_services.filter(service => isSameDay(Date.parse(service.date), addDays(beginningOfWeek, 6)))]
-        // };
-        //
-        // console.log("Schedule", schedule)
-        //
-        // const daysOfWeekOptions = this.#getDaysOfWeekOptions(job);
-        //
-        // let routes = [];
-        //
-        // for (const days_of_week of daysOfWeekOptions) {
-        //     let conflict = false;
-        //
-        //     for (const day of days_of_week) {
-        //         const service = {
-        //             id: uuid(),
-        //             job: job,
-        //             date: format(addDays(beginningOfWeek, day), "yyyy-MM-dd"),
-        //         };
-        //
-        //         const route = await routeOptimizerApi.getOptimizedRoute({
-        //             services: [service, ...schedule[day]],
-        //             date: addDays(beginningOfWeek, day - 1).toISOString(),
-        //         });
-        //
-        //         if (route.unserved) {
-        //             conflict = true;
-        //         } else {
-        //             routes.push(route);
-        //         }
-        //     }
-        //     if (!conflict) {
-        //         break;
-        //     } else {
-        //         routes = [];
-        //     }
-        // }
-        //
-        // console.log("Routes", routes);
-        //
-        // return Promise.resolve({
-        //     success: false,
-        //     conflicts: undefined,
-        // });
-
-        const {job} = request;
+        const {job, operating_hours, operating_days} = request;
 
         const beginningOfWeek = startOfWeek(new Date());
 
@@ -373,7 +336,10 @@ class SchedulerApi {
                 // @ts-ignore
                 services,
                 organization_id: services[0].job.organization_id,
+                franchise_id: services[0].job.franchise_id,
                 date: addDays(startOfWeek(new Date()), i - 1).toISOString(),
+                operating_hours: operating_hours,
+                operating_days: operating_days,
             });
 
             if (route.unserved) {
@@ -401,9 +367,12 @@ class SchedulerApi {
                 on_site_contact_id: job.on_site_contact.id,
                 driver_notes: job.driver_notes,
                 organization_id: job.organization_id,
+                franchise_id: job.franchise_id,
                 summary: job.summary,
                 days_of_week: job.days_of_week,
                 services_per_week: job.services_per_week,
+                charge_unit: job.charge_unit,
+                charge_per_unit: job.charge_per_unit,
             })
 
             if (!res.success) {
@@ -416,6 +385,8 @@ class SchedulerApi {
             for (let i = 1; i <= 3; i++) {
                 const updateFutureWeeksServicesRes = await schedulerApi.insertRecurringJobServicesForWeek({
                     beginningOfWeek: startOfWeek(addWeeks(new Date(), i)),
+                    operating_hours: operating_hours,
+                    operating_days: operating_days,
                 })
 
                 if (!updateFutureWeeksServicesRes.success) {
@@ -473,7 +444,10 @@ class SchedulerApi {
                 // @ts-ignore
                 services,
                 organization_id: services[0].job.organization_id,
+                franchise_id: services[0].job.franchise_id,
                 date: addDays(request.beginningOfWeek, i).toISOString(),
+                operating_hours: request.operating_hours,
+                operating_days: request.operating_days,
             });
 
             if (route.unserved) {
@@ -560,7 +534,9 @@ class SchedulerApi {
                     client_id: service.job.client.id,
                     location_id: service.job.location.id,
                     organization_id: service.job.organization_id,
+                    franchise_id: service.job.franchise_id,
                     summary: service.job.summary,
+                    driver_notes: service.job.driver_notes,
                     job_id: service.job.id,
                     status: service.job.status,
                     start_time_window: service.job.start_time_window,

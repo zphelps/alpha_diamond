@@ -17,49 +17,9 @@ import {setTruckStatus, upsertManyTrucks} from "../../slices/trucks";
 import {useAuth} from "../../hooks/use-auth.ts";
 import {Client} from "../../types/client.ts";
 
-// const useTrucks = (): Truck[] => {
-//     return [
-//         {
-//             id: "Truck #1",
-//             location: "Carmel, IN, USA",
-//             latitude: 39.95923,
-//             longitude: -86.15655,
-//             startedAt: "Sep 01, 7:53 AM",
-//             departedAt: "Sep 01, 8:02 AM",
-//             arrivedAt: "Sep 01, 8:18 AM"
-//         },
-//         {
-//             id: "Truck #2",
-//             location: "Carmel, IN, USA",
-//             latitude: 39.99074,
-//             longitude: -86.23345,
-//             startedAt: "Sep 01, 8:21 AM",
-//             departedAt: "Sep 01, 8:36 AM",
-//             arrivedAt: "Sep 01, 9:54 AM"
-//         },
-//         {
-//             id: "Truck #3",
-//             location: "Zionsville, IN, USA",
-//             latitude: 39.98331,
-//             longitude: -86.26225,
-//             startedAt: "Sep 01, 6:34 AM",
-//             departedAt: "Sep 01, 7:41 AM",
-//             arrivedAt: "Sep 01, 9:20 AM"
-//         },
-//         {
-//             id: "Truck #4",
-//             location: "Meridian Hills, IN, USA",
-//             latitude: 39.88429,
-//             longitude: -86.14803,
-//             startedAt: "Sep 01, 6:34 AM",
-//             departedAt: "Sep 01, 7:41 AM",
-//             arrivedAt: "Sep 01, 9:20 AM"
-//         },
-//     ];
-// };
-
 interface TrucksSearchState {
     organization_id: string;
+    franchise_id: string;
 }
 
 const useTrucksStore = (searchState: TrucksSearchState) => {
@@ -104,7 +64,8 @@ const useTrucks = (trucks: Truck[] = []) => {
 export const FleetPage = () => {
     const auth = useAuth();
     const [searchState, setSearchState] = useState<TrucksSearchState>({
-        organization_id: auth.user.organizationID,
+        organization_id: auth.user.organization.id,
+        franchise_id: auth.user.franchise.id,
     });
 
     const rootRef = useRef<HTMLDivElement | null>(null);

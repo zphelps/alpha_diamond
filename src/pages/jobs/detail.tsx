@@ -233,7 +233,8 @@ export const JobDetailsPage = () => {
                                             status={job.status}
                                             serviceType={job.service_type}
                                             summary={job.summary}
-                                            driver_notes={job.driver_notes}
+                                            charge_unit={job.charge_unit}
+                                            charge_per_unit={job.charge_per_unit}
                                         />
                                         {/*{job.primary_contact && <ClientContact*/}
                                         {/*    first_name={job.primary_contact.first_name}*/}
@@ -248,6 +249,7 @@ export const JobDetailsPage = () => {
                                     >
                                         <Stack spacing={3}>
                                             {job.service_type === 'On-Demand' && <JobServiceDetails
+                                                driver_notes={job.driver_notes}
                                                 contact_name={`${job.on_site_contact.first_name} ${job.on_site_contact.last_name}`}
                                                 duration={job.duration}
                                                 city={job.location.city}

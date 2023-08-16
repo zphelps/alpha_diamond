@@ -27,6 +27,7 @@ import {Job} from "../../types/job.ts";
 import {paths} from "../../paths.ts";
 import {RouterLink} from "../../components/router-link.tsx";
 import {Loading01} from "@untitled-ui/icons-react";
+import {useAuth} from "../../hooks/use-auth.ts";
 
 // ----------------------------------------------------------------------
 
@@ -48,13 +49,15 @@ interface Filters {
 
 interface JobsSearchState {
     filters: Filters;
+    franchise_id?: string;
+    organization_id?: string;
     page: number;
     rowsPerPage: number;
     sortBy: string;
     sortDir: 'asc' | 'desc';
 }
 
-const useJobsSearch = () => {
+const useJobsSearch = (organization_id: string, franchise_id: string) => {
     const [state, setState] = useState<JobsSearchState>({
         filters: {
             query: undefined,
@@ -62,6 +65,8 @@ const useJobsSearch = () => {
             inactive: undefined,
             type: undefined,
         },
+        franchise_id: franchise_id,
+        organization_id: organization_id,
         page: 0,
         rowsPerPage: 15,
         sortBy: 'updatedAt',
@@ -176,7 +181,8 @@ const useFilteredJobs = (jobs: Job[] = [], query) => {
 };
 
 export default function JobListPage() {
-    const jobsSearch = useJobsSearch();
+    const auth = useAuth();
+    const jobsSearch = useJobsSearch(auth.user.organization.id, auth.user.franchise.id);
 
     // @ts-ignore
     const jobsStore = useSelector((state) => state.jobs);

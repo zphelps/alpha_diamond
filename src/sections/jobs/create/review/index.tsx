@@ -13,7 +13,7 @@ import {
     Typography
 } from "@mui/material";
 import {ArrowDropDown, Check} from "@mui/icons-material";
-import {_clientTypes} from "../select-client";
+import {_clientTypes} from "../../../../components/select-client";
 import Checkbox from "@mui/material/Checkbox";
 import {PropertyList} from "../../../../components/property-list.tsx";
 import {PropertyListItem} from "../../../../components/property-list-item.tsx";
@@ -21,7 +21,7 @@ import {SeverityPill} from "../../../../components/severity-pill.tsx";
 import {CreateJobFormValues} from "../../../../pages/jobs/create.tsx";
 import {daysOfWeek} from "../select-recurrence";
 import {schedulerApi} from "../../../../api/scheduler";
-import {Job, PriceModel} from "../../../../types/job.ts";
+import {ChargeUnit, Job} from "../../../../types/job.ts";
 import {getSeverityServiceTypeColor} from "../../../../utils/severity-color.ts";
 import {format} from "date-fns";
 
@@ -88,21 +88,13 @@ export const Review: FC<ReviewProps> = (props) => {
                             // @ts-ignore
                             value={`${formValues.on_site_contact.first_name} ${formValues.on_site_contact.last_name}`}
                         />
-                        {formValues.price_model === PriceModel.MONTHLY && <PropertyListItem
+                        {formValues.charge_unit === ChargeUnit.MONTH && <PropertyListItem
                             label="Monthly Charge"
-                            value={`$${formValues.price}`}
+                            value={`$${formValues.charge_per_unit}`}
                         />}
-                        {formValues.price_model === PriceModel.VALUE && <PropertyListItem
-                            label="Pricing"
-                            value={`Value Based`}
-                        />}
-                        {formValues.price_model === PriceModel.ON_DEMAND && <PropertyListItem
-                            label="Price"
-                            value={`$${formValues.price}`}
-                        />}
-                        {formValues.price_model === PriceModel.ROUTED_ON_DEMAND && <PropertyListItem
-                            label="Price"
-                            value={`$${formValues.price}`}
+                        {formValues.charge_unit !== ChargeUnit.MONTH && <PropertyListItem
+                            label="Charge"
+                            value={`$${formValues.charge_per_unit} / ${formValues.charge_unit}`}
                         />}
                     </PropertyList>
                 </Card>

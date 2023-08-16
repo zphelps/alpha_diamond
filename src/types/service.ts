@@ -18,9 +18,12 @@ export interface Service {
         lng: number;
     }
     summary: string;
+    driver_notes: string;
     job: {
         id: string;
         service_type: string;
+        charge_per_unit: number;
+        charge_unit: string;
     }
     status: string;
     issued_on: string;
@@ -44,5 +47,14 @@ export interface Service {
             last_name: string;
         }
     }
-    charge?: number;
+    invoice_id?: string;
+    completed_on?: string;
+    num_units_to_charge?: number;
+}
+
+export enum ServiceType {
+    RECURRING = "Recurring",
+    ON_DEMAND = "On-Demand",
+    DEMO = "Demo",
+    TRIAL = "Trial",
 }

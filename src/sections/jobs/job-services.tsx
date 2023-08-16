@@ -25,6 +25,7 @@ import {Status} from "../../utils/status.ts";
 import {servicesApi} from "../../api/services";
 import {setServicesStatus, upsertManyServices} from "../../slices/services";
 import {getSeverityStatusColor} from "../../utils/severity-color.ts";
+import {useAuth} from "../../hooks/use-auth.ts";
 
 interface JobServicesSearchState {
     jobID: string;
@@ -70,11 +71,16 @@ const useJobServicesSearch = (jobID: string) => {
 const useJobServicesStore = (searchState: JobServicesSearchState) => {
     const isMounted = useMounted();
     const dispatch = useDispatch();
+    const auth = useAuth();
 
     const handleJobServicesGet = useCallback(
         async () => {
             try {
-                const response = await servicesApi.getServices(searchState);
+                const response = await servicesApi.getServices({
+                    organization_id: auth.user?.organization_id,
+                    franchise_id: auth.user?.franchise_id,
+                    ...searchState
+                });
 
                 if (isMounted()) {
                     dispatch(upsertManyServices(response.data));

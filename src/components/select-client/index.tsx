@@ -1,17 +1,17 @@
 import {ChangeEvent, FC, useCallback, useEffect, useMemo, useState} from "react";
 import {Button, Card, CardContent, Grid, Stack, Typography} from "@mui/material";
 import {AddBusiness, AddBusinessOutlined, AdsClick, Repeat} from "@mui/icons-material";
-import {ClientListSearch} from "../../../clients/client-list-search.tsx";
-import {ClientListTable} from "../../../clients/client-list-table.tsx";
+import {ClientListSearch} from "../../sections/clients/client-list-search.tsx";
+import {ClientListTable} from "../../sections/clients/client-list-table.tsx";
 import {SelectClientListSearch} from "./select-client-list-search.tsx";
 import {SelectClientListTable} from "./select-client-list-table.tsx";
 import {useDispatch, useSelector} from "react-redux";
-import {useSelection} from "../../../../hooks/use-selection.tsx";
-import {useMounted} from "../../../../hooks/use-mounted.ts";
-import {clientsApi} from "../../../../api/clients";
-import {setClientsStatus, setFilteredClients} from "../../../../slices/clients";
-import {Status} from "../../../../utils/status.ts";
-import {Client} from "../../../../types/client.ts";
+import {useSelection} from "../../hooks/use-selection.tsx";
+import {useMounted} from "../../hooks/use-mounted.ts";
+import {clientsApi} from "../../api/clients";
+import {setClientsStatus, setFilteredClients} from "../../slices/clients";
+import {Status} from "../../utils/status.ts";
+import {Client} from "../../types/client.ts";
 
 export const _clientTypes = [
     'Commercial',
@@ -133,10 +133,10 @@ const useFilteredClients = (clients: Client[] = []) => {
     );
 };
 interface SelectClientProps {
-    setFieldValue: (field: string, value: any) => void;
+    handleClientChange: (client?: Client) => void;
 }
 export const SelectClient: FC<SelectClientProps> = (props) => {
-    const {setFieldValue} = props;
+    const {handleClientChange} = props;
 
     const clientsSearch = useClientsSearch();
     useClientsStore(clientsSearch.state);
@@ -151,17 +151,11 @@ export const SelectClient: FC<SelectClientProps> = (props) => {
 
     useEffect(() => {
         if (clientsSelection.selected.length === 1) {
-            setFieldValue('client_id', clientsSelection.selected[0]);
-            setFieldValue('client', filteredClients.find((client) => client.id === clientsSelection.selected[0]));
-            setFieldValue('recurring_charge', filteredClients.find((client) => client.id === clientsSelection.selected[0])?.recurring_charge);
-            setFieldValue('on_demand_charge', filteredClients.find((client) => client.id === clientsSelection.selected[0])?.on_demand_charge);
+            handleClientChange(filteredClients.find((client) => client.id === clientsSelection.selected[0]));
         } else {
-            setFieldValue('client_id', null);
-            setFieldValue('client', null);
-            setFieldValue('recurring_charge', null);
-            setFieldValue('on_demand_charge', null);
+            handleClientChange(null);
         }
-    }, [clientsSelection.selected, setFieldValue])
+    }, [clientsSelection.selected])
 
     return (
         <Stack>

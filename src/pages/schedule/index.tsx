@@ -38,6 +38,7 @@ interface PreviewDialogData {
 
 interface TrucksSearchState {
     organization_id: string;
+    franchise_id: string;
 }
 
 const useTrucksStore = (searchState: TrucksSearchState) => {
@@ -48,6 +49,8 @@ const useTrucksStore = (searchState: TrucksSearchState) => {
         async () => {
             try {
                 const response = await trucksApi.getTrucks(searchState);
+
+                console.log(response)
 
                 if (isMounted()) {
                     dispatch(upsertManyTrucks(response.data));
@@ -82,11 +85,15 @@ const useTrucks = (trucks: Truck[] = []) => {
 const useServicesStore = () => {
     const isMounted = useMounted();
     const dispatch = useDispatch();
+    const auth = useAuth();
 
     const handleServicesGet = useCallback(
         async () => {
             try {
-                const response = await servicesApi.getServices();
+                const response = await servicesApi.getServices({
+                    organization_id: auth.user.organization.id,
+                    franchise_id: auth.user.franchise.id,
+                });
 
                 if (isMounted()) {
                     dispatch(upsertManyServices(response.data));
@@ -154,7 +161,8 @@ export const SchedulePage = () => {
 
     const auth = useAuth();
     const [trucksSearchState, setTrucksSearchState] = useState<TrucksSearchState>({
-        organization_id: auth.user.organizationID,
+        organization_id: auth.user.organization.id,
+        franchise_id: auth.user.franchise.id,
     });
 
     useTrucksStore(trucksSearchState);
@@ -281,6 +289,8 @@ export const SchedulePage = () => {
 
                 const res = await schedulerApi.insertRecurringJobServicesForWeek({
                     beginningOfWeek: startOfWeek(addDays(new Date(), 3)),
+                    operating_hours: auth.user.franchise.operating_hours,
+                    operating_days: auth.user.franchise.operating_days,
                 })
 
                 console.log(res)

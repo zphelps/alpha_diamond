@@ -22,11 +22,11 @@ import {supabase} from "../../config.ts";
 import {useFormik} from "formik";
 import toast from "react-hot-toast";
 import {object, string, number, date, InferType, bool} from "yup";
-import {SelectClient} from "../../sections/jobs/create/select-client";
+import {SelectClient} from "../../components/select-client";
 import {SelectClientLocation} from "../../sections/jobs/create/select-client-location";
 import {SelectContact} from "../../sections/jobs/create/select-contact";
 import {JobDetails} from "../../sections/jobs/create/job-details";
-import {Job, PriceModel} from "../../types/job.ts";
+import {Job} from "../../types/job.ts";
 import {SelectDuration} from "../../sections/jobs/create/select-duration";
 import {SelectRecurrence} from "../../sections/jobs/create/select-recurrence";
 import {SelectTimeWindow} from "../../sections/jobs/create/select-time-window";
@@ -63,17 +63,19 @@ export interface CreateJobFormValues {
     timestamp: string;
     days_of_week: number[];
     services_per_week: number;
-    recurring_charge: number;
-    on_demand_charge: number;
+    client_default_monthly_charge: number;
+    client_default_on_demand_charge: number;
+    default_hourly_charge: number;
     driver_notes: string;
-    price?: number;
-    price_model: string;
+    charge_unit: string;
+    charge_per_unit: number;
     submit: null;
 }
 
 const useInitialValues = (
     job?: Job,
     organization_id?: string,
+    franchise_id?: string
 ): CreateJobFormValues => {
     return useMemo(
         (): CreateJobFormValues => {
@@ -96,20 +98,21 @@ const useInitialValues = (
                     on_site_contact_id: job.on_site_contact.id,
                     on_site_contact: job.on_site_contact,
                     status: job.status,
-                    recurring_charge: job.client.recurring_charge,
-                    on_demand_charge: job.client.on_demand_charge,
+                    client_default_monthly_charge: job.client.recurring_charge,
+                    client_default_on_demand_charge: job.client.on_demand_charge,
+                    default_hourly_charge: 450,
                     driver_notes: job.driver_notes,
                     days_of_week: job.days_of_week,
                     services_per_week: job.services_per_week,
-                    price: job.price,
-                    price_model: job.price_model,
+                    charge_unit: job.charge_unit,
+                    charge_per_unit: job.charge_per_unit,
                     submit: null
                 };
             }
 
             return {
                 organization_id: organization_id,
-                franchise_id: null,
+                franchise_id: franchise_id,
                 location_id: null,
                 location: null,
                 client_id: null,
@@ -121,8 +124,9 @@ const useInitialValues = (
                 start_time_window: null,
                 end_time_window: null,
                 timestamp: null,
-                recurring_charge: null,
-                on_demand_charge: null,
+                client_default_monthly_charge: null,
+                client_default_on_demand_charge: null,
+                default_hourly_charge: 450,
                 any_time_window: false,
                 on_site_contact_id: null,
                 on_site_contact: null,
@@ -130,8 +134,8 @@ const useInitialValues = (
                 status: "open",
                 days_of_week: [1],
                 services_per_week: 1,
-                price: null,
-                price_model: PriceModel.MONTHLY,
+                charge_unit: null,
+                charge_per_unit: null,
                 submit: null,
             };
         },
@@ -149,50 +153,43 @@ export const CreateJobPage = () => {
     const [conflict, setConflict] = useState(null);
     const navigate = useNavigate();
     const auth = useAuth();
-    const initialValues = useInitialValues(null, auth.user.organizationID); //useInitialValues(job);
+    const initialValues = useInitialValues(null, auth.user.organization.id, auth.user.franchise.id); //useInitialValues(job);
     const formik = useFormik({
         enableReinitialize: true,
         initialValues,
         validationSchema,
         onSubmit: async (values, helpers): Promise<void> => {
             try {
-                const data = {
-                    id: uuid(),
-                    organization_id: auth.user.organizationID,
-                    // franchise_id: values.franchise_id,
-                    timestamp: values.timestamp,
-                    location_id: values.location_id,
-                    client_id: values.client_id,
-                    summary: values.summary,
-                    start_time_window: values.start_time_window,
-                    end_time_window: values.end_time_window,
-                    duration: values.duration,
-                    service_type: values.service_type,
-                    on_site_contact_id: values.on_site_contact_id,
-                    status: values.status,
-                    driver_notes: values.driver_notes,
-                    days_of_week: values.days_of_week,
-                    services_per_week: values.services_per_week,
-                };
-
                 toast.loading("Creating job...");
 
                 // Insert New On-Demand Job
                 if (values.service_type !== "Recurring") {
-                    // @ts-ignore
-                    const onDemandRes = await schedulerApi.insertNewOnDemandJob({job: formik.values as Job});
+                    const onDemandRes = await schedulerApi.insertNewOnDemandJob({
+                        // @ts-ignore
+                        job: formik.values as Job,
+                        operating_hours: auth.user.franchise.operating_hours,
+                        operating_days: auth.user.franchise.operating_days,
+                    });
 
                     if (onDemandRes.success) {
                         toast.dismiss();
                         navigate(`/jobs/${formik.values.id}`);
                         toast.success("Job created");
-                    } else {
+                    } else if (onDemandRes.conflict) {
                         toast.dismiss();
                         setConflict(true);
+                    } else {
+                        toast.dismiss();
+                        toast.error("Something went wrong!");
                     }
                 } else {
                     // @ts-ignore
-                    const res = await schedulerApi.insertRecurringJob({job: formik.values as Job});
+                    const res = await schedulerApi.insertRecurringJob({
+                        // @ts-ignore
+                        job: formik.values as Job,
+                        operating_hours: auth.user.franchise.operating_hours,
+                        operating_days: auth.user.franchise.operating_days,
+                    });
 
                     console.log(res);
                     toast.dismiss();
@@ -239,6 +236,20 @@ export const CreateJobPage = () => {
 
     const handleDriverNotesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         formik.setFieldValue("driver_notes", event.target.value);
+    };
+
+    const handleClientChange = (client: Client) => {
+        if (client) {
+            formik.setFieldValue('client_id', client.id);
+            formik.setFieldValue('client', client);
+            formik.setFieldValue('client_default_monthly_charge', client.default_monthly_charge);
+            formik.setFieldValue('client_default_on_demand_charge', client.default_on_demand_charge);
+        } else {
+            formik.setFieldValue('client_id', null);
+            formik.setFieldValue('client', null);
+            formik.setFieldValue('client_default_monthly_charge', null);
+            formik.setFieldValue('client_default_on_demand_charge', null);
+        }
     };
 
     useEffect(() => {
@@ -343,7 +354,7 @@ export const CreateJobPage = () => {
                                                        setFieldValue={formik.setFieldValue}/>
                                 )}
                                 {activeStep === 1 && (
-                                    <SelectClient setFieldValue={formik.setFieldValue}/>
+                                    <SelectClient handleClientChange={handleClientChange}/>
                                 )}
                                 {activeStep === 2 && (
                                     <Stack>
@@ -357,10 +368,12 @@ export const CreateJobPage = () => {
                                 )}
                                 {activeStep === 3 && (
                                     <JobDetails
-                                        price={formik.values.price}
-                                        recurring_charge={formik.values.recurring_charge}
-                                        on_demand_charge={formik.values.on_demand_charge}
-                                        price_model={formik.values.price_model}
+                                        charge_unit={formik.values.charge_unit}
+                                        charge_per_unit={formik.values.charge_per_unit}
+                                        service_type={formik.values.service_type}
+                                        client_default_monthly_charge={formik.values.client_default_monthly_charge}
+                                        client_default_on_demand_charge={formik.values.client_default_on_demand_charge}
+                                        default_hourly_charge={formik.values.default_hourly_charge}
                                         setFieldValue={formik.setFieldValue}
                                         handleSummaryChange={handleSummaryChange}
                                         handleDriverNotesChange={handleDriverNotesChange}
@@ -413,8 +426,8 @@ export const CreateJobPage = () => {
                                         disabled={
                                             (activeStep === 1 && !formik.values.client_id)
                                             || (activeStep === 2 && (!formik.values.on_site_contact_id || !formik.values.location_id))
-                                            || (activeStep === 3 && ((formik.values.service_type === "Recurring" && !formik.values.recurring_charge)
-                                                || (formik.values.service_type === "On-Demand" && !formik.values.on_demand_charge)
+                                            || (activeStep === 3 && ((formik.values.service_type === "Recurring" && !formik.values.client_default_monthly_charge)
+                                                || (formik.values.service_type === "On-Demand" && !formik.values.client_default_on_demand_charge)
                                                 || !formik.values.summary || !formik.values.driver_notes))
                                             || (activeStep === 4 && ((!formik.values.duration) || (formik.values.service_type === "Recurring" && !formik.values.services_per_week)
                                                 || (formik.values.service_type === "Recurring" && (!formik.values.start_time_window || !formik.values.end_time_window) && !formik.values.any_time_window)))

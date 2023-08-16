@@ -72,7 +72,7 @@ export const useSections = () => {
             },
             {
               title: 'Invoices',
-              path: paths.invoices,
+              path: paths.invoices.index,
               icon: (
                 <SvgIcon fontSize="small">
                   <CurrencyDollar />
@@ -108,8 +108,8 @@ export const useSections = () => {
           subheader: "Settings",
           items: [
             {
-              title: "Organization",
-              path: `/organization`,
+              title: "Franchise",
+              path: `/franchise`,
               icon: (
                   <SvgIcon fontSize="small">
                     <Business />
