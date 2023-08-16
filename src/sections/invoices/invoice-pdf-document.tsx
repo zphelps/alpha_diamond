@@ -264,7 +264,7 @@ export const InvoicePdfDocument: FC<InvoicePdfDocumentProps> = (props) => {
             </View>
           </View>
           {items.map((item, index) => {
-            const unitAmount = numeral(item.unit_price).format(`$0,0.00`);
+            const unitAmount = numeral(item.charge_per_unit).format(`$0,0.00`);
             const totalAmount = numeral(item.total).format(`$0,0.00`);
 
             return (
@@ -284,7 +284,7 @@ export const InvoicePdfDocument: FC<InvoicePdfDocumentProps> = (props) => {
                 </View>
                 <View style={styles.itemQty}>
                   <Text style={styles.body2}>
-                    {item.quantity}
+                    {item.num_units}
                   </Text>
                 </View>
                 <View style={styles.itemUnitAmount}>
