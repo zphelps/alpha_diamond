@@ -1,5 +1,17 @@
 import {ChangeEvent, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {Box, Button, Card, colors, Container, Popover, Stack, Theme, Typography, useMediaQuery} from "@mui/material";
+import {
+    Box,
+    Button,
+    Card,
+    colors,
+    Container,
+    Divider,
+    Popover,
+    Stack,
+    Theme,
+    Typography,
+    useMediaQuery
+} from "@mui/material";
 import {useDialog} from "../../hooks/use-dialog.tsx";
 import {Seo} from "../../components/seo.tsx";
 import Calendar from '@fullcalendar/react';
@@ -21,7 +33,7 @@ import {useMounted} from "../../hooks/use-mounted.ts";
 import {servicesApi} from "../../api/services";
 import {setServicesStatus, upsertManyServices} from "../../slices/services";
 import {Status} from "../../utils/status.ts";
-import {Service} from "../../types/service.ts";
+import {Service, ServiceType} from "../../types/service.ts";
 import {date} from "yup";
 import {TimelineToolbar, TimelineView} from "../../sections/schedule/timeline-toolbar.tsx";
 import {schedulerApi} from "../../api/scheduler";
@@ -31,6 +43,8 @@ import {setTruckStatus, upsertManyTrucks} from "../../slices/trucks";
 import {Truck} from "../../types/truck.ts";
 import {useAuth} from "../../hooks/use-auth.ts";
 import {ServicePreviewPreviewDialog} from "../../sections/services/service-preview-dialog.tsx";
+import {useNavigate} from "react-router-dom";
+import {paths} from "../../paths.ts";
 
 interface PreviewDialogData {
     serviceId?: string;
@@ -125,7 +139,7 @@ const useScheduleServices = (services: Service[] = []) => {
                 return {
                     id: service.id,
                     title: service.client.name,
-                    backgroundColor: service.job.service_type === 'Recurring' ? colors.blueGrey[600] : colors.blue[600],
+                    backgroundColor: service.job.service_type === ServiceType.RECURRING ? colors.blueGrey[600] : colors.blue[600],
                     resourceId: service.truck.id,
                     start: start,
                     end: end,
@@ -156,7 +170,7 @@ const useCurrentService = (
 };
 
 export const SchedulePage = () => {
-    const dispatch = useDispatch();
+    const navigate = useNavigate();
     const calendarRef = useRef<Calendar | null>(null);
 
     const auth = useAuth();
@@ -175,8 +189,6 @@ export const SchedulePage = () => {
     useServicesStore();
     // @ts-ignore
     const servicesStore = useSelector((state) => state.services);
-
-    const [generatedServices, setGeneratedServices] = useState<Service[]>([]);
 
     const services = useScheduleServices(servicesStore.services); // useScheduleServices(generatedServices); (for testing)
 
@@ -282,24 +294,29 @@ export const SchedulePage = () => {
 
     const handleAddClick = useCallback(
         async (): Promise<void> => {
+
+            navigate(paths.jobs.create);
             // createDialog.handleOpen();
-            try {
-                toast.loading('Creating schedule services')
-                console.log('Beginning of Week: ', startOfWeek(addDays(new Date(), 3)));
 
-                const res = await schedulerApi.insertRecurringJobServicesForWeek({
-                    beginningOfWeek: startOfWeek(addDays(new Date(), 3)),
-                    operating_hours: auth.user.franchise.operating_hours,
-                    operating_days: auth.user.franchise.operating_days,
-                })
-
-                console.log(res)
-
-                toast.dismiss()
-                toast.success('Successfully created schedule services')
-            } catch(e) {
-                console.log(e)
-            }
+            // try {
+            //     toast.loading('Creating schedule services')
+            //     console.log('Beginning of Week: ', startOfWeek(addDays(new Date(), 3)));
+            //
+            //     const res = await schedulerApi.insertRecurringJobServicesForWeek({
+            //         beginningOfWeek: startOfWeek(addDays(new Date(), 7)),
+            //         operating_hours: auth.user.franchise.operating_hours,
+            //         operating_days: auth.user.franchise.operating_days,
+            //         organization_id: auth.user.organization.id,
+            //         franchise_id: auth.user.franchise.id,
+            //     })
+            //
+            //     console.log(res)
+            //
+            //     toast.dismiss()
+            //     toast.success('Successfully created schedule services')
+            // } catch(e) {
+            //     console.log(e)
+            // }
 
         },
         [previewDialog]
@@ -367,13 +384,14 @@ export const SchedulePage = () => {
 
     return (
         <>
-            <Seo title="Dashboard: Calendar" />
+            <Seo title="Schedule" />
             <Box
                 component="main"
                 sx={{
                     flexGrow: 1,
                 }}
             >
+                <Divider />
                 <Container maxWidth={false}>
                     <Stack spacing={0}>
                         <TimelineToolbar
@@ -407,6 +425,9 @@ export const SchedulePage = () => {
                                             <Stack>
                                                 <Typography
                                                     fontSize={'0.7em'}
+                                                    sx={{
+                                                        textDecoration: event.event.extendedProps.service.status === 'completed' ? 'line-through' : 'none',
+                                                    }}
                                                 >
                                                     {event.event.start.toLocaleTimeString('en-US', { timeStyle: 'short' })}
                                                 </Typography>
@@ -416,6 +437,7 @@ export const SchedulePage = () => {
                                                     display: '-webkit-box',
                                                     WebkitLineClamp: 1,
                                                     WebkitBoxOrient: 'vertical',
+                                                    textDecoration: event.event.extendedProps.service.status === 'completed' ? 'line-through' : 'none',
                                                 }} fontSize={'0.85em'} lineHeight={1.2} fontWeight={'600'}>{event.event.title}</Typography>
                                             </Stack>
                                         </Box>

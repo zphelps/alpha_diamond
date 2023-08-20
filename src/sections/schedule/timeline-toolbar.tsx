@@ -15,7 +15,7 @@ import {
   Typography,
   useMediaQuery
 } from '@mui/material';
-import {AutoAwesome} from "@mui/icons-material";
+import {Add, AutoAwesome} from "@mui/icons-material";
 
 export type TimelineView =
     | 'resourceTimeGridWeek'
@@ -84,7 +84,7 @@ export const TimelineToolbar: FC<CalendarToolbarProps> = (props) => {
 
   return (
     <Stack
-      alignItems={'top'}
+      alignItems={'end'}
       flexWrap="wrap"
       justifyContent="space-between"
       flexDirection={{
@@ -92,26 +92,26 @@ export const TimelineToolbar: FC<CalendarToolbarProps> = (props) => {
         md: 'row'
       }}
       spacing={3}
-      sx={{ px: 3 }}
+      sx={{ px: 3, mb: 2 }}
       {...other}
     >
       <Stack
-        alignItems="center"
+        alignItems="start"
         direction="row"
         spacing={1}
       >
-        <Typography variant="h5">
+        <Typography variant="h4">
           {dateMonth}
         </Typography>
         <Typography
           sx={{ fontWeight: 300 }}
-          variant="h5"
+          variant="h4"
         >
           {dateDay}
         </Typography>
       </Stack>
       <Stack
-        alignItems="start"
+        alignItems="center"
         direction="row"
         spacing={1}
       >
@@ -134,6 +134,7 @@ export const TimelineToolbar: FC<CalendarToolbarProps> = (props) => {
           size="small"
           sx={{
             minWidth: 120,
+            height: 40,
             order: {
               xs: -1,
               md: 0
@@ -154,7 +155,7 @@ export const TimelineToolbar: FC<CalendarToolbarProps> = (props) => {
           onClick={onAddClick}
           startIcon={(
             <SvgIcon>
-              <AutoAwesome />
+              <Add />
             </SvgIcon>
           )}
           sx={{
@@ -165,7 +166,7 @@ export const TimelineToolbar: FC<CalendarToolbarProps> = (props) => {
           }}
           variant="contained"
         >
-          Optimize Recurring Jobs
+          Job
         </Button>
       </Stack>
     </Stack>

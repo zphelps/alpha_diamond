@@ -228,7 +228,7 @@ export const CreateInvoicePage = () => {
                         </Typography>
                         <Card>
                             <CardContent>
-                                <Stepper activeStep={activeStep} alternativeLabel>
+                                <Stepper activeStep={activeStep}>
                                     {steps.map((label, index) => {
                                         const stepProps: { completed?: boolean } = {};
                                         const labelProps: {

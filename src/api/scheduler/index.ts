@@ -27,6 +27,8 @@ type GetScheduleRequest = {
     beginningOfWeek: Date;
     include_on_demand_jobs?: boolean;
     new_job?: Job;
+    organization_id: string;
+    franchise_id: string;
 };
 
 type GetScheduleResponse = Promise<Schedule>;
@@ -38,6 +40,8 @@ type InsertRecurringJobRequest = {
         end: string;
     },
     operating_days: number[];
+    organization_id: string;
+    franchise_id: string;
 };
 
 type InsertRecurringJobResponse = Promise<{
@@ -56,6 +60,8 @@ type InsertRecurringJobServicesForWeekRequest = {
         end: string;
     },
     operating_days: number[];
+    organization_id: string;
+    franchise_id: string;
 };
 
 type InsertRecurringJobServicesForWeekResponse = Promise<{
@@ -226,11 +232,6 @@ class SchedulerApi {
                                 charge_per_unit: job.charge_per_unit,
                             });
                             if (!newJobRes.success) {
-                                // if (job.timestamp) {
-                                //     return Promise.resolve({
-                                //         success: false,
-                                //     });
-                                // }
                                 return Promise.reject(newJobRes.message);
                             }
 
@@ -298,9 +299,7 @@ class SchedulerApi {
             }
 
         }
-        return Promise.resolve({
-            success: false,
-        });
+        return Promise.reject("Failed to insert new on-demand job");
     }
 
     /**
@@ -308,7 +307,7 @@ class SchedulerApi {
      * @param request
      */
     async insertRecurringJob(request: InsertRecurringJobRequest): InsertRecurringJobResponse {
-        const {job, operating_hours, operating_days} = request;
+        const {job, operating_hours, operating_days, organization_id, franchise_id} = request;
 
         const beginningOfWeek = startOfWeek(new Date());
 
@@ -317,6 +316,8 @@ class SchedulerApi {
             beginningOfWeek: beginningOfWeek,
             include_on_demand_jobs: false,
             new_job: job,
+            organization_id: organization_id,
+            franchise_id: franchise_id,
         });
 
         console.log("Schedule", schedule);
@@ -387,6 +388,8 @@ class SchedulerApi {
                     beginningOfWeek: startOfWeek(addWeeks(new Date(), i)),
                     operating_hours: operating_hours,
                     operating_days: operating_days,
+                    organization_id: organization_id,
+                    franchise_id: franchise_id,
                 })
 
                 if (!updateFutureWeeksServicesRes.success) {
@@ -419,6 +422,8 @@ class SchedulerApi {
         const schedule = await this.getSchedule({
             beginningOfWeek: request.beginningOfWeek,
             include_on_demand_jobs: true,
+            organization_id: request.organization_id,
+            franchise_id: request.franchise_id,
         });
 
         const existing_services_for_week = await servicesApi.getScheduleServicesForWeek({
@@ -574,13 +579,15 @@ class SchedulerApi {
     }
 
     async getSchedule(request: GetScheduleRequest): GetScheduleResponse {
-        const {beginningOfWeek, include_on_demand_jobs, new_job} = request;
+        const {beginningOfWeek, include_on_demand_jobs, new_job, organization_id, franchise_id} = request;
 
         const jobsToBeScheduled = await jobsApi.getJobs({
             filters: {
                 open: true,
                 type: ["Recurring"],
-            }
+            },
+            organization_id: organization_id,
+            franchise_id: franchise_id,
         }).then(response => {
             return response.data;
         });

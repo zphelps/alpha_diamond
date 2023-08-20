@@ -26,8 +26,8 @@ import {useParams} from "react-router-dom";
 import {useDispatch, useSelector} from "react-redux";
 import {Status} from "../../utils/status.ts";
 import {ClientBasicDetails} from "../../sections/clients/client-basic-details.tsx";
-import {ClientLocation} from "../../sections/clients/client-location.tsx";
-import {ClientContact} from "../../sections/clients/client-contact.tsx";
+import {ClientLocations} from "../../sections/clients/client-locations.tsx";
+import {ClientServiceContact} from "../../sections/clients/client-service-contact.tsx";
 import {jobsApi} from "../../api/jobs";
 import {setJobsStatus, upsertOneJob} from "../../slices/jobs";
 import {JobBasicDetails} from "../../sections/jobs/job-basic-details.tsx";
@@ -103,31 +103,31 @@ export const JobDetailsPage = () => {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    py: 1
                 }}
             >
+                <Divider sx={{mb: 4}}/>
                 <Container maxWidth="xl">
                     <Stack spacing={4}>
                         <Stack spacing={2}>
-                            <div>
-                                <Link
-                                    color="text.primary"
-                                    component={RouterLink}
-                                    href={paths.jobs.index}
-                                    sx={{
-                                        alignItems: "center",
-                                        display: "inline-flex"
-                                    }}
-                                    underline="hover"
-                                >
-                                    <SvgIcon sx={{mr: 1}}>
-                                        <ArrowLeftIcon/>
-                                    </SvgIcon>
-                                    <Typography variant="subtitle2">
-                                        Jobs
-                                    </Typography>
-                                </Link>
-                            </div>
+                            {/*<div>*/}
+                            {/*    <Link*/}
+                            {/*        color="text.primary"*/}
+                            {/*        component={RouterLink}*/}
+                            {/*        href={paths.jobs.index}*/}
+                            {/*        sx={{*/}
+                            {/*            alignItems: "center",*/}
+                            {/*            display: "inline-flex"*/}
+                            {/*        }}*/}
+                            {/*        underline="hover"*/}
+                            {/*    >*/}
+                            {/*        <SvgIcon sx={{mr: 1}}>*/}
+                            {/*            <ArrowLeftIcon/>*/}
+                            {/*        </SvgIcon>*/}
+                            {/*        <Typography variant="subtitle2">*/}
+                            {/*            Jobs*/}
+                            {/*        </Typography>*/}
+                            {/*    </Link>*/}
+                            {/*</div>*/}
                             <Stack
                                 alignItems="flex-start"
                                 direction={{

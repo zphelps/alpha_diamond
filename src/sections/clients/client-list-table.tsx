@@ -124,7 +124,7 @@ export const ClientListTable: FC<ClientListTableProps> = (props) => {
                 Name
               </TableCell>
               <TableCell>
-                Country
+                Location
               </TableCell>
               <TableCell>
                 Type
@@ -173,7 +173,7 @@ export const ClientListTable: FC<ClientListTableProps> = (props) => {
                   key={client.id}
                   selected={isSelected}
                 >
-                  <TableCell padding="checkbox">
+                  <TableCell padding="checkbox" sx={{py: 1}}>
                     <Checkbox
                       checked={isSelected}
                       onChange={(event: ChangeEvent<HTMLInputElement>): void => {
@@ -186,7 +186,7 @@ export const ClientListTable: FC<ClientListTableProps> = (props) => {
                       value={isSelected}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{py: 0}}>
                     <Stack
                       alignItems="center"
                       direction="row"
@@ -205,23 +205,23 @@ export const ClientListTable: FC<ClientListTableProps> = (props) => {
                           color="text.secondary"
                           variant="body2"
                         >
-                          ID: {client.id}
+                          ID: {client.id.split('-').shift().toUpperCase()}
                         </Typography>
                       </div>
                     </Stack>
                   </TableCell>
-                  <TableCell>
-                    {client.country}
+                  <TableCell sx={{py: 0}}>
+                    {client.service_location.name}
                   </TableCell>
-                  <TableCell>
-                    {client.type.name}
+                  <TableCell sx={{py: 0}}>
+                    {client.type}
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{py: 0}}>
                     <SeverityPill color={client.status === 'active' ? 'success' : 'error'}>
                         {client.status}
                     </SeverityPill>
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right" sx={{py: 0}}>
                     <IconButton
                       // component={RouterLink}
                       // href={paths.dashboard.customers.edit}
@@ -252,7 +252,7 @@ export const ClientListTable: FC<ClientListTableProps> = (props) => {
         onRowsPerPageChange={onRowsPerPageChange}
         page={page}
         rowsPerPage={rowsPerPage}
-        rowsPerPageOptions={[5, 10, 25]}
+        rowsPerPageOptions={[15, 30, 60]}
       />
     </Box>
   );

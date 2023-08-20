@@ -136,6 +136,10 @@ class ServicesApi {
 
         const res = await query;
 
+        if (res.error) {
+            return Promise.reject(res.error);
+        }
+
         console.log(res);
 
         return Promise.resolve({

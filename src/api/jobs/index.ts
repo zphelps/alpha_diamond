@@ -22,12 +22,11 @@ type GetJobsRequest = {
         cancelled?: boolean;
         type?: string[];
     };
-    franchise_id?: string;
-    organization_id?: string;
+    client_id?: string;
+    franchise_id: string;
+    organization_id: string;
     page?: number;
     rowsPerPage?: number;
-    sortBy?: string;
-    sortDir?: "asc" | "desc";
 };
 
 type GetJobResponse = Promise<Job>;
@@ -80,8 +79,8 @@ class JobsApi {
         return Promise.resolve({success: true});
     }
 
-    async getJobs(request: GetJobsRequest = {}): GetJobsResponse {
-        const {filters, page, rowsPerPage, sortBy, sortDir, organization_id, franchise_id} = request;
+    async getJobs(request: GetJobsRequest): GetJobsResponse {
+        const {filters, page, rowsPerPage, organization_id, franchise_id, client_id} = request;
         const query = supabase.from("client_jobs").select("*, client:client_id(id, name), location:location_id(*), on_site_contact:on_site_contact_id(*)", {count: "exact"});
 
         if (typeof filters !== "undefined") {
@@ -107,7 +106,11 @@ class JobsApi {
                 query.in("service_type", filters.type);
             }
         }
-        
+
+        if (typeof client_id !== "undefined") {
+            query.eq('client_id', client_id);
+        }
+
         query.eq('organization_id', organization_id);
         query.eq('franchise_id', franchise_id);
 

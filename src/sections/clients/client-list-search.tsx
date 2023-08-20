@@ -48,44 +48,13 @@ const tabs: TabOption[] = [
     },
 ];
 
-type SortValue = "updatedAt|desc" | "updatedAt|asc" | "totalOrders|desc" | "totalOrders|asc";
-
-interface SortOption {
-    label: string;
-    value: SortValue;
-}
-
-const sortOptions: SortOption[] = [
-    {
-        label: "Last update (newest)",
-        value: "updatedAt|desc"
-    },
-    {
-        label: "Last update (oldest)",
-        value: "updatedAt|asc"
-    },
-    {
-        label: "Total orders (highest)",
-        value: "totalOrders|desc"
-    },
-    {
-        label: "Total orders (lowest)",
-        value: "totalOrders|asc"
-    }
-];
-
-type SortDir = "asc" | "desc";
-
 interface ClientListSearchProps {
     resultsCount: number;
     onFiltersChange?: (filters: Filters) => void;
-    onSortChange?: (sort: { sortBy: string; sortDir: SortDir }) => void;
-    sortBy?: string;
-    sortDir?: SortDir;
 }
 
 export const ClientListSearch: FC<ClientListSearchProps> = (props) => {
-    const {resultsCount, onFiltersChange, onSortChange, sortBy, sortDir} = props;
+    const {resultsCount, onFiltersChange} = props;
     const queryRef = useRef<HTMLInputElement | null>(null);
     const [currentTab, setCurrentTab] = useState<TabValue>("all");
     const [filters, setFilters] = useState<Filters>({});
@@ -134,18 +103,6 @@ export const ClientListSearch: FC<ClientListSearchProps> = (props) => {
             }));
         },
         []
-    );
-
-    const handleSortChange = useCallback(
-        (event: ChangeEvent<HTMLInputElement>): void => {
-            const [sortBy, sortDir] = event.target.value.split("|") as [string, SortDir];
-
-            onSortChange?.({
-                sortBy,
-                sortDir
-            });
-        },
-        [onSortChange]
     );
 
     const handleFilterType = useCallback(
@@ -337,9 +294,6 @@ export const ClientListSearch: FC<ClientListSearchProps> = (props) => {
 
 ClientListSearch.propTypes = {
     onFiltersChange: PropTypes.func,
-    onSortChange: PropTypes.func,
-    sortBy: PropTypes.string,
-    sortDir: PropTypes.oneOf<SortDir>(["asc", "desc"])
 };
 
 type BlockProps = StackProps & {

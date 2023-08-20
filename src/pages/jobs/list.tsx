@@ -19,7 +19,7 @@ import {ClientListSearch} from "../../sections/clients/client-list-search.tsx";
 import {ClientListTable} from "../../sections/clients/client-list-table.tsx";
 import {useDispatch, useSelector} from "react-redux";
 import {Status} from "../../utils/status.ts";
-import {setFilteredJobs, setJobCount, setJobsStatus} from "../../slices/jobs";
+import {setFilteredJobs, setJobCount, setJobsStatus, upsertManyJobs} from "../../slices/jobs";
 import {jobsApi} from "../../api/jobs";
 import {JobListSearch} from "../../sections/jobs/job-list-search.tsx";
 import {JobListTable} from "../../sections/jobs/job-list-table.tsx";
@@ -49,8 +49,8 @@ interface Filters {
 
 interface JobsSearchState {
     filters: Filters;
-    franchise_id?: string;
-    organization_id?: string;
+    franchise_id: string;
+    organization_id: string;
     page: number;
     rowsPerPage: number;
     sortBy: string;
@@ -136,6 +136,7 @@ const useJobsStore = (searchState: JobsSearchState, setLoading) => {
 
                 if (isMounted()) {
                     dispatch(setFilteredJobs(response.data));
+                    dispatch(upsertManyJobs(response.data));
                     dispatch(setJobCount(response.count));
                     dispatch(setJobsStatus(Status.SUCCESS));
                 }

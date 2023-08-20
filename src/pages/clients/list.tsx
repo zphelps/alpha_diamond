@@ -17,9 +17,17 @@ import {Client} from "../../types/client.ts";
 import {useSelection} from "../../hooks/use-selection.tsx";
 import {ClientListSearch} from "../../sections/clients/client-list-search.tsx";
 import {ClientListTable} from "../../sections/clients/client-list-table.tsx";
-import {setClientsStatus, setFilteredClients, upsertManyClients} from "../../slices/clients";
+import {
+    setClientsCount,
+    setClientsStatus,
+    setFilteredClients,
+    upsertManyClients
+} from "../../slices/clients";
 import {useDispatch, useSelector} from "react-redux";
 import {Status} from "../../utils/status.ts";
+import {useNavigate} from "react-router-dom";
+import {paths} from "../../paths.ts";
+import {useAuth} from "../../hooks/use-auth.ts";
 
 // ----------------------------------------------------------------------
 
@@ -44,13 +52,13 @@ interface Filters {
 
 interface ClientsSearchState {
     filters: Filters;
+    organization_id: string;
+    franchise_id: string;
     page: number;
     rowsPerPage: number;
-    sortBy: string;
-    sortDir: 'asc' | 'desc';
 }
 
-const useClientsSearch = () => {
+const useClientsSearch = (organization_id: string, franchise_id: string) => {
     const [state, setState] = useState<ClientsSearchState>({
         filters: {
             query: undefined,
@@ -58,10 +66,10 @@ const useClientsSearch = () => {
             inactive: undefined,
             type: undefined,
         },
+        organization_id: organization_id,
+        franchise_id: franchise_id,
         page: 0,
-        rowsPerPage: 5,
-        sortBy: 'updatedAt',
-        sortDir: 'desc'
+        rowsPerPage: 15,
     });
 
     const handleFiltersChange = useCallback(
@@ -69,17 +77,6 @@ const useClientsSearch = () => {
             setState((prevState) => ({
                 ...prevState,
                 filters
-            }));
-        },
-        []
-    );
-
-    const handleSortChange = useCallback(
-        (sort: { sortBy: string; sortDir: 'asc' | 'desc'; }): void => {
-            setState((prevState) => ({
-                ...prevState,
-                sortBy: sort.sortBy,
-                sortDir: sort.sortDir
             }));
         },
         []
@@ -108,7 +105,6 @@ const useClientsSearch = () => {
 
     return {
         handleFiltersChange,
-        handleSortChange,
         handlePageChange,
         handleRowsPerPageChange,
         state
@@ -126,6 +122,7 @@ const useClientsStore = (searchState: ClientsSearchState) => {
 
                 if (isMounted()) {
                     dispatch(setFilteredClients(response.data));
+                    dispatch(setClientsCount(response.count));
                     dispatch(setClientsStatus(Status.SUCCESS));
                 }
             } catch (err) {
@@ -164,7 +161,9 @@ const useFilteredClients = (clients: Client[] = []) => {
 };
 
 export default function ClientListPage() {
-    const clientsSearch = useClientsSearch();
+    const navigate = useNavigate();
+    const auth = useAuth();
+    const clientsSearch = useClientsSearch(auth.user.organization.id, auth.user.franchise.id);
     useClientsStore(clientsSearch.state);
 
     // @ts-ignore
@@ -202,6 +201,7 @@ export default function ClientListPage() {
                                 spacing={3}
                             >
                                 <Button
+                                    onClick={() => navigate(paths.clients.create)}
                                     startIcon={(
                                         <SvgIcon>
                                             <PlusIcon/>
@@ -215,15 +215,12 @@ export default function ClientListPage() {
                         </Stack>
                         <Card>
                             <ClientListSearch
-                                resultsCount={clientsStore.filteredClientsCount}
+                                resultsCount={clientsStore.clientsCount}
                                 onFiltersChange={clientsSearch.handleFiltersChange}
-                                onSortChange={clientsSearch.handleSortChange}
-                                sortBy={clientsSearch.state.sortBy}
-                                sortDir={clientsSearch.state.sortDir}
                             />
 
                             <ClientListTable
-                                count={clientsStore.filteredClientsCount}
+                                count={clientsStore.clientsCount}
                                 items={filteredClients}
                                 onDeselectAll={clientsSelection.handleDeselectAll}
                                 onDeselectOne={clientsSelection.handleDeselectOne}

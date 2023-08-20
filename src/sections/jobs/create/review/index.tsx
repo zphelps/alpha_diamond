@@ -78,9 +78,9 @@ export const Review: FC<ReviewProps> = (props) => {
                         />
                         <PropertyListItem
                             divider
-                            label="Location"
+                            label="Service Location"
                             // @ts-ignore
-                            value={`${formValues.location.street_address}, ${formValues.location.city}, ${formValues.location.state} ${formValues.location.zip}`}
+                            value={`${formValues.location.formatted_address}`}
                         />
                         <PropertyListItem
                             divider

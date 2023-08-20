@@ -15,6 +15,7 @@ import {InvoicesPage} from "../pages/invoices/list.tsx";
 import {InvoiceDetailsPage} from "../pages/invoices/detail.tsx";
 import {InvoiceEditPage} from "../pages/invoices/edit.tsx";
 import {CreateInvoicePage} from "../pages/invoices/create.tsx";
+import {CreateClientPage} from "../pages/clients/create.tsx";
 
 export const dashboardRoutes: RouteObject[] = [
     {
@@ -39,8 +40,16 @@ export const dashboardRoutes: RouteObject[] = [
                         element: <ClientListPage />
                     },
                     {
+                        path: ':clientID/:tab',
+                        element: <ClientDetailsPage />
+                    },
+                    {
                         path: ':clientID',
                         element: <ClientDetailsPage />
+                    },
+                    {
+                        path: 'create',
+                        element: <CreateClientPage />
                     }
                 ]
             },

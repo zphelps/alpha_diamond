@@ -9,9 +9,10 @@ import {useDispatch, useSelector} from "react-redux";
 import {useSelection} from "../../hooks/use-selection.tsx";
 import {useMounted} from "../../hooks/use-mounted.ts";
 import {clientsApi} from "../../api/clients";
-import {setClientsStatus, setFilteredClients} from "../../slices/clients";
+import {setClientsCount, setClientsStatus, setFilteredClients} from "../../slices/clients";
 import {Status} from "../../utils/status.ts";
 import {Client} from "../../types/client.ts";
+import {useAuth} from "../../hooks/use-auth.ts";
 
 export const _clientTypes = [
     'Commercial',
@@ -31,19 +32,23 @@ interface Filters {
 
 interface ClientsSearchState {
     filters: Filters;
+    organization_id: string;
+    franchise_id: string;
     page: number;
     rowsPerPage: number;
 }
 
-const useClientsSearch = () => {
+const useClientsSearch = (organization_id: string, franchise_id: string) => {
     const [state, setState] = useState<ClientsSearchState>({
         filters: {
             query: undefined,
             active: true,
             type: undefined,
         },
+        organization_id: organization_id,
+        franchise_id: franchise_id,
         page: 0,
-        rowsPerPage: 5,
+        rowsPerPage: 10,
     });
 
     const handleFiltersChange = useCallback(
@@ -96,6 +101,7 @@ const useClientsStore = (searchState: ClientsSearchState) => {
 
                 if (isMounted()) {
                     dispatch(setFilteredClients(response.data));
+                    dispatch(setClientsCount(response.count));
                     dispatch(setClientsStatus(Status.SUCCESS));
                 }
             } catch (err) {
@@ -137,8 +143,8 @@ interface SelectClientProps {
 }
 export const SelectClient: FC<SelectClientProps> = (props) => {
     const {handleClientChange} = props;
-
-    const clientsSearch = useClientsSearch();
+    const auth = useAuth();
+    const clientsSearch = useClientsSearch(auth.user.organization.id, auth.user.franchise.id);
     useClientsStore(clientsSearch.state);
 
     // @ts-ignore
@@ -166,12 +172,12 @@ export const SelectClient: FC<SelectClientProps> = (props) => {
                 Select Client
             </Typography>
             <SelectClientListSearch
-                resultsCount={clientsStore.filteredClientsCount}
+                resultsCount={clientsStore.clientsCount}
                 onFiltersChange={clientsSearch.handleFiltersChange}
             />
 
             <SelectClientListTable
-                count={clientsStore.filteredClientsCount}
+                count={clientsStore.clientsCount}
                 items={filteredClients}
                 onDeselectAll={clientsSelection.handleDeselectAll}
                 onDeselectOne={clientsSelection.handleDeselectOne}

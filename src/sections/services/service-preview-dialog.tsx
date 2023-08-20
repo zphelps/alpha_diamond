@@ -3,7 +3,7 @@ import {useAuth} from "../../hooks/use-auth.ts";
 import {useNavigate} from "react-router-dom";
 import toast from "react-hot-toast";
 import {Box, Button, Dialog, Divider, Link, Stack, Typography} from "@mui/material";
-import {Service} from "../../types/service.ts";
+import {Service, ServiceType} from "../../types/service.ts";
 import PropTypes from "prop-types";
 import {SeverityPill} from "../../components/severity-pill.tsx";
 import {getSeverityServiceTypeColor, getSeverityStatusColor} from "../../utils/severity-color.ts";
@@ -11,6 +11,7 @@ import {PropertyListItem} from "../../components/property-list-item.tsx";
 import {format} from "date-fns";
 import {PropertyList} from "../../components/property-list.tsx";
 import {RouterLink} from "../../components/router-link.tsx";
+import {getJobRecurrenceDescription} from "../../utils/job-recurrence-description.ts";
 
 interface ServicePreviewDialogProps {
     service?: Service;
@@ -25,7 +26,6 @@ export const ServicePreviewPreviewDialog: FC<ServicePreviewDialogProps> = (props
         open = false,
     } = props;
 
-    const auth = useAuth();
     const navigate = useNavigate();
 
     return (
@@ -84,26 +84,39 @@ export const ServicePreviewPreviewDialog: FC<ServicePreviewDialogProps> = (props
                                 </Typography>
                             </Link>
                         </PropertyListItem>
-                        <PropertyListItem
+                        {/*<PropertyListItem*/}
+                        {/*    sx={{*/}
+                        {/*        px: 0,*/}
+                        {/*        py: 1.5,*/}
+                        {/*    }}*/}
+                        {/*    align={'horizontal'}*/}
+                        {/*    divider*/}
+                        {/*    label="Job"*/}
+                        {/*>*/}
+                        {/*    <Link*/}
+                        {/*        component={RouterLink}*/}
+                        {/*        href={`/jobs/${service.job.id}`}*/}
+                        {/*    >*/}
+                        {/*        <Typography*/}
+                        {/*            variant={"body2"}*/}
+                        {/*        >*/}
+                        {/*            {`JOB-${service.job.id.split("-").shift().toUpperCase()}`}*/}
+                        {/*        </Typography>*/}
+                        {/*    </Link>*/}
+                        {/*</PropertyListItem>*/}
+
+                        {service.job.service_type === ServiceType.RECURRING && <PropertyListItem
                             sx={{
                                 px: 0,
                                 py: 1.5,
                             }}
-                            align={'horizontal'}
+                            align={"horizontal"}
                             divider
-                            label="Job"
-                        >
-                            <Link
-                                component={RouterLink}
-                                href={`/jobs/${service.job.id}`}
-                            >
-                                <Typography
-                                    variant={"body2"}
-                                >
-                                    {`JOB-${service.job.id.split("-").shift().toUpperCase()}`}
-                                </Typography>
-                            </Link>
-                        </PropertyListItem>
+                            label="Recurrence"
+                            // @ts-ignore
+                            value={getJobRecurrenceDescription(service?.job)}
+                        />}
+
                         <PropertyListItem
                             sx={{
                                 px: 0,

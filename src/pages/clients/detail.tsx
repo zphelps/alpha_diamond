@@ -23,22 +23,25 @@ import {useMounted} from "../../hooks/use-mounted.ts";
 import {Seo} from "../../components/seo.tsx";
 import {RouterLink} from "../../components/router-link.tsx";
 import {paths} from "../../paths.ts";
-import {useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import {clientsApi} from "../../api/clients";
 import {useDispatch, useSelector} from "react-redux";
 import {setClientsStatus, upsertOneClient} from "../../slices/clients";
 import {Status} from "../../utils/status.ts";
 import {ClientBasicDetails} from "../../sections/clients/client-basic-details.tsx";
-import {ClientLocation} from "../../sections/clients/client-location.tsx";
-import {ClientContact} from "../../sections/clients/client-contact.tsx";
+import {ClientLocations} from "../../sections/clients/client-locations.tsx";
+import {ClientServiceContact} from "../../sections/clients/client-service-contact.tsx";
 import {ClientPricingDetails} from "../../sections/clients/client-pricing-details.tsx";
+import {ClientBillingContact} from "../../sections/clients/client-billing-contact.tsx";
+import {ClientJobs} from "../../sections/clients/jobs";
 
 const tabs = [
     {label: "Details", value: "details"},
     {label: "Jobs", value: "jobs"},
+    {label: "Services", value: "services"},
     {label: "Invoices", value: "invoices"},
-    {label: "Locations", value: "locations"},
-    {label: "Contacts", value: "contacts"}
+    // {label: "Locations", value: "locations"},
+    // {label: "Contacts", value: "contacts"}
 ];
 
 const useClient = (clientID: string) => {
@@ -68,48 +71,24 @@ const useClient = (clientID: string) => {
     );
 };
 
-// const useInvoices = (): CustomerInvoice[] => {
-//   const isMounted = useMounted();
-//   const [invoices, setInvoices] = useState<CustomerInvoice[]>([]);
-//
-//   const handleInvoicesGet = useCallback(async () => {
-//     try {
-//       const response = await customersApi.getInvoices();
-//
-//       if (isMounted()) {
-//         setInvoices(response);
-//       }
-//     } catch (err) {
-//       console.error(err);
-//     }
-//   }, [isMounted]);
-//
-//   useEffect(
-//     () => {
-//       handleInvoicesGet();
-//     },
-//     // eslint-disable-next-line react-hooks/exhaustive-deps
-//     []
-//   );
-//
-//   return invoices;
-// };
-
 export const ClientDetailsPage = () => {
     const params = useParams();
-    const [currentTab, setCurrentTab] = useState<string>("details");
-    // const invoices = useInvoices();
+    const [currentTab, setCurrentTab] = useState<string>(params.tab || "details");
+    const navigate = useNavigate();
 
     useClient(params.clientID);
 
     // @ts-ignore
     const client = useSelector((state) => state.clients).clients[params.clientID];
 
-
+    useEffect(() => {
+        setCurrentTab(params.tab ?? 'details')
+    }, [params.clientID, params.tab]);
 
     const handleTabsChange = useCallback(
         (event: ChangeEvent<{}>, value: string): void => {
             setCurrentTab(value);
+            navigate(`/clients/${params.clientID}/${value}`, {replace: true})
         },
         []
     );
@@ -128,28 +107,29 @@ export const ClientDetailsPage = () => {
                     py: 0
                 }}
             >
+                <Divider sx={{mb: 4}}/>
                 <Container maxWidth="xl">
                     <Stack spacing={4}>
                         <Stack spacing={2}>
-                            <div>
-                                <Link
-                                    color="text.primary"
-                                    component={RouterLink}
-                                    href={paths.clients.index}
-                                    sx={{
-                                        alignItems: "center",
-                                        display: "inline-flex"
-                                    }}
-                                    underline="hover"
-                                >
-                                    <SvgIcon sx={{mr: 1}}>
-                                        <ArrowLeftIcon/>
-                                    </SvgIcon>
-                                    <Typography variant="subtitle2">
-                                        Clients
-                                    </Typography>
-                                </Link>
-                            </div>
+                            {/*<div>*/}
+                            {/*    <Link*/}
+                            {/*        color="text.primary"*/}
+                            {/*        component={RouterLink}*/}
+                            {/*        href={paths.clients.index}*/}
+                            {/*        sx={{*/}
+                            {/*            alignItems: "center",*/}
+                            {/*            display: "inline-flex"*/}
+                            {/*        }}*/}
+                            {/*        underline="hover"*/}
+                            {/*    >*/}
+                            {/*        <SvgIcon sx={{mr: 1}}>*/}
+                            {/*            <ArrowLeftIcon/>*/}
+                            {/*        </SvgIcon>*/}
+                            {/*        <Typography variant="subtitle2">*/}
+                            {/*            Clients*/}
+                            {/*        </Typography>*/}
+                            {/*    </Link>*/}
+                            {/*</div>*/}
                             <Stack
                                 alignItems="flex-start"
                                 direction={{
@@ -173,11 +153,8 @@ export const ClientDetailsPage = () => {
                                             direction="row"
                                             spacing={1}
                                         >
-                                            <Typography variant="subtitle2">
-                                                id:
-                                            </Typography>
                                             <Chip
-                                                label={client.id}
+                                                label={`ID-${client.id.split("-").shift().toUpperCase()}`}
                                                 size="small"
                                             />
                                         </Stack>
@@ -246,12 +223,13 @@ export const ClientDetailsPage = () => {
                                             <ClientBasicDetails
                                                 name={client.name}
                                                 country={client.country}
-                                                type={client.type.name}
+                                                type={client.type}
                                                 status={client.status}
                                             />
                                             <ClientPricingDetails
-                                                recurring_charge={client.recurring_charge.toString()}
-                                                on_demand_charge={client.on_demand_charge.toString()}
+                                                monthly_charge={client.default_monthly_charge.toString()}
+                                                on_demand_charge={client.default_on_demand_charge.toString()}
+                                                hourly_charge={client.default_hourly_charge.toString()}
                                             />
                                         </Stack>
                                     </Grid>
@@ -260,19 +238,16 @@ export const ClientDetailsPage = () => {
                                         lg={8}
                                     >
                                         <Stack spacing={2}>
-                                            {client.primary_location && <ClientLocation
-                                                street_address={client.primary_location.street_address}
-                                                city={client.primary_location.city}
-                                                state={client.primary_location.state}
-                                                zip={client.primary_location.zip}
-                                                name={client.primary_location.name}
-                                            />}
-                                            {client.primary_contact && <ClientContact
-                                                first_name={client.primary_contact.first_name}
-                                                last_name={client.primary_contact.last_name}
-                                                email={client.primary_contact.email}
-                                                phone_number={client.primary_contact.phone_number}
-                                            />}
+                                            <ClientLocations
+                                                billing_location={client.service_location}
+                                                service_location={client.service_location}
+                                            />
+                                            <ClientServiceContact
+                                                service_contact={client.service_contact}
+                                            />
+                                            <ClientBillingContact
+                                                billing_contact={client.billing_contact}
+                                            />
                                           {/*<CustomerEmailsSummary />*/}
                                           {/*<CustomerDataManagement />*/}
                                         </Stack>
@@ -280,7 +255,7 @@ export const ClientDetailsPage = () => {
                                 </Grid>
                             </div>
                         )}
-                        {/*{currentTab === 'invoices' && <CustomerInvoices invoices={invoices} />}*/}
+                        {currentTab === 'jobs' && <ClientJobs clientID={client.id} />}
                         {/*{currentTab === 'logs' && <CustomerLogs logs={logs} />}*/}
                     </Stack>
                 </Container>

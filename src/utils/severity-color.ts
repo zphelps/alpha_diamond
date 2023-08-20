@@ -4,9 +4,13 @@ export const getSeverityStatusColor = (status: string) => {
     switch (status) {
         case 'open':
             return 'success';
-        case 'completed':
+        case 'in-progress':
             return 'warning';
+        case 'completed':
+            return 'success';
         case 'cancelled':
+            return 'error';
+        case 'incomplete':
             return 'error';
         default:
             return 'info';

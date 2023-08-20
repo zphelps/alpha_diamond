@@ -69,7 +69,7 @@ export const SelectClientListTable: FC<ClientListTableProps> = (props) => {
                 Name
               </TableCell>
               <TableCell>
-                Country
+                Service Location
               </TableCell>
               <TableCell>
                 Type
@@ -146,10 +146,10 @@ export const SelectClientListTable: FC<ClientListTableProps> = (props) => {
                     </Stack>
                   </TableCell>
                   <TableCell>
-                    {client.country}
+                    {client.service_location.name}
                   </TableCell>
                   <TableCell>
-                    {client.type.name}
+                    {client.type}
                   </TableCell>
                   <TableCell>
                     <SeverityPill color={client.status === 'active' ? 'success' : 'error'}>
@@ -169,7 +169,7 @@ export const SelectClientListTable: FC<ClientListTableProps> = (props) => {
         onRowsPerPageChange={onRowsPerPageChange}
         page={page}
         rowsPerPage={rowsPerPage}
-        rowsPerPageOptions={[5, 10, 25]}
+        rowsPerPageOptions={[10, 20, 30]}
       />
     </Box>
   );

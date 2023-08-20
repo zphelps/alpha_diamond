@@ -6,7 +6,7 @@ const clientsSlice = createSlice({
     initialState: {
         clients: {},
         filteredClients: [],
-        filteredClientsCount: 0,
+        clientsCount: 0,
         status: Status.IDLE,
     },
     reducers: {
@@ -22,8 +22,11 @@ const clientsSlice = createSlice({
         },
         setFilteredClients: (state, action) => {
             state.filteredClients = action.payload;
-            state.filteredClientsCount = action.payload.length;
+            state.clientsCount = action.payload.length;
             clientsSlice.caseReducers.upsertManyClients(state, action);
+        },
+        setClientsCount: (state, action) => {
+            state.clientsCount = action.payload;
         },
         setClientsStatus: (state, action) => {
             state.status = action.payload;
@@ -35,6 +38,7 @@ export const {
     upsertManyClients,
     upsertOneClient,
     setFilteredClients,
+    setClientsCount,
     setClientsStatus
 } = clientsSlice.actions;
 export default clientsSlice.reducer;
