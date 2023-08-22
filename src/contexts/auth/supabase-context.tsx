@@ -82,8 +82,6 @@ export const AuthProvider: FC<AuthProviderProps> = (props) => {
                     "id, email, first_name, last_name, phone_number, avatar_url, franchise:franchise_id(*, primary_contact:primary_contact_id(*)), organization:organization_id(*)"
                 ).eq("id", session.user.id).single();
 
-                console.log(user)
-
                 dispatch({
                     type: ActionType.AUTH_STATE_CHANGED,
                     payload: {

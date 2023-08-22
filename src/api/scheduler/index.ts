@@ -8,7 +8,7 @@ import {
     addMinutes, addWeeks,
     differenceInMinutes,
     format, isAfter, isBefore,
-    isSameDay,
+    isSameDay, isSameHour, isSameMinute,
     parse,
     set,
     setMinutes,
@@ -32,6 +32,19 @@ type GetScheduleRequest = {
 };
 
 type GetScheduleResponse = Promise<Schedule>;
+
+type FindClosestAvailableTimestampsRequest = {
+    job: Job;
+    operating_hours: {
+        start: string;
+        end: string;
+    }
+}
+
+type FindClosestAvailableTimestampsResponse = Promise<{
+    success: boolean;
+    timestamps?: string[];
+}>
 
 type InsertRecurringJobRequest = {
     job: Job;
@@ -102,7 +115,7 @@ export type Schedule = {
     [day: number]: ScheduleServiceConstraints[]
 };
 
-type insertNewOnDemandJobRequest = {
+type insertOnDemandJobRequest = {
     job: Job;
     operating_hours: {
         start: string;
@@ -111,14 +124,22 @@ type insertNewOnDemandJobRequest = {
     operating_days: number[];
 };
 
-type insertNewOnDemandJobResponse = Promise<{
-    success: boolean;
-    conflict?: boolean;
+type insertOnDemandJobResponse = Promise<{
+    response: SchedulerResponse;
+    message?: string;
 }>;
+
+export enum SchedulerResponse {
+    SUCCESS = "SUCCESS",
+    ERR_METADATA = "ERR_METADATA",
+    ERR_UNABLE_TO_SQUEEZE_AT_TIME = "ERR_UNABLE_TO_SQUEEZE_AT_TIME",
+    ERR_UNABLE_TO_SQUEEZE_ON_DAY = "ERR_UNABLE_TO_SQUEEZE_ON_DAY",
+    ERR_UNKNOWN = "ERR_UNKNOWN",
+}
 
 class SchedulerApi {
 
-    async insertNewOnDemandJob(request: insertNewOnDemandJobRequest): Promise<insertNewOnDemandJobResponse> {
+    async insertOnDemandJob(request: insertOnDemandJobRequest): Promise<insertOnDemandJobResponse> {
         const {job, operating_hours, operating_days} = request;
 
         const NUM_ATTEMPTS = 31;
@@ -177,17 +198,25 @@ class SchedulerApi {
                 organization_id: job.organization_id,
                 franchise_id: job.franchise_id,
                 operating_hours: operating_hours,
-                operating_days: operating_days,
             });
 
-            // New job conflicts with existing jobs -> return false
+            console.log("Route", route)
+
+            // New on-demand job conflicts with existing jobs
             if (route.error || route.unserved) {
-                if (job.timestamp) {
+                // Failed to insert new on-demand job on specified day
+                if (route.error === 'ERR_UNABLE_TO_SQUEEZE_STOPS' && job.timestamp && job.start_time_window && job.end_time_window) {
                     return Promise.resolve({
-                        success: false,
-                        conflict: true,
+                        response: SchedulerResponse.ERR_UNABLE_TO_SQUEEZE_AT_TIME,
+                        message: "Unfortunately, we could not schedule your job at the specified time.",
+                    });
+                } else if (route.error === 'ERR_UNABLE_TO_SQUEEZE_STOPS' && job.timestamp) {
+                    return Promise.resolve({
+                        response: SchedulerResponse.ERR_UNABLE_TO_SQUEEZE_ON_DAY,
+                        message: "Unfortunately, we could not schedule your job at the specified time.",
                     });
                 }
+                // else try again with next day
             } else /* No conflicts */ {
                 // Update existing services (and jobs) if their times or truck_id have changed
                 for (const [truck_id, visits] of Object.entries(route.solution)) {
@@ -195,28 +224,28 @@ class SchedulerApi {
                         if (!visit.finish_time) continue;
                         const service = scheduleServicesOnDate.find(service => service.id === visit.location_id);
 
-                        let timestamp;
+                        let serviceTimestamp;
 
                         // Adjust arrival time if idle time is present and job has time restrictions
                         if (visit.idle_time && service.start_time_window) {
-                            timestamp = set(job.timestamp ? Date.parse(job.timestamp) : date, {
+                            serviceTimestamp = set(job.timestamp ? Date.parse(job.timestamp) : date, {
                                 hours: parseInt(service.start_time_window.split(":")[0]),
                                 minutes: parseInt(service.start_time_window.split(":")[1]),
                             }).toISOString();
                         } else {
-                            timestamp = set(job.timestamp ? Date.parse(job.timestamp) : date, {
+                            serviceTimestamp = set(job.timestamp ? Date.parse(job.timestamp) : date, {
                                 hours: parseInt(visit.arrival_time.split(":")[0]),
                                 minutes: parseInt(visit.arrival_time.split(":")[1]),
                             }).toISOString();
                         }
 
-                        // New Job/Service
+                        // New Job/Service (because a truck has not yet been assigned)
                         if (!service.truck_id) {
                             // Insert new on-demand job
                             const newJobRes = await jobsApi.createJob({
                                 id: job.id,
                                 client_id: job.client.id,
-                                timestamp: timestamp,
+                                timestamp: serviceTimestamp,
                                 start_time_window: service.start_time_window,
                                 end_time_window: service.end_time_window,
                                 duration: job.duration,
@@ -232,14 +261,14 @@ class SchedulerApi {
                                 charge_per_unit: job.charge_per_unit,
                             });
                             if (!newJobRes.success) {
-                                return Promise.reject(newJobRes.message);
+                                return Promise.reject(`Failed to create new job: ${newJobRes.message}`);
                             }
 
                             const newServiceRes = await servicesApi.createService({
                                 id: service.id,
                                 job_id: job.id,
                                 truck_id: truck_id,
-                                timestamp: timestamp,
+                                timestamp: serviceTimestamp,
                                 start_time_window: service.start_time_window,
                                 end_time_window: service.end_time_window,
                                 duration: job.duration,
@@ -253,38 +282,39 @@ class SchedulerApi {
                                 driver_notes: job.driver_notes,
                             });
 
-                            console.log("New Service Res", newServiceRes)
-
                             if (!newServiceRes.success) {
-                                return Promise.reject(newServiceRes.message);
+                                // TODO: Delete job
+                                return Promise.reject(`Failed to create new service for job: ${newServiceRes.message}`);
                             }
                         } else /* Existing Job/Service */ {
-                            const [newHours, newMinutes] = visit.arrival_time.split(":");
-                            const originalDate = new Date(service.timestamp);
-                            const newDate = set(originalDate, {
-                                hours: parseInt(newHours),
-                                minutes: parseInt(newMinutes)
-                            });
+                            const originalServiceTimestamp = new Date(service.timestamp);
+                            const updatedServiceTimestamp = new Date(serviceTimestamp);
 
-                            if (!isEqual(newDate, originalDate) || service.truck_id !== truck_id) {
-                                console.log("Updating service");
+                            // Update service if time or truck has changed
+                            if ((!isSameHour(updatedServiceTimestamp, originalServiceTimestamp) && !isSameMinute(updatedServiceTimestamp, originalServiceTimestamp))
+                                || service.truck_id !== truck_id) {
+                                console.log("Updating Service ID: ", service.id);
+                                console.log("Originally Scheduled For: ", format(originalServiceTimestamp, "MM/dd/yyyy hh:mm a"));
+                                console.log("Now Scheduled For: ", format(updatedServiceTimestamp, "MM/dd/yyyy hh:mm a"));
+                                console.log("Truck ID: ", truck_id);
+                                console.log("Service", service.truck_id);
                                 const serviceUpdateRes = await servicesApi.updateService({
                                     id: service.id,
                                     updated_fields: {
-                                        timestamp: timestamp,
+                                        timestamp: serviceTimestamp,
                                         truck_id: truck_id,
                                     }
                                 });
                                 const jobUpdateRes = await jobsApi.updateJob({
                                     id: service.job_id,
                                     updated_fields: {
-                                        timestamp: timestamp,
+                                        timestamp: serviceTimestamp,
                                     }
                                 });
 
                                 if ((!serviceUpdateRes.success || !jobUpdateRes.success) && job.timestamp) {
                                     return Promise.resolve({
-                                        success: false,
+                                        response: SchedulerResponse.ERR_METADATA,
                                         conflict: false,
                                     });
                                 }
@@ -294,12 +324,178 @@ class SchedulerApi {
                 }
                 // return success
                 return Promise.resolve({
-                    success: true,
+                    response: SchedulerResponse.SUCCESS,
                 });
             }
-
         }
         return Promise.reject("Failed to insert new on-demand job");
+    }
+
+    /**
+     * Find the closest available timestamps for a given job on a given day
+     * **ASSUMES THAT THE JOB HAS A TIMESTAMP AND START/END WINDOW**
+     * @param request
+     */
+    async findClosestAvailableTimeslots(request: FindClosestAvailableTimestampsRequest): FindClosestAvailableTimestampsResponse {
+        const {job, operating_hours} = request;
+
+        const availableTimestamps = [];
+
+        const startOfDay = set(new Date(job.timestamp), {
+            hours: parseInt(operating_hours.start.split(":")[0]),
+            minutes: parseInt(operating_hours.start.split(":")[1]),
+        });
+
+        const endOfDay = set(new Date(job.timestamp), {
+            hours: parseInt(operating_hours.end.split(":")[0]),
+            minutes: parseInt(operating_hours.end.split(":")[1]),
+        });
+
+        const {data: servicesOnDate, count} = await servicesApi.getServicesOnDate({
+            date: job.timestamp,
+            organization_id: job.organization_id,
+            franchise_id: job.franchise_id,
+        });
+
+        const scheduleServicesOnDate = servicesOnDate.map(service => ({
+            id: service.id,
+            location: {
+                lat: service.location.lat,
+                lng: service.location.lng,
+                name: service.location.name,
+            },
+            job_id: service.job.id,
+            truck_id: service.truck.id,
+            timestamp: service.timestamp,
+            start_time_window: service.start_time_window,
+            end_time_window: service.end_time_window,
+            duration: service.duration,
+        }));
+
+        // ASSUME THAT THE JOB HAS A START/END WINDOW
+        let beforeTimestamp = set(new Date(job.timestamp), {
+            hours: parseInt(job.start_time_window.split(":")[0]),
+            minutes: parseInt(job.start_time_window.split(":")[1]),
+        });
+        let afterTimestamp = set(new Date(job.timestamp), {
+            hours: parseInt(job.start_time_window.split(":")[0]),
+            minutes: parseInt(job.start_time_window.split(":")[1]),
+        });
+
+        // eslint-disable-next-line no-constant-condition
+        while (1) {
+            beforeTimestamp = addMinutes(beforeTimestamp, -job.duration);
+            afterTimestamp = addMinutes(afterTimestamp, job.duration);
+
+            if (!isBefore(startOfDay, beforeTimestamp) && !isBefore(afterTimestamp, endOfDay)) break;
+
+            if (availableTimestamps.length >= 4) break;
+
+            if (isBefore(startOfDay, beforeTimestamp)) {
+                // Add potential timestamp
+                scheduleServicesOnDate.push({
+                    id: uuid(),
+                    location: {
+                        lat: job.location.lat,
+                        lng: job.location.lng,
+                        name: job.location.name,
+                    },
+                    job_id: job.id,
+                    truck_id: null,
+                    timestamp: beforeTimestamp.toISOString(),
+                    start_time_window: format(beforeTimestamp, "HH:mm"),
+                    end_time_window: format(addMinutes(beforeTimestamp, job.duration), "HH:mm"),
+                    duration: job.duration,
+                });
+
+                // Get updated route
+                const route = await routeOptimizerApi.getReOptimizedRoute({
+                    services: scheduleServicesOnDate,
+                    date: job.timestamp,
+                    organization_id: job.organization_id,
+                    franchise_id: job.franchise_id,
+                    operating_hours: operating_hours,
+                });
+
+                if (route.solution) {
+                    availableTimestamps.push(beforeTimestamp.toISOString());
+                }
+
+                scheduleServicesOnDate.pop();
+            }
+
+            if (isBefore(afterTimestamp, endOfDay)) {
+                // Add potential timestamp
+                scheduleServicesOnDate.push({
+                    id: uuid(),
+                    location: {
+                        lat: job.location.lat,
+                        lng: job.location.lng,
+                        name: job.location.name,
+                    },
+                    job_id: job.id,
+                    truck_id: null,
+                    timestamp: afterTimestamp.toISOString(),
+                    start_time_window: format(afterTimestamp, "HH:mm"),
+                    end_time_window: format(addMinutes(afterTimestamp, job.duration), "HH:mm"),
+                    duration: job.duration,
+                });
+
+                // Get updated route
+                const route = await routeOptimizerApi.getReOptimizedRoute({
+                    services: scheduleServicesOnDate,
+                    date: job.timestamp,
+                    organization_id: job.organization_id,
+                    franchise_id: job.franchise_id,
+                    operating_hours: operating_hours,
+                });
+
+                if (route.solution) {
+                    availableTimestamps.push(afterTimestamp.toISOString());
+                }
+
+                scheduleServicesOnDate.pop();
+            }
+        }
+
+        // for (let timestamp = startOfDay; isBefore(timestamp, endOfDay); timestamp = addMinutes(timestamp, job.duration)) {
+        //     console.log("Timestamp", timestamp);
+        //     // Add potential timestamp
+        //     scheduleServicesOnDate.push({
+        //         id: uuid(),
+        //         location: {
+        //             lat: job.location.lat,
+        //             lng: job.location.lng,
+        //             name: job.location.name,
+        //         },
+        //         job_id: job.id,
+        //         truck_id: null,
+        //         timestamp: timestamp.toISOString(),
+        //         start_time_window: format(timestamp, "HH:mm"),
+        //         end_time_window: format(addMinutes(timestamp, job.duration), "HH:mm"),
+        //         duration: job.duration,
+        //     });
+        //
+        //     // Get updated route
+        //     const route = await routeOptimizerApi.getReOptimizedRoute({
+        //         services: scheduleServicesOnDate,
+        //         date: job.timestamp,
+        //         organization_id: job.organization_id,
+        //         franchise_id: job.franchise_id,
+        //         operating_hours: operating_hours,
+        //     });
+        //
+        //     if (route.solution) {
+        //         availableTimestamps.push(timestamp.toISOString());
+        //     }
+        //
+        //     scheduleServicesOnDate.pop();
+        // }
+
+        return Promise.resolve({
+            success: true,
+            timestamps: availableTimestamps,
+        });
     }
 
     /**
@@ -309,7 +505,8 @@ class SchedulerApi {
     async insertRecurringJob(request: InsertRecurringJobRequest): InsertRecurringJobResponse {
         const {job, operating_hours, operating_days, organization_id, franchise_id} = request;
 
-        const beginningOfWeek = startOfWeek(new Date());
+        // Beginning of the next week
+        const beginningOfWeek = startOfWeek(addDays(new Date(), 7));
 
         console.log("Inserting recurring job");
         const schedule = await this.getSchedule({
@@ -607,13 +804,13 @@ class SchedulerApi {
         // TODO: IMPROVE Big-O RUNTIME!!!
         const schedule: Schedule = {
             conflicts: [],
-            0: include_on_demand_jobs ? [...existing_on_demand_services_for_week.filter(service => isSameDay(Date.parse(service.timestamp), addDays(beginningOfWeek, 0)))] : [],
-            1: include_on_demand_jobs ? [...existing_on_demand_services_for_week.filter(service => isSameDay(Date.parse(service.timestamp), addDays(beginningOfWeek, 1)))] : [],
-            2: include_on_demand_jobs ? [...existing_on_demand_services_for_week.filter(service => isSameDay(Date.parse(service.timestamp), addDays(beginningOfWeek, 2)))] : [],
-            3: include_on_demand_jobs ? [...existing_on_demand_services_for_week.filter(service => isSameDay(Date.parse(service.timestamp), addDays(beginningOfWeek, 3)))] : [],
-            4: include_on_demand_jobs ? [...existing_on_demand_services_for_week.filter(service => isSameDay(Date.parse(service.timestamp), addDays(beginningOfWeek, 4)))] : [],
-            5: include_on_demand_jobs ? [...existing_on_demand_services_for_week.filter(service => isSameDay(Date.parse(service.timestamp), addDays(beginningOfWeek, 5)))] : [],
-            6: include_on_demand_jobs ? [...existing_on_demand_services_for_week.filter(service => isSameDay(Date.parse(service.timestamp), addDays(beginningOfWeek, 6)))] : [],
+            0: include_on_demand_jobs ? [...existing_on_demand_services_for_week.filter(service => isSameDay(new Date(service.timestamp), addDays(beginningOfWeek, 0)))] : [],
+            1: include_on_demand_jobs ? [...existing_on_demand_services_for_week.filter(service => isSameDay(new Date(service.timestamp), addDays(beginningOfWeek, 1)))] : [],
+            2: include_on_demand_jobs ? [...existing_on_demand_services_for_week.filter(service => isSameDay(new Date(service.timestamp), addDays(beginningOfWeek, 2)))] : [],
+            3: include_on_demand_jobs ? [...existing_on_demand_services_for_week.filter(service => isSameDay(new Date(service.timestamp), addDays(beginningOfWeek, 3)))] : [],
+            4: include_on_demand_jobs ? [...existing_on_demand_services_for_week.filter(service => isSameDay(new Date(service.timestamp), addDays(beginningOfWeek, 4)))] : [],
+            5: include_on_demand_jobs ? [...existing_on_demand_services_for_week.filter(service => isSameDay(new Date(service.timestamp), addDays(beginningOfWeek, 5)))] : [],
+            6: include_on_demand_jobs ? [...existing_on_demand_services_for_week.filter(service => isSameDay(new Date(service.timestamp), addDays(beginningOfWeek, 6)))] : [],
         };
 
         // Place jobs that have specified time window and days of week

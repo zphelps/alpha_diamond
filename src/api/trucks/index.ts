@@ -32,8 +32,6 @@ class TrucksApi {
 
         const res = await query;
 
-        console.log(res)
-
         if (res.error) {
             return Promise.reject(res.error);
         }

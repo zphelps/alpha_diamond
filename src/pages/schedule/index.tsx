@@ -64,8 +64,6 @@ const useTrucksStore = (searchState: TrucksSearchState) => {
             try {
                 const response = await trucksApi.getTrucks(searchState);
 
-                console.log(response)
-
                 if (isMounted()) {
                     dispatch(upsertManyTrucks(response.data));
                     dispatch(setTruckStatus(Status.SUCCESS));

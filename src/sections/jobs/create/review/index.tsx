@@ -23,7 +23,7 @@ import {daysOfWeek} from "../select-recurrence";
 import {schedulerApi} from "../../../../api/scheduler";
 import {ChargeUnit, Job} from "../../../../types/job.ts";
 import {getSeverityServiceTypeColor} from "../../../../utils/severity-color.ts";
-import {format} from "date-fns";
+import {format, set} from "date-fns";
 
 interface ReviewProps {
     formValues: CreateJobFormValues;
@@ -102,18 +102,27 @@ export const Review: FC<ReviewProps> = (props) => {
                 <Card variant={'outlined'} sx={{pb: 2, width: '100%'}}>
                     <CardHeader title={formValues.service_type === 'Recurring' ? 'Recurrence Logistics' : 'Service Logistics'} />
                     <PropertyList>
-                        {formValues.timestamp && <PropertyListItem
-                            divider
-                            label="Scheduled For"
-                            value={formValues.start_time_window
-                                ? format(new Date(formValues.timestamp), "MM/dd/yyyy HH:mm a")
-                                : `Any time on ${format(new Date(formValues.timestamp), "MM/dd/yyyy")}`}
-                        />}
                         {!formValues.timestamp && formValues.service_type !== 'Recurring' && <PropertyListItem
                             divider
                             label="Scheduled For"
                             value={'ASAP'}
                         />}
+                        {formValues.timestamp && <PropertyListItem
+                            divider
+                            label="Scheduled For"
+                            value={format(new Date(formValues.timestamp), "EEEE, M/dd/yyyy")}
+                        />}
+                        <PropertyListItem
+                            divider
+                            label="Time Window"
+                            value={!formValues.start_time_window ? "Any" : `${format(set(new Date(), {
+                                hours: parseInt(formValues.start_time_window.split(':')[0]),
+                                minutes: parseInt(formValues.start_time_window.split(':')[1])
+                            }), 'h:mm a')} - ${format(set(new Date(), {
+                                hours: parseInt(formValues.end_time_window.split(':')[0]),
+                                minutes: parseInt(formValues.end_time_window.split(':')[1])
+                            }), 'h:mm a')}`}
+                        />
                         <PropertyListItem
                             divider
                             label="Duration"

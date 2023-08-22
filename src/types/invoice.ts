@@ -6,14 +6,13 @@ export interface Invoice {
     client: {
         id: string;
         name: string;
-    }
-    location: {
-        id: string;
-        name: string;
-        street_address: string;
-        city: string;
-        state: string;
-        zip: string;
+        billing_location: {
+            formatted_address: string;
+        }
+        billing_contact: {
+            email: string;
+            phone: string;
+        }
     }
     summary: string;
     issued_on: string;

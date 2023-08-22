@@ -1,12 +1,12 @@
 import {useCallback, useEffect, useState} from "react";
 import ArrowLeftIcon from "@untitled-ui/icons-react/build/esm/ArrowLeft";
 import {
-    Avatar,
+    Avatar, Backdrop,
     Box,
-    Button,
+    Button, CircularProgress,
     Container,
     Divider,
-    Link,
+    Link, ListItemIcon, ListItemText, Menu, MenuItem, MenuList,
     Stack,
     SvgIcon,
     Typography
@@ -28,6 +28,18 @@ import {useDispatch, useSelector} from "react-redux";
 import {setJobsStatus, upsertOneJob} from "../../slices/jobs";
 import {Status} from "../../utils/status.ts";
 import {setInvoicesStatus, upsertOneInvoice} from "../../slices/invoices";
+import {useAuth} from "../../hooks/use-auth.ts";
+import ChevronDownIcon from "@untitled-ui/icons-react/build/esm/ChevronDown";
+import {
+    Delete,
+    DeleteForeverOutlined, DeleteOutlined,
+    Edit,
+    Email,
+    ManageAccounts,
+    Preview,
+    RemoveRedEye,
+    Verified
+} from "@mui/icons-material";
 
 const useInvoice = (invoiceId: string) => {
     const isMounted = useMounted();
@@ -61,11 +73,21 @@ export const InvoiceDetailsPage = () => {
     useInvoice(params.invoiceId);
     const dialog = useDialog();
 
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const actionsMenuOpen = Boolean(anchorEl);
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
     const navigate = useNavigate();
 
     // @ts-ignore
     const invoice = useSelector((state) => state.invoices).invoices[params.invoiceId];
 
+    const [loading, setLoading] = useState(false);
 
     if (!invoice) {
         return null;
@@ -142,30 +164,114 @@ export const InvoiceDetailsPage = () => {
                                     direction="row"
                                     spacing={2}
                                 >
+                                    {/*<Button*/}
+                                    {/*    color="inherit"*/}
+                                    {/*    onClick={() => navigate(paths.invoices.edit(invoice.id))}*/}
+                                    {/*>*/}
+                                    {/*    Edit*/}
+                                    {/*</Button>*/}
+                                    {/*<Button*/}
+                                    {/*    color="inherit"*/}
+                                    {/*    onClick={dialog.handleOpen}*/}
+                                    {/*>*/}
+                                    {/*    Preview*/}
+                                    {/*</Button>*/}
                                     <Button
-                                        color="inherit"
-                                        onClick={() => navigate(paths.invoices.edit(invoice.id))}
+                                        color="primary"
+                                        variant="contained"
+                                        onClick={handleClick}
+                                        endIcon={(
+                                            <SvgIcon>
+                                                <ChevronDownIcon/>
+                                            </SvgIcon>
+                                        )}
                                     >
-                                        Edit
+                                        Actions
                                     </Button>
-                                    <Button
-                                        color="inherit"
-                                        onClick={dialog.handleOpen}
+                                    <Menu
+                                        anchorEl={anchorEl}
+                                        open={actionsMenuOpen}
+                                        onClose={handleClose}
+                                        anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
+                                        transformOrigin={{vertical: 'top', horizontal: 'right'}}
                                     >
-                                        Preview
-                                    </Button>
-                                    <PDFDownloadLink
-                                        document={<InvoicePdfDocument invoice={invoice}/>}
-                                        fileName="invoice"
-                                        style={{textDecoration: "none"}}
-                                    >
-                                        <Button
-                                            color="primary"
-                                            variant="contained"
-                                        >
-                                            Download
-                                        </Button>
-                                    </PDFDownloadLink>
+                                        <MenuList sx={{px: 1, py: 0}}>
+                                            <MenuItem
+                                                onClick={() => navigate(paths.invoices.edit(invoice.id))}
+                                            >
+                                                <ListItemIcon>
+                                                    <Edit fontSize="small" />
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={
+                                                        <Typography variant="subtitle2">
+                                                            Edit
+                                                        </Typography>
+                                                    }
+                                                />
+                                            </MenuItem>
+                                            <MenuItem
+                                                onClick={() => {
+                                                    dialog.handleOpen();
+                                                    handleClose();
+                                                }}
+                                            >
+                                                <ListItemIcon>
+                                                    <RemoveRedEye fontSize="small" />
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={
+                                                        <Typography variant="subtitle2">
+                                                            Preview
+                                                        </Typography>
+                                                    }
+                                                />
+                                            </MenuItem>
+                                            <MenuItem
+                                                onClick={() => {}}
+                                            >
+                                                <ListItemIcon>
+                                                    <Email fontSize="small" />
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={
+                                                        <Typography variant="subtitle2">
+                                                            Email
+                                                        </Typography>
+                                                    }
+                                                />
+                                            </MenuItem>
+                                            <Divider />
+                                            <MenuItem
+                                                onClick={async () => {
+                                                    handleClose();
+                                                    setLoading(true)
+                                                    await invoicesApi.deleteInvoice({id: invoice.id});
+                                                    setLoading(false)
+                                                    navigate(paths.invoices.index);
+                                                }}
+                                            >
+                                                <ListItemIcon>
+                                                    <Delete color={'error'} fontSize="small"/>
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    sx={{color: 'error.main', fontWeight: 'bold'}}
+                                                    primary={
+                                                        <Typography variant="subtitle2" color="error.main">
+                                                            Delete
+                                                        </Typography>
+                                                    }
+                                                />
+                                            </MenuItem>
+                                        </MenuList>
+                                    </Menu>
+                                    {/*<PDFDownloadLink*/}
+                                    {/*    document={<InvoicePdfDocument invoice={invoice} franchise={auth.user.franchise}/>}*/}
+                                    {/*    fileName="invoice"*/}
+                                    {/*    style={{textDecoration: "none"}}*/}
+                                    {/*>*/}
+                                    {/*    */}
+                                    {/*</PDFDownloadLink>*/}
                                 </Stack>
                             </Stack>
                         </Stack>
@@ -178,6 +284,14 @@ export const InvoiceDetailsPage = () => {
                 onClose={dialog.handleClose}
                 open={dialog.open}
             />
+            {loading && (
+                <Backdrop
+                    sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+                    open={loading}
+                >
+                    <CircularProgress color="inherit" />
+                </Backdrop>
+            )}
         </>
     );
 };

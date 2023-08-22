@@ -66,34 +66,15 @@ export const InvoiceEditPage = () => {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    py: 3
                 }}
             >
+                <Divider sx={{mb: 4}}/>
                 <Container maxWidth="lg">
                     <Stack
                         divider={<Divider/>}
                         spacing={3}
                     >
                         <Stack spacing={3}>
-                            <div>
-                                <Link
-                                    color="text.primary"
-                                    component={RouterLink}
-                                    href={paths.invoices.index}
-                                    sx={{
-                                        alignItems: "center",
-                                        display: "inline-flex"
-                                    }}
-                                    underline="hover"
-                                >
-                                    <SvgIcon sx={{mr: 1}}>
-                                        <ArrowLeftIcon/>
-                                    </SvgIcon>
-                                    <Typography variant="subtitle2">
-                                        Invoices
-                                    </Typography>
-                                </Link>
-                            </div>
                             <Stack
                                 alignItems="flex-start"
                                 direction="row"

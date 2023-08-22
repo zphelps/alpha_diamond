@@ -14,10 +14,10 @@ import {
 } from "@mui/material";
 import {FC, useEffect, useMemo, useState} from "react";
 import ChevronDownIcon from "@untitled-ui/icons-react/build/esm/ChevronDown";
-import {ArrowForward, AutoAwesome, Check, Update} from "@mui/icons-material";
+import {ArrowForward, AutoAwesome, Check, EventBusy, EventBusyOutlined, Update} from "@mui/icons-material";
 import {useBeforeUnload, useLocation, useNavigate} from "react-router-dom";
 import {SelectServiceType} from "../../sections/jobs/create/select-service-type";
-import {Service} from "../../types/service.ts";
+import {Service, ServiceType} from "../../types/service.ts";
 import {supabase} from "../../config.ts";
 import {useFormik} from "formik";
 import toast from "react-hot-toast";
@@ -36,10 +36,11 @@ import {jobsApi} from "../../api/jobs";
 import {useAuth} from "../../hooks/use-auth.ts";
 import {uuid} from "@supabase/supabase-js/dist/main/lib/helpers";
 import {SelectDateAndDuration} from "../../sections/jobs/create/select-date-and-duration";
-import {schedulerApi} from "../../api/scheduler";
+import {schedulerApi, SchedulerResponse} from "../../api/scheduler";
 import {TimePicker} from "@mui/x-date-pickers";
 import {Timeline} from "@mui/lab";
 import {Clock} from "@untitled-ui/icons-react";
+import {addMinutes, format} from "date-fns";
 
 const steps = ["Service Type", "Client", "Client Details", "Job Details", "Schedule", "Review"];
 
@@ -143,14 +144,14 @@ const useInitialValues = (
     );
 };
 
-type Action = "create" | "update"
-
 const validationSchema = object({
     summary: string().max(5000).required("Summary is required"),
 });
 
 export const CreateJobPage = () => {
-    const [conflict, setConflict] = useState(null);
+    const [dayConflict, setDayConflict] = useState(null);
+    const [alternativeTimes, setAlternativeTimes] = useState(null);
+
     const navigate = useNavigate();
     const auth = useAuth();
     const initialValues = useInitialValues(null, auth.user.organization.id, auth.user.franchise.id); //useInitialValues(job);
@@ -163,24 +164,36 @@ export const CreateJobPage = () => {
                 toast.loading("Creating job...");
 
                 // Insert New On-Demand Job
-                if (values.service_type !== "Recurring") {
-                    const onDemandRes = await schedulerApi.insertNewOnDemandJob({
+                if (values.service_type === ServiceType.ON_DEMAND) {
+                    const onDemandRes = await schedulerApi.insertOnDemandJob({
                         // @ts-ignore
                         job: formik.values as Job,
                         operating_hours: auth.user.franchise.operating_hours,
                         operating_days: auth.user.franchise.operating_days,
                     });
 
-                    if (onDemandRes.success) {
+                    if (onDemandRes.response === SchedulerResponse.SUCCESS) {
                         toast.dismiss();
                         navigate(`/jobs/${formik.values.id}`);
                         toast.success("Job created");
-                    } else if (onDemandRes.conflict) {
+                    } else if (onDemandRes.response === SchedulerResponse.ERR_UNABLE_TO_SQUEEZE_AT_TIME) {
                         toast.dismiss();
-                        setConflict(true);
-                    } else {
+                        toast.error("Unable to schedule at selected time.");
+                        toast.loading("Finding closest available timeslots...");
+                        const res = await schedulerApi.findClosestAvailableTimeslots({
+                            // @ts-ignore
+                            job: formik.values as Job,
+                            operating_hours: auth.user.franchise.operating_hours,
+                        });
+
+                        console.log(res.timestamps.map((t) => format(new Date(t), 'MM/dd/yyyy HH:mm a')));
+
+                        setAlternativeTimes(res.timestamps.sort((a, b) => new Date(a).getTime() - new Date(b).getTime()));
+
                         toast.dismiss();
-                        toast.error("Something went wrong!");
+                    } else if (onDemandRes.response === SchedulerResponse.ERR_UNABLE_TO_SQUEEZE_ON_DAY) {
+                        toast.dismiss();
+                        setDayConflict(true);
                     }
                 } else {
                     // @ts-ignore
@@ -267,8 +280,8 @@ export const CreateJobPage = () => {
     }, [formik.values]);
 
     useEffect(() => {
-        console.log(conflict);
-    }, [conflict]);
+        console.log(dayConflict);
+    }, [dayConflict]);
 
     return (
         <>
@@ -311,38 +324,91 @@ export const CreateJobPage = () => {
                                     </>
                                 )}
                                 <Divider sx={{my: 3.5}}/>
-                                {conflict && activeStep === 5 && (
+                                {alternativeTimes && activeStep === 5 && (
                                     <Stack>
                                         <Card variant={"outlined"} sx={{mb: 3, pt: 0}}>
                                             <CardContent sx={{m: 0, pt: 2.5, pb: 1}}>
                                                 <Stack>
-                                                    <Typography variant={"h6"}>
-                                                        Scheduling conflict!
-                                                    </Typography>
+                                                    <Stack direction={'row'} alignItems={'center'} spacing={2.5}>
+                                                        <EventBusyOutlined fontSize={"large"}/>
+                                                        <Stack>
+                                                            <Typography variant={"h6"}>
+                                                                Could not schedule at selected time
+                                                            </Typography>
+                                                            <Typography
+                                                                sx={{mt: 0.75}}
+                                                                variant={"body1"}
+                                                            >
+                                                                Please select on of the following timeslots or select a different day.
+                                                            </Typography>
+                                                        </Stack>
+                                                    </Stack>
+                                                    <Divider sx={{my: 2}}/>
                                                     <Typography
-                                                        sx={{mt: 1}}
-                                                        variant={"body2"}
+                                                        fontSize={'1.05rem'}
+                                                        fontWeight={600}
                                                     >
-                                                        Please select a different date/time or let the system find the
-                                                        soonest time that works.
+                                                        {format(new Date(formik.values.timestamp), 'EEEE, MMMM dd, yyyy')}
                                                     </Typography>
                                                 </Stack>
                                             </CardContent>
-                                            <CardActions sx={{mt: 0, pt: 0, mb: 0.5}}>
+                                            <CardActions sx={{mt: 0.5, pt: 0, mb: 2, mx: 2}}>
+                                                {alternativeTimes.map((t) => (
+                                                    <Button
+                                                        key={t}
+                                                        onClick={() => {
+                                                            setAlternativeTimes(null);
+                                                            setDayConflict(false);
+                                                            formik.setFieldValue('start_time_window', format(new Date(t), 'HH:mm'));
+                                                            formik.setFieldValue('end_time_window', format(addMinutes(new Date(t), formik.values.duration), 'HH:mm'));
+                                                            formik.handleSubmit();
+                                                        }}
+                                                        variant={"outlined"}
+                                                    >
+                                                        <Typography variant={"inherit"}>
+                                                            {format(new Date(t), 'h:mm a')}
+                                                        </Typography>
+                                                    </Button>
+                                                ))}
+                                            </CardActions>
+                                        </Card>
+                                        <Divider sx={{mb: 3}}/>
+                                    </Stack>
+                                )}
+                                {dayConflict && activeStep === 5 && (
+                                    <Stack>
+                                        <Card variant={"outlined"} sx={{mb: 3, pt: 0}}>
+                                            <CardContent sx={{m: 0, pt: 2.5, pb: 1}}>
+                                                <Stack direction={'row'} alignItems={'center'} spacing={2.5}>
+                                                    <EventBusyOutlined fontSize={"large"}/>
+                                                    <Stack>
+                                                        <Typography variant={"h6"}>
+                                                            Could not schedule on selected day
+                                                        </Typography>
+                                                        <Typography
+                                                            sx={{mt: 0.75}}
+                                                            variant={"body1"}
+                                                        >
+                                                            Please select a new date or let the system schedule the job as soon as possible.
+                                                        </Typography>
+                                                    </Stack>
+                                                </Stack>
+                                            </CardContent>
+                                            <CardActions sx={{mt: 0.5, pt: 0, mb: 2, mx: 2}}>
                                                 <Button
                                                     onClick={() => {
-                                                        formik.setFieldValue("timestamp", null);
-                                                        formik.setFieldValue('start_time_window', null);
+                                                        setAlternativeTimes(null);
+                                                        setDayConflict(false);
+                                                        formik.setFieldValue('timestamp', null);
+                                                        formik.setFieldValue('start_time_window',null);
                                                         formik.setFieldValue('end_time_window', null);
                                                         formik.handleSubmit();
                                                     }}
+                                                    variant={"outlined"}
                                                 >
-                                                    <Stack direction={"row"} alignItems={"center"} spacing={1}>
-                                                        <AutoAwesome fontSize={"small"}/>
-                                                        <Typography variant={"inherit"}>
-                                                            Schedule as soon as possible
-                                                        </Typography>
-                                                    </Stack>
+                                                    <Typography variant={"inherit"}>
+                                                        Schedule as soon as possible
+                                                    </Typography>
                                                 </Button>
                                             </CardActions>
                                         </Card>

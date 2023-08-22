@@ -87,11 +87,11 @@ export const InvoicePreview: FC<InvoicePreviewProps> = (props) => {
             <Typography variant="body2">
               {invoice.client.name}
               <br />
-              {auth.user.franchise.legal_address}
+              {invoice.client.billing_location.formatted_address}
               <br />
-              {auth.user.franchise.primary_contact.phone_number}
-                <br />
-                {auth.user.franchise.primary_contact.email}
+              {invoice.client.billing_contact.phone}
+              <br />
+              {invoice.client.billing_contact.email}
             </Typography>
           </Grid>
           <Grid

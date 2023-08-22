@@ -5,6 +5,7 @@ import ArrowLeftIcon from '@untitled-ui/icons-react/build/esm/ArrowLeft';
 import { Box, Button, Dialog, SvgIcon } from '@mui/material';
 import { InvoicePdfDocument } from './invoice-pdf-document';
 import {Invoice} from "../../types/invoice.ts";
+import {useAuth} from "../../hooks/use-auth.ts";
 
 interface InvoicePdfDialogProps {
   invoice?: Invoice;
@@ -14,6 +15,7 @@ interface InvoicePdfDialogProps {
 
 export const InvoicePdfDialog: FC<InvoicePdfDialogProps> = (props) => {
   const { invoice, onClose, open = false, ...other } = props;
+  const auth = useAuth();
 
   if (!invoice) {
     return null;
@@ -56,7 +58,7 @@ export const InvoicePdfDialog: FC<InvoicePdfDialogProps> = (props) => {
             style={{ border: 'none' }}
             width="100%"
           >
-            <InvoicePdfDocument invoice={invoice} />
+            <InvoicePdfDocument invoice={invoice} franchise={auth.user.franchise} />
           </PDFViewer>
         </Box>
       </Box>

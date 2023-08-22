@@ -44,7 +44,6 @@ type GetReOptimizedRouteRequest = {
         start: string;
         end: string;
     }
-    operating_days: number[];
 };
 
 type GetReOptimizedRouteResponse = Promise<Route>;
@@ -110,6 +109,7 @@ class RouteOptimizerApi {
                 date: date,
                 solution: data.solution,
                 unserved: data.unserved,
+                error: data.error_type,
             } as Route);
         } catch (e) {
             console.log(e)
@@ -120,7 +120,7 @@ class RouteOptimizerApi {
 
 
     async getReOptimizedRoute(request: GetReOptimizedRouteRequest): GetReOptimizedRouteResponse {
-        const {services, date, organization_id, franchise_id, operating_hours, operating_days} = request;
+        const {services, date, organization_id, franchise_id, operating_hours} = request;
 
         console.log(services)
 
@@ -237,14 +237,11 @@ class RouteOptimizerApi {
 
             console.log(data)
 
-            if (data.error) {
-                return Promise.reject(data.error);
-            }
-
             return Promise.resolve({
                 date: date,
                 solution: data.solution,
                 unserved: data.unserved,
+                error: data.error_type,
             } as Route);
         } catch (e) {
             console.log(e)

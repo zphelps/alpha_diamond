@@ -65,13 +65,22 @@ export type CreateInvoiceRequest = {
 type CreateInvoiceResponse = Promise<{
     success: boolean;
 }>;
+
+type DeleteInvoiceRequest = {
+    id: string;
+}
+
+type DeleteInvoiceResponse = Promise<{
+    success: boolean;
+}>
+
 class InvoicesApi {
 
     async getInvoices(request: GetInvoicesRequest = {}): GetInvoicesResponse {
         const {filters, page, rowsPerPage, sortBy, sortDir} = request;
         const query = supabase
             .from("client_invoices")
-            .select("*, client:client_id(*)", {count: "exact"});
+            .select("*, client:client_id(*, billing_location:billing_location_id(*), billing_contact:billing_contact_id(*))", {count: "exact"});
 
         if (typeof filters !== "undefined") {
 
@@ -110,7 +119,7 @@ class InvoicesApi {
     async getInvoice(request?: GetInvoiceRequest): GetInvoiceResponse {
         const res = await supabase
             .from("client_invoices")
-            .select("*, client:client_id(id, name)")
+            .select("*, client:client_id(*, billing_location:billing_location_id(*), billing_contact:billing_contact_id(*))")
             .eq('id', request.id)
             .single();
         return Promise.resolve(res.data as Job);
@@ -183,6 +192,39 @@ class InvoicesApi {
         const res = await supabase
             .from("client_invoices")
             .update(request)
+            .eq('id', request.id)
+            .single();
+        if (res.error) {
+            return Promise.reject(res.error);
+        }
+        return Promise.resolve({success: true});
+    }
+
+    async deleteInvoice(request: DeleteInvoiceRequest): DeleteInvoiceResponse {
+        const {data: ids, error} = await supabase
+            .from("client_services")
+            .select("id")
+            .eq("invoice_id", request.id);
+        if (error) {
+            return Promise.reject(error);
+        }
+
+        for (const service of ids) {
+            const res = await supabase
+                .from("client_services")
+                .update({
+                    invoice_id: null,
+                })
+                .eq("id", service.id)
+                .single();
+            if (res.error) {
+                return Promise.reject(res.error);
+            }
+        }
+
+        const res = await supabase
+            .from("client_invoices")
+            .delete()
             .eq('id', request.id)
             .single();
         if (res.error) {

@@ -124,8 +124,6 @@ class ServicesApi {
         const startDate = startOfDay(targetDate); //isToday(targetDate) ? setMinutes(new Date(), -60) : startOfDay(targetDate);
         const endDate = startOfDay(addDays(targetDate, 1));
 
-        console.log(targetDate, startDate, endDate);
-
         query.gte('timestamp', formatISO(startDate))
         query.lt('timestamp', formatISO(endDate));
 
@@ -139,8 +137,6 @@ class ServicesApi {
         if (res.error) {
             return Promise.reject(res.error);
         }
-
-        console.log(res);
 
         return Promise.resolve({
             data: (res.data as Service[]) ?? [],
