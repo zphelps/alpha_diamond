@@ -18,6 +18,7 @@ type UpdateServiceResponse = Promise<{
 type GetServicesRequest = {
     completed?: boolean;
     invoiced?: boolean;
+    invoice_id?: string;
     exclude_ids?: string[];
     clientID?: string;
     jobID?: string;
@@ -150,7 +151,7 @@ class ServicesApi {
      * @param request
      */
     async getServices(request: GetServicesRequest): GetServicesResponse {
-        const {exclude_ids, jobID, clientID, page, rowsPerPage, completed, invoiced, organization_id, franchise_id} = request;
+        const {invoice_id, exclude_ids, jobID, clientID, page, rowsPerPage, completed, invoiced, organization_id, franchise_id} = request;
         const query = supabase
             .from("client_services")
             .select("*, client:client_id(id, name), on_site_contact:on_site_contact_id(*), job:job_id(*), location:location_id(*), truck:truck_id(*)", {count: "exact"});
@@ -167,8 +168,12 @@ class ServicesApi {
             query.eq("status", "completed");
         }
 
-        if (typeof invoiced !== "undefined" && !invoiced) {
+        if (typeof invoiced !== "undefined" && !invoiced && typeof invoice_id !== "undefined") {
+            query.or("invoice_id.is.null,invoice_id.eq." + invoice_id);
+        } else if (typeof invoiced !== "undefined" && !invoiced) {
             query.is("invoice_id", null);
+        } else if (typeof invoiced !== "undefined" && invoiced) {
+            query.not("invoice_id", 'eq', null);
         }
 
         if (typeof exclude_ids !== "undefined") {
@@ -187,6 +192,8 @@ class ServicesApi {
         }
 
         const res = await query;
+
+        console.log(res)
 
         return Promise.resolve({
             data: (res.data as Service[]) ?? [],

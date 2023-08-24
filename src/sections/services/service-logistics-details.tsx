@@ -6,17 +6,14 @@ import {PropertyListItem} from "../../components/property-list-item.tsx";
 import {format} from "date-fns";
 
 interface ServiceLogisticsDetailsProps {
-    street_address?: string;
-    city?: string;
-    state?: string;
-    zip?: string;
+    formatted_address?: string;
     timestamp?: string;
     duration?: number;
     driver_notes?: string;
 }
 
 export const ServiceLogisticsDetails: FC<ServiceLogisticsDetailsProps> = (props) => {
-    const {driver_notes, street_address, zip, duration, timestamp, city, state} = props;
+    const {driver_notes, formatted_address, duration, timestamp} = props;
     const mdUp = useMediaQuery((theme: Theme) => theme.breakpoints.up("md"));
 
     const align = mdUp ? "horizontal" : "vertical";
@@ -29,7 +26,7 @@ export const ServiceLogisticsDetails: FC<ServiceLogisticsDetailsProps> = (props)
                     align={align}
                     divider
                     label="Address"
-                    value={`${street_address}, ${city}, ${state} ${zip}`}
+                    value={formatted_address}
                 />
                 <PropertyListItem
                     align={align}

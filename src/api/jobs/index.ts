@@ -124,6 +124,10 @@ class JobsApi {
 
         console.log(res);
 
+        if (res.error) {
+            return Promise.reject(res.error)
+        }
+
         return Promise.resolve({
             data: (res.data as Job[]) ?? [],
             count: res.count ?? 0,

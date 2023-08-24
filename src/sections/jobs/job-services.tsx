@@ -180,7 +180,7 @@ export const JobServices: FC<JobServicesProps> = (props) => {
                                         {issueDate}
                                     </TableCell>
                                     <TableCell>
-                                        {`${service.location.street_address}, ${service.location.city}, ${service.location.state}`}
+                                        {`${service.location.formatted_address}`}
                                     </TableCell>
                                     <TableCell>
                                         {/*@ts-ignore*/}

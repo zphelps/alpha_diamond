@@ -1,3 +1,4 @@
+import {Bin} from "./bin.ts";
 
 export interface Service {
     id: string;
@@ -10,10 +11,7 @@ export interface Service {
     location: {
         id: string;
         name: string;
-        street_address: string;
-        city: string;
-        state: string;
-        zip: string;
+        formatted_address: string;
         lat: number;
         lng: number;
     }
@@ -50,6 +48,7 @@ export interface Service {
     invoice_id?: string;
     completed_on?: string;
     num_units_to_charge?: number;
+    bins?: Bin[];
 }
 
 export enum ServiceType {
@@ -57,4 +56,12 @@ export enum ServiceType {
     ON_DEMAND = "On-Demand",
     DEMO = "Demo",
     TRIAL = "Trial",
+}
+
+export enum ServiceStatus {
+    SCHEDULED = "scheduled",
+    IN_PROGRESS = "in-progress",
+    COMPLETED = "completed",
+    CANCELLED = "cancelled",
+    INCOMPLETE = "incomplete",
 }

@@ -20,28 +20,22 @@ import {
 } from "@mui/material";
 import {useMounted} from "../../hooks/use-mounted.ts";
 import {Seo} from "../../components/seo.tsx";
-import {RouterLink} from "../../components/router-link.tsx";
-import {paths} from "../../paths.ts";
 import {useParams} from "react-router-dom";
 import {useDispatch, useSelector} from "react-redux";
 import {Status} from "../../utils/status.ts";
-import {ClientBasicDetails} from "../../sections/clients/client-basic-details.tsx";
-import {ClientLocations} from "../../sections/clients/client-locations.tsx";
-import {ClientServiceContact} from "../../sections/clients/client-service-contact.tsx";
-import {jobsApi} from "../../api/jobs";
-import {setJobsStatus, upsertOneJob} from "../../slices/jobs";
-import {JobBasicDetails} from "../../sections/jobs/job-basic-details.tsx";
-import {JobBookingDetails} from "../../sections/jobs/job-booking-details.tsx";
-import {JobRecurrenceDetails} from "../../sections/jobs/job-recurrence-details.tsx";
-import {Service} from "../../types/service.ts";
 import {servicesApi} from "../../api/services";
-import {JobServices} from "../../sections/jobs/job-services.tsx";
 import {setServicesStatus, upsertOneService} from "../../slices/services";
 import {ServiceBasicDetails} from "../../sections/services/service-basic-details.tsx";
 import {ServiceLogisticsDetails} from "../../sections/services/service-logistics-details.tsx";
 import {ServiceOnSiteContact} from "../../sections/services/service-on-site-contact.tsx";
 import {SeverityPill} from "../../components/severity-pill.tsx";
 import {getSeverityServiceTypeColor, getSeverityStatusColor} from "../../utils/severity-color.ts";
+import {CompactionChart} from "../../sections/services/compaction-chart.tsx";
+import {ServiceReportSummary} from "../../sections/services/service-report-summary.tsx";
+import {ServiceChargeDetails} from "../../sections/services/service-charge-details.tsx";
+import {ServiceFiles} from "../../sections/services/service-files.tsx";
+import {binsApi} from "../../api/bins";
+import Error from '/assets/errors/error-404.png'
 
 const tabs = [
     {label: "Details", value: "details"},
@@ -55,9 +49,13 @@ const useService = (serviceID: string) => {
     const handleServiceGet = useCallback(async () => {
         try {
             const response = await servicesApi.getService({id: serviceID});
+            const bins_res = await binsApi.getBins({service_id: serviceID});
 
             if (isMounted()) {
-                dispatch(upsertOneService(response));
+                dispatch(upsertOneService({
+                    ...response,
+                    bins: bins_res.data
+                }));
                 dispatch(setServicesStatus(Status.SUCCESS));
             }
         } catch (err) {
@@ -85,6 +83,8 @@ export const ServiceDetailsPage = () => {
     // @ts-ignore
     const service = useSelector((state) => state.services).services[params.serviceID];
 
+    console.log(service)
+
     const handleTabsChange = useCallback(
         (event: ChangeEvent<{}>, value: string): void => {
             setCurrentTab(value);
@@ -103,31 +103,31 @@ export const ServiceDetailsPage = () => {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    py: 2
                 }}
             >
+                <Divider sx={{mb: 4}}/>
                 <Container maxWidth="xl">
                     <Stack spacing={3}>
                         <Stack spacing={2}>
-                            <div>
-                                <Link
-                                    color="text.primary"
-                                    component={RouterLink}
-                                    href={paths.schedule}
-                                    sx={{
-                                        alignItems: "center",
-                                        display: "inline-flex"
-                                    }}
-                                    underline="hover"
-                                >
-                                    <SvgIcon sx={{mr: 1}}>
-                                        <ArrowLeftIcon/>
-                                    </SvgIcon>
-                                    <Typography variant="subtitle2">
-                                        Schedule
-                                    </Typography>
-                                </Link>
-                            </div>
+                            {/*<div>*/}
+                            {/*    <Link*/}
+                            {/*        color="text.primary"*/}
+                            {/*        component={RouterLink}*/}
+                            {/*        href={paths.schedule}*/}
+                            {/*        sx={{*/}
+                            {/*            alignItems: "center",*/}
+                            {/*            display: "inline-flex"*/}
+                            {/*        }}*/}
+                            {/*        underline="hover"*/}
+                            {/*    >*/}
+                            {/*        <SvgIcon sx={{mr: 1}}>*/}
+                            {/*            <ArrowLeftIcon/>*/}
+                            {/*        </SvgIcon>*/}
+                            {/*        <Typography variant="subtitle2">*/}
+                            {/*            Schedule*/}
+                            {/*        </Typography>*/}
+                            {/*    </Link>*/}
+                            {/*</div>*/}
                             <Stack
                                 alignItems="flex-start"
                                 direction={{
@@ -234,10 +234,7 @@ export const ServiceDetailsPage = () => {
                                         <Stack spacing={4}>
                                             <ServiceLogisticsDetails
                                                 driver_notes={service.driver_notes}
-                                                street_address={service.location.street_address}
-                                                city={service.location.city}
-                                                state={service.location.state}
-                                                zip={service.location.zip}
+                                                formatted_address={service.location.formatted_address}
                                                 timestamp={service.timestamp}
                                                 duration={service.duration}
                                             />
@@ -251,7 +248,7 @@ export const ServiceDetailsPage = () => {
                                                 first_name={service.on_site_contact.first_name}
                                                 last_name={service.on_site_contact.last_name}
                                                 email={service.on_site_contact.email}
-                                                phone_number={service.on_site_contact.phone_number}
+                                                phone_number={service.on_site_contact.phone}
                                             />
                                           {/*<CustomerEmailsSummary />*/}
                                           {/*<CustomerDataManagement />*/}
@@ -260,7 +257,60 @@ export const ServiceDetailsPage = () => {
                                 </Grid>
                             </div>
                         )}
-                        {currentTab === 'services' && <JobServices jobID={service.id} clientID={service.client.id} />}
+                        {currentTab === 'report' && service.completed_on && (
+                            <Stack spacing={2} >
+                                <Grid
+                                    container
+                                    spacing={4}
+                                >
+                                    <Grid
+                                        xs={12}
+                                        lg={4}
+                                    >
+                                        <Stack spacing={4}>
+                                            <ServiceReportSummary service={service} />
+                                            <ServiceFiles service={service} />
+                                        </Stack>
+                                    </Grid>
+                                    <Grid
+                                        xs={12}
+                                        lg={8}
+                                    >
+                                        <Stack spacing={4}>
+                                            <ServiceChargeDetails service={service} />
+                                            <CompactionChart bins={service.bins} />
+                                        </Stack>
+                                    </Grid>
+                                </Grid>
+                            </Stack>
+                        )}
+                        {currentTab === 'report' && !service.completed_on && (
+                            <Stack spacing={2} >
+                                <Grid
+                                    container
+                                    spacing={4}
+                                    sx={{mt: 5}}
+                                    justifyContent={'center'}
+                                >
+                                    <Grid
+                                        xs={10}
+                                        sm={8}
+                                        md={6}
+                                        lg={4}
+                                    >
+                                        <Stack spacing={4}>
+                                            <img src={Error} />
+                                            <Typography
+                                                align="center"
+                                                variant={'h5'}
+                                            >
+                                                Service is not complete yet
+                                            </Typography>
+                                        </Stack>
+                                    </Grid>
+                                </Grid>
+                            </Stack>
+                        )}
                         {/*{currentTab === 'logs' && <CustomerLogs logs={logs} />}*/}
                     </Stack>
                 </Container>

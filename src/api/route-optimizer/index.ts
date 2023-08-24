@@ -4,7 +4,6 @@ import {useAuth} from "../../hooks/use-auth.ts";
 import {Service} from "../../types/service.ts";
 import {Route} from "../../types/route.ts";
 import {addMinutes, format, isAfter, isBefore, isToday, set, setMinutes} from "date-fns";
-import {SampleService} from "../../utils/testing/service-data.ts";
 import {ScheduleServiceConstraints} from "../scheduler";
 import {trucksApi} from "../trucks";
 import {uuid} from "@supabase/supabase-js/dist/main/lib/helpers";

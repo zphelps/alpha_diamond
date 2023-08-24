@@ -138,11 +138,6 @@ export const Review: FC<ReviewProps> = (props) => {
                             label="Services Per Week"
                             value={formValues.services_per_week.toString()}
                         />}
-                        {formValues.service_type === 'Recurring' && <PropertyListItem
-                            divider
-                            label="Time Window"
-                            value={!formValues.start_time_window ? "Any" : `${formValues.start_time_window} - ${formValues.end_time_window}`}
-                        />}
                         <PropertyListItem
                             divider
                             label="Summary"

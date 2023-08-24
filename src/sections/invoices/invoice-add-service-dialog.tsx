@@ -14,8 +14,10 @@ import {FieldArrayMethodProps} from "react-hook-form";
 import {ChargeUnit} from "../../types/job.ts";
 import {uuid} from "@supabase/supabase-js/dist/main/lib/helpers";
 import {NonInvoicedClientJob, SelectNonInvoicedJobs} from "../../components/select-non-invoiced-jobs";
+import {current} from "@reduxjs/toolkit";
 
 interface InvoiceAddServiceDialogProps {
+    current_invoice_id?: string;
     client_id?: string;
     existing_service_ids?: string[];
     append: (value: unknown, options?: FieldArrayMethodProps) => void;
@@ -25,6 +27,7 @@ interface InvoiceAddServiceDialogProps {
 
 export const InvoiceAddServiceDialog: FC<InvoiceAddServiceDialogProps> = (props) => {
     const {
+        current_invoice_id,
         client_id,
         existing_service_ids,
         onClose,
@@ -67,6 +70,7 @@ export const InvoiceAddServiceDialog: FC<InvoiceAddServiceDialogProps> = (props)
 
                     <Card variant={"outlined"} sx={{borderRadius: "10px"}}>
                         <SelectNonInvoicedJobs
+                            current_invoice_id={current_invoice_id}
                             client_id={client_id}
                             existing_service_ids={existing_service_ids}
                             handleJobSelectionChange={handleJobSelectionChange}

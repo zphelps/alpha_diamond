@@ -1,9 +1,7 @@
 import {Seo} from "../../components/seo.tsx";
 import {Button} from "@mui/material";
-import {sampleRecurringJobs, sampleServices} from "../../utils/testing/service-data.ts";
 import {formatDate} from "fullcalendar";
 import {addMinutes, differenceInMinutes, format, isAfter, isBefore, parse, set} from "date-fns";
-import {createWeekOfServices, Schedule} from "../../utils/testing/algorithms.ts";
 import {isEqual} from "lodash";
 import {supabase} from "../../config.ts";
 export const HomePage = () => {

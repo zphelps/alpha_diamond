@@ -147,7 +147,7 @@ export const ServicePreviewPreviewDialog: FC<ServicePreviewDialogProps> = (props
                             align={'horizontal'}
                             divider
                             label="Address"
-                            value={`${service?.location.street_address}, ${service?.location.city}, ${service?.location.state} ${service?.location.zip}`}
+                            value={service?.location.formatted_address}
                         />
 
                         <PropertyListItem

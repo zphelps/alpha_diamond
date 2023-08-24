@@ -112,7 +112,7 @@ export const SelectClientLocationListTable: FC<SelectClientLocationListTableProp
                     {location.name}
                   </TableCell>
                   <TableCell>
-                    {location.street_address}
+                    {location.formatted_address}
                   </TableCell>
                 </TableRow>
               );

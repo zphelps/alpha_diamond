@@ -67,10 +67,12 @@ export const ServiceBasicDetails: FC<ServiceBasicDetailsProps> = (props) => {
                     value={capitalize(serviceType)}
                 />
                 {charge_unit === ChargeUnit.MONTH && <PropertyListItem
+                    divider
                     label="Monthly Charge"
                     value={`$${charge_per_unit}`}
                 />}
                 {charge_unit !== ChargeUnit.MONTH && <PropertyListItem
+                    divider
                     label="Charge"
                     value={`$${charge_per_unit} / ${charge_unit}`}
                 />}

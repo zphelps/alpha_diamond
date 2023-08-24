@@ -33,7 +33,7 @@ import {useMounted} from "../../hooks/use-mounted.ts";
 import {servicesApi} from "../../api/services";
 import {setServicesStatus, upsertManyServices} from "../../slices/services";
 import {Status} from "../../utils/status.ts";
-import {Service, ServiceType} from "../../types/service.ts";
+import {Service, ServiceStatus, ServiceType} from "../../types/service.ts";
 import {date} from "yup";
 import {TimelineToolbar, TimelineView} from "../../sections/schedule/timeline-toolbar.tsx";
 import {schedulerApi} from "../../api/scheduler";
@@ -45,6 +45,17 @@ import {useAuth} from "../../hooks/use-auth.ts";
 import {ServicePreviewPreviewDialog} from "../../sections/services/service-preview-dialog.tsx";
 import {useNavigate} from "react-router-dom";
 import {paths} from "../../paths.ts";
+import {getServiceScheduleBlockColor} from "../../utils/severity-color.ts";
+import {
+    Cancel,
+    Check,
+    CheckCircle,
+    Error,
+    ErrorOutline,
+    ErrorOutlined,
+    HourglassBottom,
+    Warning
+} from "@mui/icons-material";
 
 interface PreviewDialogData {
     serviceId?: string;
@@ -137,8 +148,9 @@ const useScheduleServices = (services: Service[] = []) => {
                 return {
                     id: service.id,
                     title: service.client.name,
-                    backgroundColor: service.job.service_type === ServiceType.RECURRING ? colors.blueGrey[600] : colors.blue[600],
+                    backgroundColor: getServiceScheduleBlockColor(service.job.service_type, service.status),
                     resourceId: service.truck.id,
+                    borderColor: getServiceScheduleBlockColor(service.job.service_type, service.status),
                     start: start,
                     end: end,
                     allDay: false,
@@ -188,7 +200,7 @@ export const SchedulePage = () => {
     // @ts-ignore
     const servicesStore = useSelector((state) => state.services);
 
-    const services = useScheduleServices(servicesStore.services); // useScheduleServices(generatedServices); (for testing)
+    const services = useScheduleServices(servicesStore.services);
 
     const mdUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
     const [date, setDate] = useState<Date>(new Date());
@@ -415,27 +427,32 @@ export const SchedulePage = () => {
                                             driver: truck.driver.first_name + ' ' + truck.driver.last_name,
                                         },
                                     }))]}
-                                    // allDayMaintainDuration
-                                    // droppable
-                                    // editable
                                     eventContent={(event) => (
                                         <Box>
                                             <Stack>
-                                                <Typography
-                                                    fontSize={'0.7em'}
-                                                    sx={{
-                                                        textDecoration: event.event.extendedProps.service.status === 'completed' ? 'line-through' : 'none',
-                                                    }}
-                                                >
-                                                    {event.event.start.toLocaleTimeString('en-US', { timeStyle: 'short' })}
-                                                </Typography>
+                                                <Stack direction={'row'}>
+                                                    {event.event.extendedProps.service.status === ServiceStatus.INCOMPLETE && <Warning sx={{width: 12, height: 12, mr: 0.5}}/>}
+                                                    {event.event.extendedProps.service.status === ServiceStatus.CANCELLED && <Cancel sx={{width: 12, height: 12, mr: 0.5}}/>}
+                                                    {event.event.extendedProps.service.status === ServiceStatus.COMPLETED && <CheckCircle sx={{width: 12, height: 12, mr: 0.5}}/>}
+                                                    {event.event.extendedProps.service.status === ServiceStatus.IN_PROGRESS && <HourglassBottom sx={{width: 12, height: 12, mr: 0.5}}/>}
+                                                    <Typography
+                                                        fontSize={'0.7em'}
+                                                        sx={{
+                                                            textDecoration: event.event.extendedProps.service.status === ServiceStatus.COMPLETED
+                                                            || event.event.extendedProps.service.status === ServiceStatus.CANCELLED ? 'line-through' : 'none',
+                                                        }}
+                                                    >
+                                                        {event.event.start.toLocaleTimeString('en-US', { timeStyle: 'short' })}
+                                                    </Typography>
+                                                </Stack>
                                                 <Typography sx={{
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
                                                     display: '-webkit-box',
                                                     WebkitLineClamp: 1,
                                                     WebkitBoxOrient: 'vertical',
-                                                    textDecoration: event.event.extendedProps.service.status === 'completed' ? 'line-through' : 'none',
+                                                    textDecoration: event.event.extendedProps.service.status === ServiceStatus.COMPLETED
+                                                    || event.event.extendedProps.service.status === ServiceStatus.CANCELLED ? 'line-through' : 'none',
                                                 }} fontSize={'0.85em'} lineHeight={1.2} fontWeight={'600'}>{event.event.title}</Typography>
                                             </Stack>
                                         </Box>

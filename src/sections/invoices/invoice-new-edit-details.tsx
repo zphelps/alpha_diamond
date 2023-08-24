@@ -28,6 +28,7 @@ import {format} from "date-fns";
 // ----------------------------------------------------------------------
 
 interface AddServiceDialogData {
+    current_invoice_id?: string;
     client_id?: string;
     existing_service_ids?: string[];
     append: (value: unknown, options?: FieldArrayMethodProps) => void;
@@ -36,7 +37,6 @@ interface AddServiceDialogData {
 export default function InvoiceNewEditDetails() {
 
     const addServiceDialog = useDialog<AddServiceDialogData>();
-
 
     const {control, setValue, watch, resetField} = useFormContext();
 
@@ -53,12 +53,15 @@ export default function InvoiceNewEditDetails() {
 
     const totalAmount = subTotal - (values.discount ?? 0); // - values.shipping + values.taxes;
 
+    console.log("values", values);
+
     useEffect(() => {
         setValue("totalAmount", totalAmount);
     }, [setValue, totalAmount]);
 
     useEffect(() => {
         addServiceDialog.data = {
+            current_invoice_id: values.id,
             client_id: values.client?.id,
             existing_service_ids: values.items.reduce((acc: string[], item: InvoiceItem) => {
                 return [...acc, ...item.service_ids ?? []];
@@ -69,6 +72,7 @@ export default function InvoiceNewEditDetails() {
 
     const handleAdd = () => {
         addServiceDialog.handleOpen({
+            current_invoice_id: values.id,
             client_id: values.client?.id,
             existing_service_ids: values.items.reduce((acc: string[], item: InvoiceItem) => {
                 return [...acc, ...item.service_ids ?? []];
@@ -80,15 +84,6 @@ export default function InvoiceNewEditDetails() {
     const handleRemove = (index: number) => {
         remove(index);
     };
-
-    const handleClearService = useCallback(
-        (index: number) => {
-            resetField(`items[${index}].quantity`);
-            resetField(`items[${index}].price`);
-            resetField(`items[${index}].total`);
-        },
-        [resetField]
-    );
 
     const handleChangeNumUnits = useCallback(
         (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) => {
@@ -349,6 +344,7 @@ export default function InvoiceNewEditDetails() {
             {renderTotal}
 
             {addServiceDialog.data && <InvoiceAddServiceDialog
+                current_invoice_id={addServiceDialog.data?.current_invoice_id}
                 append={addServiceDialog.data?.append}
                 open={addServiceDialog.open}
                 client_id={addServiceDialog.data?.client_id}

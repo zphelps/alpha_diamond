@@ -31,6 +31,7 @@ interface JobServicesSearchState {
     invoiced: boolean;
     completed: boolean;
     exclude_ids?: string[];
+    invoice_id?: string;
     clientID: string;
     organization_id: string;
     franchise_id: string;
@@ -38,8 +39,9 @@ interface JobServicesSearchState {
     rowsPerPage: number;
 }
 
-const useClientServicesSearch = (clientID: string, existing_service_ids: string[], organization_id: string, franchise_id: string) => {
+const useClientServicesSearch = (current_invoice_id: string, clientID: string, existing_service_ids: string[], organization_id: string, franchise_id: string) => {
     const [state, setState] = useState<JobServicesSearchState>({
+        invoice_id: current_invoice_id,
         clientID: clientID,
         invoiced: false,
         exclude_ids: existing_service_ids,
@@ -305,6 +307,7 @@ function Row(props: { job: NonInvoicedClientJob, selectedAll: boolean, selectedS
 }
 
 interface SelectNonInvoicedJobsProps {
+    current_invoice_id?: string;
     client_id: string;
     existing_service_ids: string[];
     handleJobSelectionChange: (jobs: NonInvoicedClientJob[]) => void;
@@ -312,9 +315,10 @@ interface SelectNonInvoicedJobsProps {
 
 export const SelectNonInvoicedJobs = (props) => {
     const auth = useAuth();
-    const {client_id, existing_service_ids, handleJobSelectionChange} = props;
+    const {client_id, existing_service_ids, handleJobSelectionChange, current_invoice_id} = props;
 
-    const clientServicesSearch = useClientServicesSearch(client_id, existing_service_ids, auth.user.organization.id, auth.user.franchise.id);
+
+    const clientServicesSearch = useClientServicesSearch(current_invoice_id, client_id, existing_service_ids, auth.user.organization.id, auth.user.franchise.id);
     const clientServicesStore = useClientServicesStore(clientServicesSearch.state);
 
     const filteredClientServices = useClientServices(clientServicesStore);

@@ -1,7 +1,7 @@
 import {Client} from "../../types/client.ts";
 import {supabase} from "../../config.ts";
 import {useAuth} from "../../hooks/use-auth.ts";
-import {Service} from "../../types/service.ts";
+import {Service, ServiceType} from "../../types/service.ts";
 import {Route} from "../../types/route.ts";
 import {
     addDays,
@@ -22,6 +22,7 @@ import {Job} from "../../types/job.ts";
 import {routeOptimizerApi} from "../route-optimizer";
 import {NewServiceRequest, servicesApi} from "../services";
 import {isEqual} from "lodash";
+import {trucksApi} from "../trucks";
 
 type GetScheduleRequest = {
     beginningOfWeek: Date;
@@ -29,6 +30,7 @@ type GetScheduleRequest = {
     new_job?: Job;
     organization_id: string;
     franchise_id: string;
+    num_trucks: number;
 };
 
 type GetScheduleResponse = Promise<Schedule>;
@@ -108,8 +110,7 @@ export type ScheduleServiceConstraints = {
 
 export type Schedule = {
     conflicts: {
-        job?: Job,
-        service?: ScheduleServiceConstraints,
+        job: Job,
         reason: string,
     }[],
     [day: number]: ScheduleServiceConstraints[]
@@ -508,24 +509,33 @@ class SchedulerApi {
         // Beginning of the next week
         const beginningOfWeek = startOfWeek(addDays(new Date(), 7));
 
-        console.log("Inserting recurring job");
+        // Get trucks
+        const trucks = await trucksApi.getTrucks({
+            organization_id: organization_id,
+            franchise_id: franchise_id,
+        });
+
+        console.log("Inserting recurring job...");
         const schedule = await this.getSchedule({
             beginningOfWeek: beginningOfWeek,
             include_on_demand_jobs: false,
             new_job: job,
             organization_id: organization_id,
             franchise_id: franchise_id,
+            num_trucks: trucks.data.length,
         });
-
-        console.log("Schedule", schedule);
 
         const unscheduledJobs = schedule.conflicts;
 
-        for (let i = 1; i < 6; i++) {
-            console.log("Day", i);
-            const services = schedule[i];
+        if (unscheduledJobs.length > 0) {
+            return Promise.resolve({
+                success: false,
+                conflicts: unscheduledJobs,
+            });
+        }
 
-            console.log("Services", services);
+        for (let i = 0; i < 7; i++) {
+            const services = schedule[i];
 
             // Don't create a route if there are no services
             if (services.length === 0) continue;
@@ -535,7 +545,7 @@ class SchedulerApi {
                 services,
                 organization_id: services[0].job.organization_id,
                 franchise_id: services[0].job.franchise_id,
-                date: addDays(startOfWeek(new Date()), i - 1).toISOString(),
+                date: addDays(startOfWeek(new Date()), i).toISOString(),
                 operating_hours: operating_hours,
                 operating_days: operating_days,
             });
@@ -543,12 +553,11 @@ class SchedulerApi {
             if (route.unserved) {
                 for (const [id, reason] of Object.entries(route.unserved)) {
                     unscheduledJobs.push({
-                        service: services.find(service => service.id === id),
+                        job: services.find(service => service.id === id).job,
                         reason: reason,
                     });
                 }
             }
-            console.log("Route", route);
         }
 
         if (unscheduledJobs.length === 0) {
@@ -561,7 +570,7 @@ class SchedulerApi {
                 duration: job.duration,
                 location_id: job.location.id,
                 status: "open",
-                service_type: "Recurring",
+                service_type: ServiceType.RECURRING,
                 on_site_contact_id: job.on_site_contact.id,
                 driver_notes: job.driver_notes,
                 organization_id: job.organization_id,
@@ -615,29 +624,30 @@ class SchedulerApi {
     async insertRecurringJobServicesForWeek(request: InsertRecurringJobServicesForWeekRequest): InsertRecurringJobServicesForWeekResponse {
         const scheduledServices = [];
 
-        console.log("Creating schedule services");
+        console.log("Creating schedule services...");
+
+        // Get trucks
+        const trucks = await trucksApi.getTrucks({
+            organization_id: request.organization_id,
+            franchise_id: request.franchise_id,
+        });
+
         const schedule = await this.getSchedule({
             beginningOfWeek: request.beginningOfWeek,
             include_on_demand_jobs: true,
             organization_id: request.organization_id,
             franchise_id: request.franchise_id,
+            num_trucks: trucks.data.length,
         });
 
         const existing_services_for_week = await servicesApi.getScheduleServicesForWeek({
             beginning_of_week: request.beginningOfWeek.toISOString(),
         });
 
-        console.log("Existing services for week", existing_services_for_week);
-
         const unscheduledJobs = [];
 
-        console.log("Schedule", schedule);
-
         for (let i = 0; i < 7; i++) {
-            console.log("Day", i);
             const services = schedule[i];
-
-            console.log("Services", services);
 
             // Don't create a route if there are no services
             if (services.length === 0) continue;
@@ -660,8 +670,6 @@ class SchedulerApi {
                     });
                 }
             }
-
-            console.log("Route", route);
 
             const res = await this.upsertServicesForRoute({
                 route: route,
@@ -695,12 +703,6 @@ class SchedulerApi {
 
                 console.log("Service", service);
 
-                // const service_timestamp = set(new Date(`${service.date}T00:00`), {
-                //     hours: parseInt(visit.arrival_time.split(":")[0]),
-                //     minutes: parseInt(visit.arrival_time.split(":")[1]),
-                //     seconds: 0,
-                // });
-
                 let service_timestamp;
 
                 // Adjust arrival time if idle time is present and job has time restrictions
@@ -721,7 +723,8 @@ class SchedulerApi {
 
                 let service_id = service.id;
 
-                if (service.job.service_type === 'Recurring') {
+                // TODO: OR trial
+                if (service.job.service_type === ServiceType.RECURRING) {
                     service_id = await this.#getServiceID(service, service_timestamp, existing_services_for_week);
                 }
 
@@ -776,7 +779,7 @@ class SchedulerApi {
     }
 
     async getSchedule(request: GetScheduleRequest): GetScheduleResponse {
-        const {beginningOfWeek, include_on_demand_jobs, new_job, organization_id, franchise_id} = request;
+        const {num_trucks, beginningOfWeek, include_on_demand_jobs, new_job, organization_id, franchise_id} = request;
 
         const jobsToBeScheduled = await jobsApi.getJobs({
             filters: {
@@ -798,7 +801,7 @@ class SchedulerApi {
         //TODO: Change to Demo or On-Demand
         const existing_on_demand_services_for_week = include_on_demand_jobs ? await servicesApi.getScheduleServicesForWeek({
             beginning_of_week: beginningOfWeek.toISOString(),
-            service_type: "On-Demand",
+            service_type: ServiceType.ON_DEMAND,
         }) : [];
 
         // TODO: IMPROVE Big-O RUNTIME!!!
@@ -822,12 +825,23 @@ class SchedulerApi {
                     job: job,
                     date: format(addDays(beginningOfWeek, day), "yyyy-MM-dd"),
                 };
-                if (this.#doesNewJobConflict([...schedule[day]], job)) {
+                if (this.#doesNewJobConflict([...schedule[day]], job, num_trucks)) {
+                    // schedule.conflicts.push({
+                    //     service: service,
+                    //     reason: "Could not be scheduled because there are conflicts with other jobs on these days and times"
+                    // });
+                    // add to conflicts
+
+                    // add to conflicts
                     schedule.conflicts.push({
-                        service: service,
+                        job: job,
                         reason: "Could not be scheduled because there are conflicts with other jobs on these days and times"
                     });
-                    continue;
+                    // remove services that were already scheduled
+                    for (const day of job.days_of_week) {
+                        schedule[day] = schedule[day].filter(service => service.job.id !== job.id);
+                    }
+                    break;
                 }
                 schedule[day].push(service);
             }
@@ -854,7 +868,7 @@ class SchedulerApi {
 
                 // If there is no conflict, place the job
                 for (const day of days_of_week) {
-                    if (this.#doesNewJobConflict(schedule[day], job)) {
+                    if (this.#doesNewJobConflict(schedule[day], job, num_trucks)) {
                         conflict = true;
                         break;
                     }
@@ -895,7 +909,7 @@ class SchedulerApi {
                 const service = {
                     id: uuid(),
                     job: job,
-                    date: format(addDays(beginningOfWeek, day), "yyyy-MM-dd"), // moment(beginningOfWeek).add(day, "days").format("YYYY-MM-DD"),
+                    date: format(addDays(beginningOfWeek, day), "yyyy-MM-dd"),
                 };
                 schedule[day].push(service);
             }
@@ -911,7 +925,7 @@ class SchedulerApi {
                 const service = {
                     id: uuid(),
                     job: job,
-                    date: format(addDays(beginningOfWeek, day), "yyyy-MM-dd"), // moment(beginningOfWeek).add(day, "days").format("YYYY-MM-DD"),
+                    date: format(addDays(beginningOfWeek, day), "yyyy-MM-dd"),
                 };
                 schedule[day].push(service);
             }
@@ -992,7 +1006,7 @@ class SchedulerApi {
         }
     }
 
-    #doesNewJobConflict(services, newJob) {
+    #doesNewJobConflict(services, newJob, numTrucks) {
         // Convert jobs to windows with duration
         const windows = services.filter(service => service.job.start_time_window && service.job.end_time_window).map((service) => ({
             start: set(new Date(), {hours: service.job.start_time_window.split(':')[0], minutes: service.job.start_time_window.split(':')[0], seconds: 0}),
@@ -1012,36 +1026,13 @@ class SchedulerApi {
                 (window) => (isAfter(i, window.start) || isEqual(i, window.start)) && isBefore(i, window.end),
             ).length;
 
-            if (jobsRunning >= 2) {
+            if (jobsRunning >= numTrucks) {
                 conflicts++;
             }
         }
 
         return conflicts > 0;
     }
-
-    #isTimeConflict(existingServices: ScheduleServiceConstraints[], newJob: Job): boolean {
-        // Calculate the length of the new job's time window
-        const newJobWindowLength = differenceInMinutes(Date.parse(newJob.end_time_window), Date.parse(newJob.start_time_window));
-
-        // Initialize a variable to keep track of the total duration of overlapping services
-        let totalOverlapDuration = 0;
-
-        for (let i = 0; i < existingServices.length; i++) {
-            const service = existingServices[i];
-            // If the service's time window overlaps with the new job's time window
-            if (service.job.start_time_window
-                && (newJob.start_time_window < service.job.end_time_window
-                    && newJob.end_time_window > service.job.start_time_window)) {
-                // Add the service's duration to the total overlap duration
-                totalOverlapDuration += service.job.duration;
-            }
-        }
-
-        // If the total duration of overlapping services and the duration of the new job exceed the length of the new job's time window
-        return totalOverlapDuration + newJob.duration > newJobWindowLength;
-    }
-
 
 }
 

@@ -150,6 +150,7 @@ const validationSchema = object({
 
 export const CreateJobPage = () => {
     const [dayConflict, setDayConflict] = useState(null);
+    const [recurringConflict, setRecurringConflict] = useState(null);
     const [alternativeTimes, setAlternativeTimes] = useState(null);
 
     const navigate = useNavigate();
@@ -202,6 +203,8 @@ export const CreateJobPage = () => {
                         job: formik.values as Job,
                         operating_hours: auth.user.franchise.operating_hours,
                         operating_days: auth.user.franchise.operating_days,
+                        organization_id: auth.user.organization.id,
+                        franchise_id: auth.user.franchise.id,
                     });
 
                     console.log(res);
@@ -210,6 +213,8 @@ export const CreateJobPage = () => {
                     if (res.success) {
                         navigate(`/jobs/${formik.values.id}`);
                         toast.success("Job created");
+                    } else {
+                        setRecurringConflict(true);
                     }
                 }
             } catch (err) {
@@ -415,6 +420,30 @@ export const CreateJobPage = () => {
                                         <Divider sx={{mb: 3}}/>
                                     </Stack>
                                 )}
+                                {recurringConflict && activeStep === 5 && (
+                                    <Stack>
+                                        <Card variant={"outlined"} sx={{mb: 3, pt: 0}}>
+                                            <CardContent sx={{m: 0, pt: 2.5, pb: 1}}>
+                                                <Stack direction={'row'} alignItems={'center'} spacing={2.5}>
+                                                    <EventBusyOutlined fontSize={"large"}/>
+                                                    <Stack>
+                                                        <Typography variant={"h6"}>
+                                                            Job could not be scheduled
+                                                        </Typography>
+                                                        <Typography
+                                                            sx={{mt: 0.75}}
+                                                            variant={"body1"}
+                                                        >
+                                                            Unfortunately, this job conflicts with existing jobs. Consider reducing the number of service restraints.
+                                                        </Typography>
+                                                    </Stack>
+                                                </Stack>
+                                            </CardContent>
+                                        </Card>
+                                        <Divider sx={{mb: 3}}/>
+                                    </Stack>
+                                )}
+
                                 {activeStep === 0 && (
                                     <SelectServiceType serviceType={formik.values.service_type}
                                                        setFieldValue={formik.setFieldValue}/>
@@ -490,6 +519,7 @@ export const CreateJobPage = () => {
                                     <Box sx={{flex: "1 1 auto"}}/>
                                     <Button
                                         disabled={
+                                            (formik.isSubmitting) ||
                                             (activeStep === 1 && !formik.values.client_id)
                                             || (activeStep === 2 && (!formik.values.on_site_contact_id || !formik.values.location_id))
                                             || (activeStep === 3 && ((formik.values.service_type === "Recurring" && !formik.values.client_default_monthly_charge)
