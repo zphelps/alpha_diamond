@@ -217,6 +217,7 @@ class SchedulerApi {
                         message: "Unfortunately, we could not schedule your job at the specified time.",
                     });
                 }
+                console.log("Route Error", route.error);
                 // else try again with next day
             } else /* No conflicts */ {
                 // Update existing services (and jobs) if their times or truck_id have changed

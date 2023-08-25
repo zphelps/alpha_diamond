@@ -166,7 +166,13 @@ class RouteOptimizerApi {
             if (isAfter(set(new Date(), {hours: Number(hours), minutes: Number(minutes), seconds: 0}),
                         set(new Date(), {hours: Number(operating_hours_end_hours), minutes: Number(operating_hours_end_minutes), seconds: 0}))) {
                 console.log("start_shift after start of operating hours")
-                return Promise.reject("start_shift after end of operating hours");
+                return Promise.resolve({
+                    date: date,
+                    solution: undefined,
+                    unserved: undefined,
+                    error: "start_shift after start of operating hours",
+                } as Route);
+                // return Promise.reject("start_shift after end of operating hours");
             }
         }
 

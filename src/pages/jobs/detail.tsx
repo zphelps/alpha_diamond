@@ -252,10 +252,8 @@ export const JobDetailsPage = () => {
                                                 driver_notes={job.driver_notes}
                                                 contact_name={`${job.on_site_contact.first_name} ${job.on_site_contact.last_name}`}
                                                 duration={job.duration}
-                                                city={job.location.city}
-                                                state={job.location.state}
                                                 timestamp={job.timestamp}
-                                                street_address={job.location.street_address}
+                                                formatted_address={job.location.formatted_address}
                                             />}
                                             <JobBookingDetails
                                                 origin={job.origin}

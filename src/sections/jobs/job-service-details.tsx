@@ -9,16 +9,14 @@ import {JobBasicDetails} from "./job-basic-details.tsx";
 
 interface JobServiceDetailsProps {
     timestamp?: string;
-    street_address?: string;
-    city?: string;
-    state?: string;
+    formatted_address?: string;
     duration?: number;
     contact_name?: string;
     driver_notes?: string;
 }
 
 export const JobServiceDetails: FC<JobServiceDetailsProps> = (props) => {
-    const {driver_notes, timestamp, street_address, contact_name, duration, state, city} = props;
+    const {driver_notes, timestamp, formatted_address, contact_name, duration} = props;
     const mdUp = useMediaQuery((theme: Theme) => theme.breakpoints.up("md"));
 
     const align = mdUp ? "horizontal" : "vertical";
@@ -37,7 +35,7 @@ export const JobServiceDetails: FC<JobServiceDetailsProps> = (props) => {
                     align={align}
                     divider
                     label="Location"
-                    value={`${street_address}, ${city}, ${state}`}
+                    value={formatted_address}
                 />
                 <PropertyListItem
                     align={align}
