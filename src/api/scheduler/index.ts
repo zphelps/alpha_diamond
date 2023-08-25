@@ -230,12 +230,12 @@ class SchedulerApi {
 
                         // Adjust arrival time if idle time is present and job has time restrictions
                         if (visit.idle_time && service.start_time_window) {
-                            serviceTimestamp = set(job.timestamp ? Date.parse(job.timestamp) : date, {
+                            serviceTimestamp = set(job.timestamp ? new Date(job.timestamp) : date, {
                                 hours: parseInt(service.start_time_window.split(":")[0]),
                                 minutes: parseInt(service.start_time_window.split(":")[1]),
                             }).toISOString();
                         } else {
-                            serviceTimestamp = set(job.timestamp ? Date.parse(job.timestamp) : date, {
+                            serviceTimestamp = set(job.timestamp ? new Date(job.timestamp) : date, {
                                 hours: parseInt(visit.arrival_time.split(":")[0]),
                                 minutes: parseInt(visit.arrival_time.split(":")[1]),
                             }).toISOString();
@@ -293,7 +293,7 @@ class SchedulerApi {
                             const updatedServiceTimestamp = new Date(serviceTimestamp);
 
                             // Update service if time or truck has changed
-                            if ((!isSameHour(updatedServiceTimestamp, originalServiceTimestamp) && !isSameMinute(updatedServiceTimestamp, originalServiceTimestamp))
+                            if ((!isSameHour(updatedServiceTimestamp, originalServiceTimestamp) || !isSameMinute(updatedServiceTimestamp, originalServiceTimestamp))
                                 || service.truck_id !== truck_id) {
                                 console.log("Updating Service ID: ", service.id);
                                 console.log("Originally Scheduled For: ", format(originalServiceTimestamp, "MM/dd/yyyy hh:mm a"));
