@@ -306,16 +306,13 @@ export const SchedulePage = () => {
         async (): Promise<void> => {
 
             navigate(paths.jobs.create);
-            // createDialog.handleOpen();
 
             // try {
             //     toast.loading('Creating schedule services')
-            //     console.log('Beginning of Week: ', startOfWeek(addDays(new Date(), 3)));
+            //     console.log('Beginning of Week: ', startOfWeek(addDays(new Date(), 7)));
             //
-            //     const res = await schedulerApi.insertRecurringJobServicesForWeek({
-            //         beginningOfWeek: startOfWeek(addDays(new Date(), 7)),
-            //         operating_hours: auth.user.franchise.operating_hours,
-            //         operating_days: auth.user.franchise.operating_days,
+            //     const res = await schedulerApi.optimizeServicesForWeek({
+            //         week: startOfWeek(addDays(new Date(), 7)),
             //         organization_id: auth.user.organization.id,
             //         franchise_id: auth.user.franchise.id,
             //     })
@@ -323,7 +320,7 @@ export const SchedulePage = () => {
             //     console.log(res)
             //
             //     toast.dismiss()
-            //     toast.success('Successfully created schedule services')
+            //     toast.success('Successfully optimized services')
             // } catch(e) {
             //     console.log(e)
             // }

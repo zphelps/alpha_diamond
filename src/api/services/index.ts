@@ -2,7 +2,17 @@ import {Client} from "../../types/client.ts";
 import {supabase} from "../../config.ts";
 import {useAuth} from "../../hooks/use-auth.ts";
 import {Service} from "../../types/service.ts";
-import {addDays, addMinutes, format, formatISO, isToday, setMinutes, startOfDay} from "date-fns";
+import {
+    addDays,
+    addMinutes,
+    endOfWeek,
+    format,
+    formatISO,
+    isToday,
+    setMinutes,
+    startOfDay,
+    startOfWeek
+} from "date-fns";
 import {ScheduleServiceConstraints} from "../scheduler";
 import {Job} from "../../types/job.ts";
 
@@ -31,7 +41,7 @@ type GetServicesRequest = {
 type GetServiceResponse = Promise<Service>;
 
 type GetScheduleServicesForWeekRequest = {
-    beginning_of_week: string;
+    week: Date;
     service_type?: string;
 };
 
@@ -93,7 +103,7 @@ class ServicesApi {
         });
     }
 
-    async updateService(request: UpdateServiceRequest): Promise<UpdateServiceResponse> {
+    async updateService(request: UpdateServiceRequest) {
         const {id, updated_fields} = request;
 
         const {data, error} = await supabase
@@ -102,12 +112,8 @@ class ServicesApi {
             .eq('id', id);
 
         if (error) {
-            throw error;
+            return Promise.reject(error);
         }
-
-        return Promise.resolve({
-            success: true,
-        });
     }
 
     /**
@@ -206,19 +212,26 @@ class ServicesApi {
      * @param request
      */
     async getScheduleServicesForWeek(request: GetScheduleServicesForWeekRequest): GetScheduleServicesForWeekResponse {
-        const {beginning_of_week, service_type} = request;
+        const {week, service_type} = request;
         const query = supabase
             .from("client_services")
             .select("id, timestamp, start_time_window, end_time_window, truck_id, job:job_id(*, location:location_id(*), on_site_contact:on_site_contact_id(*), client:client_id(id, name))", {count: "exact"});
 
-        if (typeof beginning_of_week !== "undefined") {
-            query.gte("timestamp", beginning_of_week);
-            query.lte("timestamp", addDays(Date.parse(beginning_of_week), 7).toISOString());
+        const start_of_week = startOfWeek(week);
+        const end_of_week = endOfWeek(week);
+
+        if (typeof week !== "undefined") {
+            query.gte("timestamp", start_of_week.toISOString());
+            query.lte("timestamp", end_of_week.toISOString());
         }
 
         query.order("timestamp", {ascending: false});
 
         const res = await query;
+
+        if (res.error) {
+            return Promise.reject(res.error);
+        }
 
         console.log(res)
         console.log(res.data);

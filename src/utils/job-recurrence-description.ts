@@ -1,5 +1,5 @@
 import {Job} from "../types/job.ts";
-import {format, set} from "date-fns";
+import {differenceInMinutes, format, set} from "date-fns";
 import {daysOfWeek} from "../sections/jobs/create/select-recurrence";
 import {ServiceType} from "../types/service.ts";
 
@@ -7,7 +7,7 @@ export const getJobRecurrenceDescription = (job: Job): string => {
     let description = '';
 
     if (job.service_type !== ServiceType.RECURRING) {
-        description = `${format(new Date(job.timestamp), 'MMM dd, yyyy')} at ${format(new Date(job.timestamp), 'h:mm a')}`;
+        description = `${format(new Date(job.timestamp), 'MMM d, yyyy')} at ${format(new Date(job.timestamp), 'h:mm a')}`;
         return description;
     }
 
@@ -19,10 +19,16 @@ export const getJobRecurrenceDescription = (job: Job): string => {
 
     if (!job.start_time_window && !job.end_time_window) {
         description += ' at any time';
+        return description;
+    }
+
+    const start_time_window_timestamp = set(new Date(), {hours: Number(job.start_time_window.split(':')[0]), minutes: Number(job.start_time_window.split(':')[1])});
+    const end_time_window_timestamp = set(new Date(), {hours: Number(job.end_time_window.split(':')[0]), minutes: Number(job.end_time_window.split(':')[1])});
+
+    if (differenceInMinutes(end_time_window_timestamp, start_time_window_timestamp) > job.duration) {
+        description += ` between ${format(start_time_window_timestamp, 'h:mm a')} - ${format(end_time_window_timestamp, 'h:mm a')}`;
     } else {
-        description += ` at ${format(set(new Date(), 
-            {hours: Number(job.start_time_window.split(':')[0]), 
-                minutes: Number(job.start_time_window.split(':')[1]), seconds: 0}), 'h:mm a')}`;
+        description += ` at ${format(start_time_window_timestamp, 'h:mm a')}`;
     }
 
     return description;

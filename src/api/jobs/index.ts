@@ -61,11 +61,6 @@ export type NewJobRequest = {
     charge_per_unit: number;
 }
 
-type CreateJobResponse = Promise<{
-    success: boolean;
-    message: string;
-}>;
-
 class JobsApi {
     async updateJob(request: UpdateJobRequest): Promise<UpdateJobResponse> {
         const {id, updated_fields} = request;
@@ -84,11 +79,6 @@ class JobsApi {
         const query = supabase.from("client_jobs").select("*, client:client_id(id, name), location:location_id(*), on_site_contact:on_site_contact_id(*)", {count: "exact"});
 
         if (typeof filters !== "undefined") {
-
-            // if (typeof filters.query !== "undefined" && filters.query !== "") {
-            //     // query.ilike("client.name", `%${filters.query}%`);
-            //     query.textSearch("client.name", filters.query)
-            // }
 
             if (typeof filters.open !== "undefined") {
                 query.eq("status", "open");
@@ -116,11 +106,17 @@ class JobsApi {
 
         query.order("created_at", {ascending: false});
 
-        if (typeof page !== "undefined" && typeof rowsPerPage !== "undefined") {
+        if (typeof page !== "undefined" && typeof rowsPerPage !== "undefined" && (typeof filters?.query === "undefined" || filters?.query === "")) {
             query.range(page * rowsPerPage, page * rowsPerPage + rowsPerPage - 1);
         }
 
         const res = await query;
+
+        if (typeof page !== "undefined" && typeof rowsPerPage !== "undefined" && (typeof filters?.query !== "undefined" && filters?.query !== "")) {
+            res.data = res.data.filter((job: Job) => job.client.name.toLowerCase().trim().includes(filters.query.toLowerCase().trim()));
+            res.count = res.data.length;
+            res.data = res.data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+        }
 
         console.log(res);
 
@@ -143,12 +139,12 @@ class JobsApi {
         return Promise.resolve(res.data as Job);
     }
 
-    async createJob(job: NewJobRequest): CreateJobResponse {
+    async createJob(job: NewJobRequest) {
         const res = await supabase.from("client_jobs").insert(job);
-        return Promise.resolve({
-            success: res.error === null,
-            message: res.error?.message ?? "",
-        });
+
+        if (res.error) {
+            return Promise.reject(res.error);
+        }
     }
 
 }

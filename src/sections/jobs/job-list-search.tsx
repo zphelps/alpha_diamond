@@ -86,13 +86,10 @@ type SortDir = "asc" | "desc";
 interface JobListSearchProps {
     resultsCount: number;
     onFiltersChange?: (filters: Filters) => void;
-    onSortChange?: (sort: { sortBy: string; sortDir: SortDir }) => void;
-    sortBy?: string;
-    sortDir?: SortDir;
 }
 
 export const JobListSearch: FC<JobListSearchProps> = (props) => {
-    const {resultsCount, onFiltersChange, onSortChange, sortBy, sortDir} = props;
+    const {resultsCount, onFiltersChange} = props;
     const queryRef = useRef<HTMLInputElement | null>(null);
     const [currentTab, setCurrentTab] = useState<TabValue>("all");
     const [filters, setFilters] = useState<Filters>({});
@@ -149,18 +146,6 @@ export const JobListSearch: FC<JobListSearchProps> = (props) => {
             }));
         },
         []
-    );
-
-    const handleSortChange = useCallback(
-        (event: ChangeEvent<HTMLInputElement>): void => {
-            const [sortBy, sortDir] = event.target.value.split("|") as [string, SortDir];
-
-            onSortChange?.({
-                sortBy,
-                sortDir
-            });
-        },
-        [onSortChange]
     );
 
     const handleFilterType = useCallback(
@@ -355,9 +340,6 @@ export const JobListSearch: FC<JobListSearchProps> = (props) => {
 
 JobListSearch.propTypes = {
     onFiltersChange: PropTypes.func,
-    onSortChange: PropTypes.func,
-    sortBy: PropTypes.string,
-    sortDir: PropTypes.oneOf<SortDir>(["asc", "desc"])
 };
 
 type BlockProps = StackProps & {

@@ -166,33 +166,29 @@ export const CreateJobPage = () => {
 
                 // Insert New On-Demand Job
                 if (values.service_type === ServiceType.ON_DEMAND) {
-                    const onDemandRes = await schedulerApi.insertOnDemandJob({
+                    const {response} = await schedulerApi.insertOnDemandJob({
                         // @ts-ignore
                         job: formik.values as Job,
                         operating_hours: auth.user.franchise.operating_hours,
                         operating_days: auth.user.franchise.operating_days,
                     });
 
-                    if (onDemandRes.response === SchedulerResponse.SUCCESS) {
+                    if (response === SchedulerResponse.SUCCESS) {
                         toast.dismiss();
                         navigate(`/jobs/${formik.values.id}`);
                         toast.success("Job created");
-                    } else if (onDemandRes.response === SchedulerResponse.ERR_UNABLE_TO_SQUEEZE_AT_TIME) {
+                    } else if (response === SchedulerResponse.ERR_UNABLE_TO_SQUEEZE_AT_TIME) {
                         toast.dismiss();
                         toast.error("Unable to schedule at selected time.");
                         toast.loading("Finding closest available timeslots...");
-                        const res = await schedulerApi.findClosestAvailableTimeslots({
+                        const {timestamps} = await schedulerApi.findClosestAvailableTimeslots({
                             // @ts-ignore
                             job: formik.values as Job,
                             operating_hours: auth.user.franchise.operating_hours,
                         });
-
-                        console.log(res.timestamps.map((t) => format(new Date(t), 'MM/dd/yyyy HH:mm a')));
-
-                        setAlternativeTimes(res.timestamps.sort((a, b) => new Date(a).getTime() - new Date(b).getTime()));
-
+                        setAlternativeTimes(timestamps.sort((a, b) => new Date(a).getTime() - new Date(b).getTime()));
                         toast.dismiss();
-                    } else if (onDemandRes.response === SchedulerResponse.ERR_UNABLE_TO_SQUEEZE_ON_DAY) {
+                    } else if (response === SchedulerResponse.ERR_UNABLE_TO_SQUEEZE_ON_DAY) {
                         toast.dismiss();
                         setDayConflict(true);
                     }

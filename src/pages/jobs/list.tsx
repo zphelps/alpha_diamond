@@ -53,8 +53,6 @@ interface JobsSearchState {
     organization_id: string;
     page: number;
     rowsPerPage: number;
-    sortBy: string;
-    sortDir: 'asc' | 'desc';
 }
 
 const useJobsSearch = (organization_id: string, franchise_id: string) => {
@@ -69,8 +67,6 @@ const useJobsSearch = (organization_id: string, franchise_id: string) => {
         organization_id: organization_id,
         page: 0,
         rowsPerPage: 15,
-        sortBy: 'updatedAt',
-        sortDir: 'desc'
     });
 
     const handleFiltersChange = useCallback(
@@ -78,17 +74,6 @@ const useJobsSearch = (organization_id: string, franchise_id: string) => {
             setState((prevState) => ({
                 ...prevState,
                 filters
-            }));
-        },
-        []
-    );
-
-    const handleSortChange = useCallback(
-        (sort: { sortBy: string; sortDir: 'asc' | 'desc'; }): void => {
-            setState((prevState) => ({
-                ...prevState,
-                sortBy: sort.sortBy,
-                sortDir: sort.sortDir
             }));
         },
         []
@@ -117,7 +102,6 @@ const useJobsSearch = (organization_id: string, franchise_id: string) => {
 
     return {
         handleFiltersChange,
-        handleSortChange,
         handlePageChange,
         handleRowsPerPageChange,
         state
@@ -136,7 +120,6 @@ const useJobsStore = (searchState: JobsSearchState, setLoading) => {
 
                 if (isMounted()) {
                     dispatch(setFilteredJobs(response.data));
-                    dispatch(upsertManyJobs(response.data));
                     dispatch(setJobCount(response.count));
                     dispatch(setJobsStatus(Status.SUCCESS));
                 }
@@ -167,17 +150,12 @@ const useJobIds = (jobs: Job[] = []) => {
     );
 };
 
-const useFilteredJobs = (jobs: Job[] = [], query) => {
+const useFilteredJobs = (jobs: Job[] = []) => {
     return useMemo(
         () => {
-            if (query && jobs.length > 0) {
-                return jobs.filter((job) => {
-                    return job.client.name.toLowerCase().includes(query.toLowerCase())
-                });
-            }
             return Object.values(jobs);
         },
-        [jobs, query]
+        [jobs]
     );
 };
 
@@ -193,17 +171,11 @@ export default function JobListPage() {
 
     const jobIds = useJobIds(jobsStore.filteredJobs);
 
-    const filteredJobs = useFilteredJobs(jobsStore.filteredJobs, jobsSearch.state.filters.query);
+    const filteredJobs = useFilteredJobs(jobsStore.filteredJobs);
 
     useEffect(() => {
         setLoading(true);
     }, [jobsSearch.state])
-
-    useEffect(() => {
-        if ((filteredJobs ?? []).length > 0 && jobsSearch.state.filters.query) {
-            filteredJobs.filter((job) => job.client.name.toLowerCase().includes(jobsSearch.state.filters.query.toLowerCase()))
-        }
-    }, [jobsSearch.state.filters.query])
 
     return (
         <>
@@ -248,9 +220,6 @@ export default function JobListPage() {
                             <JobListSearch
                                 resultsCount={jobsStore.jobCount}
                                 onFiltersChange={jobsSearch.handleFiltersChange}
-                                onSortChange={jobsSearch.handleSortChange}
-                                sortBy={jobsSearch.state.sortBy}
-                                sortDir={jobsSearch.state.sortDir}
                             />
 
                             <JobListTable

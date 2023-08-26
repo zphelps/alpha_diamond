@@ -5,7 +5,7 @@ import ArrowRightIcon from "@untitled-ui/icons-react/build/esm/ArrowRight";
 import {
     Card,
     CardHeader,
-    IconButton, Link,
+    IconButton, Link, Stack,
     SvgIcon,
     Table,
     TableBody,
@@ -19,7 +19,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {useMounted} from "../../../hooks/use-mounted.ts";
 import {useAuth} from "../../../hooks/use-auth.ts";
 import {jobsApi} from "../../../api/jobs";
-import {setFilteredJobs, setJobsStatus, upsertManyJobs} from "../../../slices/jobs";
+import {setFilteredJobs, setJobCount, setJobsStatus, upsertManyJobs} from "../../../slices/jobs";
 import {Status} from "../../../utils/status.ts";
 import {Job} from "../../../types/job.ts";
 import {Scrollbar} from "../../../components/scrollbar.tsx";
@@ -27,6 +27,7 @@ import {RouterLink} from "../../../components/router-link.tsx";
 import {getSeverityServiceTypeColor, getSeverityStatusColor} from "../../../utils/severity-color.ts";
 import {SeverityPill} from "../../../components/severity-pill.tsx";
 import {getJobRecurrenceDescription} from "../../../utils/job-recurrence-description.ts";
+import Skeleton from "@mui/material/Skeleton";
 
 interface ClientJobsSearchState {
     client_id: string;
@@ -40,7 +41,7 @@ const useClientJobsSearch = (client_id: string, organization_id: string, franchi
     const [state, setState] = useState<ClientJobsSearchState>({
         client_id: client_id,
         page: 0,
-        rowsPerPage: 5,
+        rowsPerPage: 10,
         organization_id: organization_id,
         franchise_id: franchise_id
     });
@@ -73,7 +74,7 @@ const useClientJobsSearch = (client_id: string, organization_id: string, franchi
     };
 };
 
-const useClientJobsStore = (searchState: ClientJobsSearchState) => {
+const useClientJobsStore = (searchState: ClientJobsSearchState, setLoading) => {
     const isMounted = useMounted();
     const dispatch = useDispatch();
 
@@ -85,13 +86,15 @@ const useClientJobsStore = (searchState: ClientJobsSearchState) => {
                 const response = await jobsApi.getJobs(searchState);
 
                 if (isMounted()) {
-                    dispatch(upsertManyJobs(response.data));
+                    dispatch(setFilteredJobs(response.data));
+                    dispatch(setJobCount(response.count));
                     dispatch(setJobsStatus(Status.SUCCESS));
                 }
             } catch (err) {
                 console.error(err);
                 dispatch(setJobsStatus(Status.ERROR));
             }
+            setLoading(false);
         },
         [searchState, isMounted]
     );
@@ -105,12 +108,12 @@ const useClientJobsStore = (searchState: ClientJobsSearchState) => {
     );
 };
 
-const useClientJobs = (client_id: string, clientJobs: Job[] = []) => {
+const useClientJobs = (clientJobs: Job[] = []) => {
     return useMemo(
         () => {
-            return Object.values(clientJobs).filter((job) => job.client.id === client_id);
+            return Object.values(clientJobs);
         },
-        [clientJobs, client_id]
+        [clientJobs]
     );
 };
 
@@ -122,20 +125,28 @@ export const ClientJobs: FC<ClientJobsProps> = (props) => {
     const {clientID, ...other} = props;
     const auth = useAuth();
 
-    const clientJobsSearch = useClientJobsSearch(clientID, auth.user.organization.id, auth.user.franchise.id);
-    useClientJobsStore(clientJobsSearch.state);
-
     // @ts-ignore
     const clientJobsStore = useSelector((state) => state.jobs);
 
-    const filteredClientJobs = useClientJobs(clientID, clientJobsStore.jobs);
+    const [loading, setLoading] = useState(clientJobsStore.jobsCount === 0);
+
+    const clientJobsSearch = useClientJobsSearch(clientID, auth.user.organization.id, auth.user.franchise.id);
+    useClientJobsStore(clientJobsSearch.state, setLoading);
+
+    console.log(clientJobsStore);
+
+    const filteredClientJobs = useClientJobs(clientJobsStore.filteredJobs);
+
+    useEffect(() => {
+        setLoading(true);
+    }, [clientJobsSearch.state])
 
     return (
         <Card {...other}>
             <CardHeader
                 title="Jobs"
             />
-            <Scrollbar>
+            {/*<Scrollbar>*/}
                 <Table sx={{minWidth: 600}}>
                     <TableHead>
                         <TableRow>
@@ -160,10 +171,33 @@ export const ClientJobs: FC<ClientJobsProps> = (props) => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {filteredClientJobs.length > 0 && filteredClientJobs.map((job) => {
+                        {(!filteredClientJobs || filteredClientJobs.length === 0 || loading) && [...Array(5)].map((_, rowIndex) => (
+                            <TableRow key={rowIndex}>
+                                <TableCell sx={{pl: 2, m: 0, py: 0}}>
+                                    <Skeleton variant="text" width="80%" height={24}/>
+                                </TableCell>
+                                <TableCell sx={{pl: 2, m: 0, py: 0}}>
+                                    <Skeleton variant="text" width="90%" height={24}/>
+                                </TableCell>
+                                <TableCell sx={{pl: 2, m: 0, py: 0}}>
+                                    <Skeleton variant="text" width="55%" height={24}/>
+                                </TableCell>
+                                <TableCell sx={{pl: 2, m: 0, py: 1}}>
+                                    <Skeleton variant="text" width="50%" height={24}/>
+                                </TableCell>
+                                <TableCell sx={{pl: 2, m: 0, py: 1.75}}>
+                                    <Skeleton variant="text" width="50%" height={24}/>
+                                </TableCell>
+                                <TableCell align="right" sx={{py: 0}}>
+                                    <Skeleton variant="rectangular" width={30} height={30}
+                                              sx={{ml: 2, borderRadius: 2}}/>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {!loading && filteredClientJobs.length > 0 && filteredClientJobs.map((job) => {
                             return (
                                 <TableRow key={job.id}>
-                                    <TableCell>
+                                    <TableCell sx={{py:0}}>
                                         <Link
                                             component={RouterLink}
                                             href={`/jobs/${job.id}`}
@@ -172,25 +206,25 @@ export const ClientJobs: FC<ClientJobsProps> = (props) => {
                                             {job.id.split("-").shift().toUpperCase()}
                                         </Link>
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell sx={{py:0}}>
                                         {job.summary}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell sx={{py:0}}>
                                         {getJobRecurrenceDescription(job)}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell sx={{py:0}}>
                                         {/*@ts-ignore*/}
                                         <SeverityPill color={getSeverityServiceTypeColor(job.service_type)}>
                                             {job.service_type}
                                         </SeverityPill>
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell sx={{py:0}}>
                                         {/*@ts-ignore*/}
                                         <SeverityPill color={getSeverityStatusColor(job.status)}>
                                             {job.status}
                                         </SeverityPill>
                                     </TableCell>
-                                    <TableCell align="right">
+                                    <TableCell align="right" sx={{py:1}}>
                                         <IconButton
                                             component={RouterLink}
                                             href={`/jobs/${job.id}`}
@@ -205,15 +239,15 @@ export const ClientJobs: FC<ClientJobsProps> = (props) => {
                         })}
                     </TableBody>
                 </Table>
-            </Scrollbar>
+            {/*</Scrollbar>*/}
             <TablePagination
                 component="div"
-                count={filteredClientJobs.length}
+                count={clientJobsStore.jobCount}
                 onPageChange={clientJobsSearch.handlePageChange}
                 onRowsPerPageChange={clientJobsSearch.handleRowsPerPageChange}
                 page={clientJobsSearch.state.page}
                 rowsPerPage={clientJobsSearch.state.rowsPerPage}
-                rowsPerPageOptions={[5, 10, 25]}
+                rowsPerPageOptions={[10, 25, 50]}
             />
         </Card>
     );

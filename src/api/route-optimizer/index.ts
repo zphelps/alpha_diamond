@@ -7,17 +7,18 @@ import {addMinutes, format, isAfter, isBefore, isToday, set, setMinutes} from "d
 import {ScheduleServiceConstraints} from "../scheduler";
 import {trucksApi} from "../trucks";
 import {uuid} from "@supabase/supabase-js/dist/main/lib/helpers";
+import {franchisesApi} from "../franchise";
 
 type GetOptimizedRouteRequest = {
     date: string;
     organization_id: string;
     franchise_id: string;
     services: ScheduleServiceConstraints[];
-    operating_hours: {
-        start: string;
-        end: string;
-    }
-    operating_days: number[];
+    // operating_hours: {
+    //     start: string;
+    //     end: string;
+    // }
+    // operating_days: number[];
 };
 
 type GetOptimizedRouteResponse = Promise<Route>;
@@ -39,22 +40,27 @@ type GetReOptimizedRouteRequest = {
     }[];
     organization_id: string;
     franchise_id: string;
-    operating_hours: {
-        start: string;
-        end: string;
-    }
+    // operating_hours: {
+    //     start: string;
+    //     end: string;
+    // }
 };
 
 type GetReOptimizedRouteResponse = Promise<Route>;
 class RouteOptimizerApi {
     async getOptimizedRoute(request: GetOptimizedRouteRequest): GetOptimizedRouteResponse {
-        const {services, date, organization_id, franchise_id, operating_hours, operating_days} = request;
+        const {services, date, organization_id, franchise_id} = request;
 
         console.log(services)
 
         // Get trucks
         const trucks = await trucksApi.getTrucks({
             organization_id: organization_id,
+            franchise_id: franchise_id,
+        });
+
+        // Get operating hours
+        const {operating_hours, operating_days} = await franchisesApi.getOperatingTimes({
             franchise_id: franchise_id,
         });
 
@@ -90,6 +96,8 @@ class RouteOptimizerApi {
             }, {}),
         };
 
+        console.log(body)
+
         try {
             const response = await fetch('https://api.routific.com/v1/vrp', {
                 method: 'POST',
@@ -119,9 +127,14 @@ class RouteOptimizerApi {
 
 
     async getReOptimizedRoute(request: GetReOptimizedRouteRequest): GetReOptimizedRouteResponse {
-        const {services, date, organization_id, franchise_id, operating_hours} = request;
+        const {services, date, organization_id, franchise_id} = request;
 
         console.log(services)
+
+        // Get operating hours
+        const {operating_hours, operating_days} = await franchisesApi.getOperatingTimes({
+            franchise_id: franchise_id,
+        });
 
         const past_services = [];
 
