@@ -1,51 +1,51 @@
 import {Client} from "../../types/client.ts";
 import {supabase} from "../../config.ts";
 import {ClientLocation} from "../../types/client-location.ts";
-import {ClientUser} from "../../types/client-user.ts";
+import {ClientContact} from "../../types/client-contact.ts";
 
-type GetClientUsersRequest = {
+type GetClientContactsRequest = {
     client_id?: string;
     page?: number;
     rowsPerPage?: number;
 };
 
-type GetClientUserResponse = Promise<ClientUser>;
+type GetClientContactResponse = Promise<ClientContact>;
 
-type GetClientUserRequest = {
+type GetClientContactRequest = {
     id: string;
 };
 
-type GetClientUsersResponse = Promise<{
-    data: ClientUser[];
+type GetClientContactsResponse = Promise<{
+    data: ClientContact[];
     count: number;
 }>;
 
-type CreateClientUserRequest = {
+type CreateClientContactRequest = {
     id: string;
     client_id?: string;
     first_name: string;
     last_name: string;
     email: string;
-    phone: string;
+    phone: number;
 }
 
-type CreateClientUserResponse = Promise<{
+type CreateClientContactResponse = Promise<{
     success: boolean;
 }>
 
-type UpdateClientUserRequest = {
+type UpdateClientContactRequest = {
     id: string;
     updated_fields: NonNullable<unknown>;
 }
 
-type UpdateClientUserResponse = Promise<{
+type UpdateClientContactResponse = Promise<{
     success: boolean;
 }>;
 
-class ClientUsersApi {
-    async getClientUsers(request: GetClientUsersRequest = {}): GetClientUsersResponse {
+class ClientContactsApi {
+    async getClientContacts(request: GetClientContactsRequest = {}): GetClientContactsResponse {
         const {client_id, page, rowsPerPage} = request;
-        const query = supabase.from("client_users").select("*", {count: "exact"});
+        const query = supabase.from("client_contacts").select("*", {count: "exact"});
 
         if (typeof client_id !== "undefined") {
             query.eq("client_id", client_id);
@@ -54,23 +54,23 @@ class ClientUsersApi {
         const res = await query;
 
         return Promise.resolve({
-            data: res.data as ClientUser[],
+            data: res.data as ClientContact[],
             count: res.count ?? 0,
         });
     }
 
-    async getClientUser(request?: GetClientUserRequest): GetClientUserResponse {
+    async getClientContact(request?: GetClientContactRequest): GetClientContactResponse {
         const res = await supabase
-            .from("client_users")
+            .from("client_contacts")
             .select("*")
             .eq('id', request.id)
             .single();
-        return Promise.resolve(res.data as ClientUser);
+        return Promise.resolve(res.data as ClientContact);
     }
 
-    async createClientUser(request: CreateClientUserRequest): CreateClientUserResponse {
+    async create(request: CreateClientContactRequest): CreateClientContactResponse {
         const res = await supabase
-            .from("client_users")
+            .from("client_contacts")
             .insert([request]);
         if (res.error) {
             return Promise.reject(res.error)
@@ -80,10 +80,10 @@ class ClientUsersApi {
         });
     }
 
-    async updateClientUser(request: UpdateClientUserRequest): Promise<UpdateClientUserResponse> {
+    async update(request: UpdateClientContactRequest): Promise<UpdateClientContactResponse> {
         const {id, updated_fields} = request;
 
-        const {error} = await supabase.from("client_users").update(updated_fields).eq('id', id);
+        const {error} = await supabase.from("client_contacts").update(updated_fields).eq('id', id);
 
         if (error) {
             return Promise.reject(error);
@@ -94,4 +94,4 @@ class ClientUsersApi {
 
 }
 
-export const clientUsersApi = new ClientUsersApi();
+export const clientContactsApi = new ClientContactsApi();

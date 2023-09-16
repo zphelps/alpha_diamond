@@ -1,5 +1,8 @@
 import {Client} from "../../types/client.ts";
 import {supabase} from "../../config.ts";
+import {ClientContact} from "../../types/client-contact.ts";
+import {ClientLocation} from "../../types/client-location.ts";
+import {clientLocationsApi} from "../client-locations";
 
 type GetClientsRequest = {
     filters?: {
@@ -30,26 +33,17 @@ type CreateClientRequest = {
     name: string;
     organization_id: string;
     franchise_id: string;
-    country: string;
     type: string;
     status: string;
-    service_contact_id: string;
-    billing_contact_id: string;
-    service_location_id: string;
-    billing_location_id: string;
+    account_contact_id: string;
     default_monthly_charge: number;
-    default_on_demand_charge: number;
     default_hourly_charge: number;
 }
-
-type CreateClientResponse = Promise<{
-    success: boolean;
-}>
 
 class ClientsApi {
     async getClients(request: GetClientsRequest): GetClientsResponse {
         const {filters, page, rowsPerPage} = request;
-        const query = supabase.from("clients").select("*, service_contact:service_contact_id(*), billing_contact:billing_contact_id(*), service_location:service_location_id(*), billing_location:billing_location_id(*)", {count: "exact"});
+        const query = supabase.from("clients").select("*, account_contact:account_contact_id(*)", {count: "exact"});
 
         if (typeof filters !== "undefined") {
 
@@ -86,38 +80,34 @@ class ClientsApi {
     }
 
     async getClient(request?: GetClientRequest): GetClientResponse {
-        const res = await supabase
+        const {data: client, error} = await supabase
             .from("clients")
-            .select("*, service_contact:service_contact_id(*), billing_contact:billing_contact_id(*), service_location:service_location_id(*), billing_location:billing_location_id(*)")
+            .select("*, account_contact:account_contact_id(*)")
             .eq('id', request.id)
             .single();
-        return Promise.resolve(res.data as Client);
+
+        if (error) {
+            return Promise.reject(error);
+        }
+
+        const {data: locations} = await clientLocationsApi.getClientLocations({client_id: client?.id}).catch((error) => Promise.reject(error));
+
+        client.locations = locations;
+
+        console.log(client)
+
+        return Promise.resolve(client as Client);
     }
 
-    async createClient(request: CreateClientRequest): CreateClientResponse {
+    async create(request: CreateClientRequest) {
         const res = await supabase
             .from("clients")
-            .insert([{
-                id: request.id,
-                name: request.name,
-                organization_id: request.organization_id,
-                franchise_id: request.franchise_id,
-                country: request.country,
-                type: request.type,
-                status: request.status,
-                service_contact_id: request.service_contact_id,
-                service_location_id: request.service_location_id,
-                billing_contact_id: request.billing_contact_id,
-                billing_location_id: request.billing_location_id,
-                default_monthly_charge: request.default_monthly_charge,
-                default_on_demand_charge: request.default_on_demand_charge,
-                default_hourly_charge: request.default_hourly_charge,
-            }])
+            .insert(request)
 
         if (res.error) {
             return Promise.reject(res.error);
         }
-        return Promise.resolve({success: true});
+        return Promise.resolve();
     }
 
 }

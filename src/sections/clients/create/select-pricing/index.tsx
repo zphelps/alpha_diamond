@@ -20,19 +20,34 @@ import {ServiceType} from "../../../../types/service.ts";
 import {ArrowDropDown} from "@mui/icons-material";
 import {_clientTypes} from "../../../../pages/clients/list.tsx";
 import GooglePlacesAutocomplete from "../../../../components/google-places-autocomplete.tsx";
+import {CreateClientFormValues} from "../../../../pages/clients/create.tsx";
 
 interface SelectPricingProps {
-    handleMonthlyChargeChange?: (e: never) => void;
-    handleOnDemandChargeChange?: (e: never) => void;
-    handleHourlyChargeChange?: (e: never) => void;
+    values: CreateClientFormValues;
+    setFieldValue: (field: string, value: any, shouldValidate?: boolean | undefined) => void;
 }
 
 export const SelectPricing: FC<SelectPricingProps> = (props) => {
     const {
-        handleMonthlyChargeChange,
-        handleOnDemandChargeChange,
-        handleHourlyChargeChange,
+        values,
+        setFieldValue
     } = props;
+
+    const handleMonthlyChargeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.value === "") {
+            setFieldValue("default_monthly_charge", null);
+            return;
+        }
+        setFieldValue("default_monthly_charge", Number(event.target.value));
+    }
+
+    const handleHourlyChargeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.value === "") {
+            setFieldValue("default_hourly_charge", null);
+            return;
+        }
+        setFieldValue("default_hourly_charge", Number(event.target.value));
+    }
 
     return (
         <Stack>
@@ -47,7 +62,7 @@ export const SelectPricing: FC<SelectPricingProps> = (props) => {
                 color={"text.secondary"}
                 sx={{mb: 3}}
             >
-                Specify the appropriate pricing for each charge type. You can change these later.
+                Specify the appropriate pricing for each type of charge. You can change these later.
             </Typography>
             <Table sx={{ minWidth: 700 }}>
                 <TableHead>
@@ -78,28 +93,6 @@ export const SelectPricing: FC<SelectPricingProps> = (props) => {
                                 endAdornment={
                                     <InputAdornment position={"end"} sx={{p:0, m:0}}>
                                         <Typography variant={"body1"} sx={{mr: 2.5}}>/ month</Typography>
-                                    </InputAdornment>
-                                }
-                            />
-                        </TableCell>
-                    </TableRow>
-                    <TableRow>
-                        <TableCell>
-                            {`On-Demand Charge`}
-                        </TableCell>
-                        <TableCell align={'right'}>
-                            <OutlinedInput
-                                onChange={handleOnDemandChargeChange}
-                                sx={{pr: 0, mr: 0, width: 235}}
-                                type={"number"}
-                                startAdornment={
-                                    <InputAdornment position={"start"}>
-                                        <Typography variant={"body1"}>$</Typography>
-                                    </InputAdornment>
-                                }
-                                endAdornment={
-                                    <InputAdornment position={"end"} sx={{p:0, m:0}}>
-                                        <Typography variant={"body1"} sx={{mr: 2.5}}>/ bin</Typography>
                                     </InputAdornment>
                                 }
                             />

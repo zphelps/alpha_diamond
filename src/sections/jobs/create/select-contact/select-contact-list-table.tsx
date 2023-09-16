@@ -24,11 +24,11 @@ import {Scrollbar} from "../../../../components/scrollbar.tsx";
 import {RouterLink} from "../../../../components/router-link.tsx";
 import {SeverityPill} from "../../../../components/severity-pill.tsx";
 import {ClientLocation} from "../../../../types/client-location.ts";
-import {ClientUser} from "../../../../types/client-user.ts";
+import {ClientContact} from "../../../../types/client-contact.ts";
 
 interface SelectContactListTableProps {
   count?: number;
-  items?: ClientUser[];
+  items?: ClientContact[];
   onDeselectAll?: () => void;
   onDeselectOne?: (customerId: string) => void;
   onPageChange?: (event: MouseEvent<HTMLButtonElement> | null, newPage: number) => void;

@@ -8,8 +8,8 @@ import {Client} from "../../../../types/client.ts";
 import {clientLocationsApi} from "../../../../api/client-locations";
 import {setClientLocationsStatus, upsertManyClientLocations} from "../../../../slices/client-locations";
 import {ClientLocation} from "../../../../types/client-location.ts";
-import {ClientUser} from "../../../../types/client-user.ts";
-import {clientUsersApi} from "../../../../api/client-users";
+import {ClientContact} from "../../../../types/client-contact.ts";
+import {clientContactsApi} from "../../../../api/client-contacts";
 import {setClientUsersStatus, upsertManyClientUsers} from "../../../../slices/client-users";
 import {SelectContactListTable} from "./select-contact-list-table.tsx";
 
@@ -62,7 +62,7 @@ const useContactsStore = (searchState: ClientContactsSearchState) => {
     const handleContactsGet = useCallback(
         async () => {
             try {
-                const response = await clientUsersApi.getClientUsers(searchState);
+                const response = await clientContactsApi.getClientContacts(searchState);
 
                 if (isMounted()) {
                     dispatch(upsertManyClientUsers(response.data));
@@ -85,7 +85,7 @@ const useContactsStore = (searchState: ClientContactsSearchState) => {
     );
 };
 
-const useContactIds = (contacts: ClientUser[] = []) => {
+const useContactIds = (contacts: ClientContact[] = []) => {
     return useMemo(
         () => {
             return Object.keys(contacts);
@@ -94,7 +94,7 @@ const useContactIds = (contacts: ClientUser[] = []) => {
     );
 };
 
-const useFilteredContacts = (contacts: ClientUser[] = []) => {
+const useFilteredContacts = (contacts: ClientContact[] = []) => {
     return useMemo(
         () => {
             return Object.values(contacts);

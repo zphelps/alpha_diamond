@@ -19,17 +19,27 @@ import {ChargeUnit} from "../../../../types/job.ts";
 import {ServiceType} from "../../../../types/service.ts";
 import {ArrowDropDown} from "@mui/icons-material";
 import {_clientTypes} from "../../../../pages/clients/list.tsx";
+import {FormikConfig, FormikState} from "formik";
+import {CreateClientFormValues} from "../../../../pages/clients/create.tsx";
 
 interface SelectClientNameProps {
-    handleClientNameChange: (e: never) => void;
-    handleClientTypeChange: (e: never) => void;
+    values: CreateClientFormValues;
+    setFieldValue: (field: string, value: any, shouldValidate?: boolean | undefined) => void;
 }
 
 export const SelectClientNameAndType: FC<SelectClientNameProps> = (props) => {
     const {
-        handleClientNameChange,
-        handleClientTypeChange,
+        values,
+        setFieldValue,
     } = props;
+
+    const handleClientNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setFieldValue("name", event.target.value);
+    };
+
+    const handleClientTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setFieldValue("type", event.target.value);
+    };
 
     return (
         <Stack>
@@ -48,8 +58,8 @@ export const SelectClientNameAndType: FC<SelectClientNameProps> = (props) => {
                 >
                     <InputLabel>Type</InputLabel>
                     <Select
+                        value={values.type ?? ''}
                         placeholder={'Select Type'}
-                        defaultValue={''}
                         onChange={handleClientTypeChange}
                         input={<OutlinedInput label="Type" placeholder={'Type'} />}
                         endAdornment={(
@@ -74,6 +84,7 @@ export const SelectClientNameAndType: FC<SelectClientNameProps> = (props) => {
                     required
                     fullWidth
                     onChange={handleClientNameChange}
+                    value={values.name ?? ''}
                     label={"Name"}
                 />
             </Stack>

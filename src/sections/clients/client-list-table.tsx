@@ -25,6 +25,7 @@ import {SeverityPill} from "../../components/severity-pill.tsx";
 import Skeleton from "@mui/material/Skeleton";
 
 interface ClientListTableProps {
+  loading?: boolean;
   count?: number;
   items?: Client[];
   onDeselectAll?: () => void;
@@ -40,6 +41,7 @@ interface ClientListTableProps {
 
 export const ClientListTable: FC<ClientListTableProps> = (props) => {
   const {
+    loading,
     count = 0,
     items = [],
     onDeselectAll,
@@ -124,10 +126,10 @@ export const ClientListTable: FC<ClientListTableProps> = (props) => {
                 Name
               </TableCell>
               <TableCell>
-                Location
+                Type
               </TableCell>
               <TableCell>
-                Type
+                Account Contact
               </TableCell>
               <TableCell>
                 Status
@@ -138,7 +140,7 @@ export const ClientListTable: FC<ClientListTableProps> = (props) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {(!items || items.length === 0) && [...Array(5)].map((_, rowIndex) => (
+            {(!items || items.length === 0 || loading) && [...Array(5)].map((_, rowIndex) => (
                 <TableRow key={rowIndex} sx={{px: 2, mx:2}}>
                   <TableCell sx={{pl: 3.5, m:0}}>
                     <Skeleton variant={'rectangular'} width={18} height={18} sx={{borderRadius: 0.75}}  />
@@ -164,7 +166,7 @@ export const ClientListTable: FC<ClientListTableProps> = (props) => {
                   </TableCell>
                 </TableRow>
             ))}
-            {items.map((client) => {
+            {!loading && items.map((client) => {
               const isSelected = selected.includes(client.id);
 
               return (
@@ -211,10 +213,10 @@ export const ClientListTable: FC<ClientListTableProps> = (props) => {
                     </Stack>
                   </TableCell>
                   <TableCell sx={{py: 0}}>
-                    {client.service_location.name}
+                    {client.type}
                   </TableCell>
                   <TableCell sx={{py: 0}}>
-                    {client.type}
+                    {client.account_contact.first_name} {client.account_contact.last_name}
                   </TableCell>
                   <TableCell sx={{py: 0}}>
                     <SeverityPill color={client.status === 'active' ? 'success' : 'error'}>

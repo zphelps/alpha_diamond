@@ -56,7 +56,6 @@ export const SelectClientLocationListTable: FC<SelectClientLocationListTableProp
 
   return (
     <Box sx={{ position: 'relative' }}>
-      {/*<Scrollbar>*/}
         <Table sx={{ minWidth: 700 }}>
           <TableHead>
             <TableRow>
@@ -119,7 +118,6 @@ export const SelectClientLocationListTable: FC<SelectClientLocationListTableProp
             })}
           </TableBody>
         </Table>
-      {/*</Scrollbar>*/}
       <TablePagination
         component="div"
         count={count}

@@ -105,6 +105,16 @@ export const ClientListSearch: FC<ClientListSearchProps> = (props) => {
         []
     );
 
+    const handleRemoveQuery = useCallback(
+        () => {
+            setFilters((prevState: any) => ({
+                ...prevState,
+                query: undefined
+            }));
+            queryRef.current.value = "";
+            queryRef.current?.focus();
+        }, []);
+
     const handleFilterType = useCallback(
         (event: SelectChangeEvent<string[]>) => {
             setFilters((prevState: any) => ({
@@ -149,10 +159,12 @@ export const ClientListSearch: FC<ClientListSearchProps> = (props) => {
                 inactive: undefined,
                 type: undefined,
             });
+            queryRef.current.value = "";
+            queryRef.current?.focus();
             setCurrentTab('all');
         }, [setFilters]);
     const hideToolbar = () => {
-        return (filters.query !== undefined || filters.query !== '')
+        return (filters.query === undefined || filters.query === '')
             && (filters.type?.length === 0 || filters.type === undefined)
             && (filters.active === undefined || !filters.active)
             && (filters.inactive === undefined || !filters.inactive);
@@ -268,6 +280,13 @@ export const ClientListSearch: FC<ClientListSearchProps> = (props) => {
                         <Block label="Status:">
                             <Chip size="small" label={filters.active ? "Active" : "Inactive"}
                                   onDelete={handleRemoveStatus}/>
+                        </Block>
+                    )}
+
+                    {(filters.query && filters.query.length > 0) && (
+                        <Block label="Search:">
+                            <Chip size="small" label={filters.query}
+                                  onDelete={handleRemoveQuery}/>
                         </Block>
                     )}
 

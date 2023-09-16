@@ -14,4 +14,14 @@ export interface Truck {
     arrivedAt: string;
     organization_id: string;
     franchise_id: string;
+    status: TruckStatus;
+}
+
+export enum TruckStatus {
+    INACTIVE = 'inactive',
+    DAY_NOT_STARTED = 'day not started',
+    DAY_COMPLETED = 'day completed',
+    ON_BREAK = 'on break',
+    EN_ROUTE = 'en route',
+    COMPLETING_SERVICE = 'completing service',
 }

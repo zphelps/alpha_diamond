@@ -1,6 +1,8 @@
 import {Client} from "../../types/client.ts";
 import {supabase} from "../../config.ts";
 import {ClientLocation} from "../../types/client-location.ts";
+import {ClientContact} from "../../types/client-contact.ts";
+import {BinType} from "../../types/bin-type.ts";
 
 type GetClientLocationsRequest = {
     client_id?: string;
@@ -23,10 +25,14 @@ type CreateClientLocationRequest = {
     id: string;
     client_id?: string;
     name: string;
-    formatted_address: string;
-    lat: number;
-    lng: number;
-    place_id: string;
+    billing_name: string;
+    billing_email: string;
+    billing_phone: number;
+    billing_address: string;
+    service_address: string;
+    service_location_latitude: number;
+    service_location_longitude: number;
+    on_site_contact_id: string;
 }
 
 type CreateClientLocationResponse = Promise<{
@@ -45,13 +51,32 @@ type UpdateClientLocationResponse = Promise<{
 class ClientLocationsApi {
     async getClientLocations(request: GetClientLocationsRequest = {}): GetClientLocationsResponse {
         const {client_id, page, rowsPerPage} = request;
-        const query = supabase.from("client_locations").select("*", {count: "exact"});
+        const query = supabase
+            .from("client_locations")
+            .select("*, on_site_contact:on_site_contact_id(*)", {count: "exact"});
 
         if (typeof client_id !== "undefined") {
             query.eq("client_id", client_id);
         }
 
         const res = await query;
+
+        if (res.error) {
+            return Promise.reject(res.error);
+        }
+
+        const {data: bin_types, error} = await supabase
+            .from("bin_types")
+            .select("*, hauler:hauler_id(*)")
+            .in("client_location_id", [...res.data.map((clientLocation: ClientLocation) => clientLocation.id)]);
+
+        if(error) {
+            return Promise.reject(error);
+        }
+
+        res.data.forEach((clientLocation: ClientLocation) => {
+            clientLocation.bin_types = bin_types.filter((binType: BinType) => binType.client_location_id === clientLocation.id);
+        })
 
         return Promise.resolve({
             data: res.data as ClientLocation[],
@@ -62,32 +87,24 @@ class ClientLocationsApi {
     async getClientLocation(request?: GetClientLocationRequest): GetClientLocationResponse {
         const res = await supabase
             .from("client_locations")
-            .select("*")
+            .select("*, on_site_contact:on_site_contact_id(*)")
             .eq('id', request.id)
             .single();
         return Promise.resolve(res.data as ClientLocation);
     }
 
 
-    async createClientLocation(request: CreateClientLocationRequest): CreateClientLocationResponse {
+    async create(request: CreateClientLocationRequest): CreateClientLocationResponse {
         const res = await supabase
             .from("client_locations")
-            .insert([{
-                id: request.id,
-                client_id: request.client_id,
-                name: request.name,
-                formatted_address: request.formatted_address,
-                place_id: request.place_id,
-                lat: request.lat,
-                lng: request.lng,
-            }]);
+            .insert(request);
         if(res.error !== null) {
             return Promise.reject(res.error);
         }
         return Promise.resolve({success: true});
     }
 
-    async updateClientLocation(request: UpdateClientLocationRequest): UpdateClientLocationResponse {
+    async update(request: UpdateClientLocationRequest): UpdateClientLocationResponse {
         const {id, updated_fields} = request;
 
         const {error} = await supabase.from("client_locations").update(updated_fields).eq('id', id);

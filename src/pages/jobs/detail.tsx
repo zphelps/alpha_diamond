@@ -25,7 +25,7 @@ import {paths} from "../../paths.ts";
 import {useParams} from "react-router-dom";
 import {useDispatch, useSelector} from "react-redux";
 import {Status} from "../../utils/status.ts";
-import {ClientBasicDetails} from "../../sections/clients/client-basic-details.tsx";
+import {ClientOverview} from "../../sections/clients/tabs/details/client-overview.tsx";
 import {ClientLocations} from "../../sections/clients/client-locations.tsx";
 import {ClientServiceContact} from "../../sections/clients/client-service-contact.tsx";
 import {jobsApi} from "../../api/jobs";

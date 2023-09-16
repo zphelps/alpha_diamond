@@ -64,7 +64,6 @@ export const TimelineContainer = styled("div")(
         "& .fc-list": {
             borderColor: "transparent"
         },
-
         // ".fc-timegrid-slot-label-cushion": {
         //     height: "50px",
         //     // lineHeight: "40px !important"

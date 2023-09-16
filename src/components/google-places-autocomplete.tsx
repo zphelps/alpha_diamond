@@ -178,7 +178,7 @@ export default function GooglePlacesAutocomplete(props) {
                 setInputValue(newInputValue);
             }}
             renderInput={(params) => (
-                <TextField {...params} label="Search for address..." fullWidth />
+                <TextField {...params} label="Street address" fullWidth />
             )}
             renderOption={(props, option) => {
                 const matches =

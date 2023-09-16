@@ -1,13 +1,14 @@
 import {ChangeEvent, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {
+    Avatar,
     Box,
     Button,
     Card,
     colors,
     Container,
-    Divider,
+    Divider, ListItem, ListItemIcon, ListItemText, Menu, MenuItem, MenuList,
     Popover,
-    Stack,
+    Stack, SvgIcon,
     Theme,
     Typography,
     useMediaQuery
@@ -21,7 +22,7 @@ import {TimelineContainer} from "../../sections/schedule/timeline-container.tsx"
 import {DateSelectArg, EventClickArg, EventDropArg, EventResizeDoneArg} from "fullcalendar";
 import {ScheduleEvent} from "../../types/schedule-event.ts";
 import {useDispatch, useSelector} from "react-redux";
-import {Truck01} from "@untitled-ui/icons-react";
+import {Truck01, Truck02} from "@untitled-ui/icons-react";
 import interactionPlugin from "@fullcalendar/interaction";
 import {addDays, addMinutes, format, set, setSeconds, startOfWeek} from "date-fns"; // needed for dayClick
 import ReactTooltip from 'react-tooltip';
@@ -47,15 +48,17 @@ import {useNavigate} from "react-router-dom";
 import {paths} from "../../paths.ts";
 import {getServiceScheduleBlockColor} from "../../utils/severity-color.ts";
 import {
+    AttachMoney,
     Cancel,
     Check,
-    CheckCircle,
+    CheckCircle, ContactsOutlined, Delete, Edit, Email,
     Error,
     ErrorOutline,
-    ErrorOutlined,
-    HourglassBottom,
+    ErrorOutlined, EventBusy,
+    HourglassBottom, LocalShipping, PeopleOutlined, RemoveRedEye, Schedule,
     Warning
 } from "@mui/icons-material";
+import {invoicesApi} from "../../api/invoices";
 
 interface PreviewDialogData {
     serviceId?: string;
@@ -210,8 +213,10 @@ export const SchedulePage = () => {
     const currentService = useCurrentService(Object.values(servicesStore.services), previewDialog.data);
 
     const [anchorEl, setAnchorEl] = useState(null);
+    const [popoverSelectedDate, setPopoverSelectedDate] = useState<Date>(new Date());
 
-    const handleClick = (event) => {
+    const handleClick = (event, date) => {
+        setPopoverSelectedDate(date);
         setAnchorEl(event.currentTarget);
     };
 
@@ -493,7 +498,7 @@ export const SchedulePage = () => {
                                                     minWidth: 0,
                                                     minHeight: 0,
                                                 }}
-                                                onClick={handleClick}
+                                                onClick={(e) => handleClick(e, date)}
                                             >
                                                 <Stack>
                                                     <Typography
@@ -530,7 +535,49 @@ export const SchedulePage = () => {
                                         horizontal: 'left',
                                     }}
                                 >
-                                    <Typography sx={{ p: 2 }}>The content of the Popover.</Typography>
+                                    <Typography
+                                        sx={{ pt: 2, pb: 1, px: 2 }}
+                                        variant={'subtitle2'}
+                                    >
+                                        {`${format(popoverSelectedDate, 'EEEE, MMMM d')}`}
+                                    </Typography>
+                                    <Divider/>
+                                    <Box sx={{ px: 1, pt: 1, pb: 1 }}>
+                                        <MenuItem
+                                            onClick={() => {
+                                                // navigate('jobs/create')
+                                                // onClose?.();
+                                            }}
+                                        >
+                                            <ListItemIcon sx={{p: 0, m: 0}}>
+                                                <LocalShipping />
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary={
+                                                    <Typography variant="body2">
+                                                        Move services to other trucks
+                                                    </Typography>
+                                                }
+                                            />
+                                        </MenuItem>
+                                        <MenuItem
+                                            onClick={() => {
+                                                // navigate('jobs/create')
+                                                // onClose?.();
+                                            }}
+                                        >
+                                            <ListItemIcon sx={{p: 0, m: 0}}>
+                                                <EventBusy />
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary={
+                                                    <Typography variant="body2">
+                                                        Cancel services for this truck
+                                                    </Typography>
+                                                }
+                                            />
+                                        </MenuItem>
+                                    </Box>
                                 </Popover>
                             </TimelineContainer>
                         </Card>

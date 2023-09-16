@@ -43,51 +43,33 @@ import {SelectClientNameAndType} from "../../sections/clients/create/select-name
 import {_clientTypes} from "./list.tsx";
 import {SelectClientLocations} from "../../sections/clients/create/select-locations";
 import {SelectPricing} from "../../sections/clients/create/select-pricing";
-import {SelectClientContacts} from "../../sections/clients/create/select-contacts";
-import {clientUsersApi} from "../../api/client-users";
+import {SelectAccountContact} from "../../sections/clients/create/select-contacts";
+import {clientContactsApi} from "../../api/client-contacts";
 import {clientLocationsApi} from "../../api/client-locations";
 import {clientsApi} from "../../api/clients";
+import {ClientContact} from "../../types/client-contact.ts";
+import {BinType} from "../../types/bin-type.ts";
+import {ClientLocation} from "../../types/client-location.ts";
+import {binTypesApi} from "../../api/bin-types";
+import {haulersApi} from "../../api/haulers";
 
-const steps = ["Name", "Locations", "Pricing", "Contacts"];
+const steps = ["General", "Account Contact", "Location(s)", "Pricing"];
 
 export interface CreateClientFormValues {
     organization_id: string;
     franchise_id: string;
-    service_location: {
-        id: string;
-        name: string;
-        formatted_address: string;
-        place_id: string;
-        lat: number;
-        lng: number;
-    }
-    billing_location: {
-        id: string;
-        name: string;
-        formatted_address: string;
-        place_id: string;
-        lat: number;
-        lng: number;
-    }
-    service_contact: {
+    account_contact: {
         id: string;
         first_name: string;
         last_name: string;
         email: string;
-        phone: string;
+        phone: number;
     }
-    billing_contact: {
-        id: string;
-        first_name: string;
-        last_name: string;
-        email: string;
-        phone: string;
-    }
+    locations: ClientLocation[];
     id: string;
     name: string;
     type: string;
     default_monthly_charge: number;
-    default_on_demand_charge: number;
     default_hourly_charge: number;
     submit: null;
 }
@@ -101,27 +83,18 @@ const useInitialValues = (
             return {
                 organization_id: organization_id,
                 franchise_id: franchise_id,
-                service_location: null,
-                billing_location: null,
-                service_contact: {
+                account_contact: {
                     id: uuid(),
-                    first_name: '',
-                    last_name: '',
-                    email: '',
-                    phone: '',
+                    first_name: null,
+                    last_name: null,
+                    email: null,
+                    phone: null,
                 },
-                billing_contact: {
-                    id: uuid(),
-                    first_name: '',
-                    last_name: '',
-                    email: '',
-                    phone: '',
-                },
+                locations: [],
                 id: uuid(),
                 type: null,
                 name: null,
                 default_monthly_charge: null,
-                default_on_demand_charge: null,
                 default_hourly_charge: null,
                 submit: null,
             };
@@ -141,86 +114,98 @@ export const CreateClientPage = () => {
             try {
                 toast.loading("Adding client...");
 
-                await clientUsersApi.createClientUser({
-                    id: values.service_contact.id,
-                    // client_id: values.id,
-                    first_name: values.service_contact.first_name,
-                    last_name: values.service_contact.last_name,
-                    email: values.service_contact.email,
-                    phone: values.service_contact.phone,
+                await clientContactsApi.create({
+                    id: values.account_contact.id,
+                    first_name: values.account_contact.first_name,
+                    last_name: values.account_contact.last_name,
+                    email: values.account_contact.email,
+                    phone: values.account_contact.phone,
                 });
 
-                await clientUsersApi.createClientUser({
-                    id: values.billing_contact.id,
-                    // client_id: values.id,
-                    first_name: values.billing_contact.first_name,
-                    last_name: values.billing_contact.last_name,
-                    email: values.billing_contact.email,
-                    phone: values.billing_contact.phone,
-                });
+                for (const location of values.locations) {
+                    await clientContactsApi.create({
+                        id: location.on_site_contact.id,
+                        first_name: location.on_site_contact.first_name,
+                        last_name: location.on_site_contact.last_name,
+                        email: location.on_site_contact.email,
+                        phone: location.on_site_contact.phone,
+                    });
 
-                await clientLocationsApi.createClientLocation({
-                    id: values.service_location.id,
-                    lat: values.service_location.lat,
-                    lng: values.service_location.lng,
-                    name: values.service_location.name,
-                    formatted_address: values.service_location.formatted_address,
-                    place_id: values.service_location.place_id,
-                });
+                    await clientLocationsApi.create({
+                        id: location.id,
+                        name: location.name,
+                        service_address: location.service_address,
+                        billing_address: location.billing_address,
+                        on_site_contact_id: location.on_site_contact.id,
+                        billing_name: location.billing_name,
+                        billing_email: location.billing_email,
+                        billing_phone: location.billing_phone,
+                        service_location_latitude: location.service_location_latitude,
+                        service_location_longitude: location.service_location_longitude,
+                    });
+                    for (const bin_type of location.bin_types) {
+                        await haulersApi.create({
+                            id: bin_type.hauler.id,
+                            name: bin_type.hauler.name,
+                            email: bin_type.hauler.email,
+                            phone: bin_type.hauler.phone,
+                            rate: bin_type.hauler.rate,
+                        })
+                        await binTypesApi.create({
+                            id: bin_type.id,
+                            name: bin_type.name,
+                            size: bin_type.size,
+                            hauler_id: bin_type.hauler.id,
+                            on_demand_charge: bin_type.on_demand_charge,
+                            description: bin_type.description,
+                            client_location_id: location.id,
+                        });
+                    }
+                }
 
-                await clientLocationsApi.createClientLocation({
-                    id: values.billing_location.id,
-                    lat: values.billing_location.lat,
-                    lng: values.billing_location.lng,
-                    name: values.billing_location.name,
-                    formatted_address: values.billing_location.formatted_address,
-                    place_id: values.billing_location.place_id,
-                });
-
-                await clientsApi.createClient({
+                await clientsApi.create({
                     id: values.id,
                     organization_id: values.organization_id,
                     franchise_id: values.franchise_id,
                     name: values.name,
                     type: values.type,
                     default_monthly_charge: values.default_monthly_charge,
-                    default_on_demand_charge: values.default_on_demand_charge,
                     default_hourly_charge: values.default_hourly_charge,
-                    service_contact_id: values.service_contact.id,
-                    billing_contact_id: values.billing_contact.id,
-                    service_location_id: values.service_location.id,
-                    billing_location_id: values.billing_location.id,
-                    country: "United States",
+                    account_contact_id: values.account_contact.id,
                     status: "active",
                 });
 
-                await clientUsersApi.updateClientUser({
-                    id: values.service_contact.id,
+                await clientContactsApi.update({
+                    id: values.account_contact.id,
                     updated_fields: {
                         client_id: values.id,
                     }
                 });
 
-                await clientUsersApi.updateClientUser({
-                    id: values.billing_contact.id,
-                    updated_fields: {
-                        client_id: values.id,
-                    }
-                });
+                for (const location of values.locations) {
+                    await clientLocationsApi.update({
+                        id: location.id,
+                        updated_fields: {
+                            client_id: values.id,
+                        }
+                    });
 
-                await clientLocationsApi.updateClientLocation({
-                    id: values.service_location.id,
-                    updated_fields: {
-                        client_id: values.id,
-                    }
-                });
+                    await clientContactsApi.update({
+                        id: location.on_site_contact.id,
+                        updated_fields: {
+                            client_id: values.id,
+                        }
+                    });
 
-                await clientLocationsApi.updateClientLocation({
-                    id: values.billing_location.id,
-                    updated_fields: {
-                        client_id: values.id,
+                    for (const bin_type of location.bin_types) {
+                        await haulersApi.update({
+                            id: bin_type.hauler.id,
+                            updated_fields: {
+                                client_id: values.id,
+                            }
+                        })
                     }
-                });
+                }
 
                 toast.dismiss();
                 toast.success("Client added!");
@@ -257,88 +242,6 @@ export const CreateClientPage = () => {
     const handleReset = () => {
         setActiveStep(0);
     };
-
-    const handleClientNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        formik.setFieldValue("name", event.target.value);
-    };
-
-    const handleClientTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        formik.setFieldValue("type", event.target.value);
-    };
-
-    const handleServiceLocationChange = (newValue) => {
-        if (!newValue) {
-            formik.setFieldValue("service_location", null);
-        } else {
-            formik.setFieldValue("service_location", {
-                id: uuid(),
-                name: newValue.structured_formatting.main_text,
-                formatted_address: newValue.description,
-                place_id: newValue.place_id,
-                lat: newValue.lat,
-                lng: newValue.lng,
-            });
-        }
-    }
-
-    const handleBillingLocationChange = (newValue) => {
-        if (!newValue) {
-            formik.setFieldValue("billing_location", null);
-        } else {
-            formik.setFieldValue("billing_location", {
-                id: uuid(),
-                name: newValue.structured_formatting.main_text,
-                formatted_address: newValue.description,
-                place_id: newValue.place_id,
-                lat: newValue.lat,
-                lng: newValue.lng,
-            });
-        }
-    }
-
-    const handleChangeMonthlyCharge = (event: React.ChangeEvent<HTMLInputElement>) => {
-        formik.setFieldValue("default_monthly_charge", Number(event.target.value));
-    }
-
-    const handleChangeOnDemandCharge = (event: React.ChangeEvent<HTMLInputElement>) => {
-        formik.setFieldValue("default_on_demand_charge", Number(event.target.value));
-    }
-
-    const handleChangeHourlyCharge = (event: React.ChangeEvent<HTMLInputElement>) => {
-        formik.setFieldValue("default_hourly_charge", Number(event.target.value));
-    }
-
-    const handleServiceContactFirstNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        formik.setFieldValue("service_contact.first_name", event.target.value);
-    }
-
-    const handleServiceContactLastNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        formik.setFieldValue("service_contact.last_name", event.target.value);
-    }
-
-    const handleServiceContactEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        formik.setFieldValue("service_contact.email", event.target.value);
-    }
-
-    const handleServiceContactPhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        formik.setFieldValue("service_contact.phone", event.target.value);
-    }
-
-    const handleBillingContactFirstNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        formik.setFieldValue("billing_contact.first_name", event.target.value);
-    }
-
-    const handleBillingContactLastNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        formik.setFieldValue("billing_contact.last_name", event.target.value);
-    }
-
-    const handleBillingContactEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        formik.setFieldValue("billing_contact.email", event.target.value);
-    }
-
-    const handleBillingContactPhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        formik.setFieldValue("billing_contact.phone", event.target.value);
-    }
 
     useEffect(() => {
         window.onbeforeunload = () => {
@@ -397,90 +300,19 @@ export const CreateClientPage = () => {
                                 <Divider sx={{my: 3.5}}/>
                                 {activeStep === 0 && (
                                     <SelectClientNameAndType
-                                        handleClientNameChange={handleClientNameChange}
-                                        handleClientTypeChange={handleClientTypeChange}
+                                        values={formik.values}
+                                        setFieldValue={formik.setFieldValue}
                                     />
                                 )}
                                 {activeStep === 1 && (
-                                    <SelectClientLocations
-                                        handleServiceLocationChange={handleServiceLocationChange}
-                                        handleBillingLocationChange={handleBillingLocationChange}
-                                    />
+                                    <SelectAccountContact values={formik.values} setFieldValue={formik.setFieldValue} />
                                 )}
                                 {activeStep === 2 && (
-                                    <SelectPricing
-                                        handleMonthlyChargeChange={handleChangeMonthlyCharge}
-                                        handleHourlyChargeChange={handleChangeHourlyCharge}
-                                        handleOnDemandChargeChange={handleChangeOnDemandCharge}
-                                    />
+                                    <SelectClientLocations values={formik.values} setFieldValue={formik.setFieldValue} />
                                 )}
                                 {activeStep === 3 && (
-                                    <SelectClientContacts
-                                        handleServiceContactFirstNameChange={handleServiceContactFirstNameChange}
-                                        handleServiceContactLastNameChange={handleServiceContactLastNameChange}
-                                        handleServiceContactEmailChange={handleServiceContactEmailChange}
-                                        handleServiceContactPhoneChange={handleServiceContactPhoneChange}
-                                        handleBillingContactFirstNameChange={handleBillingContactFirstNameChange}
-                                        handleBillingContactLastNameChange={handleBillingContactLastNameChange}
-                                        handleBillingContactEmailChange={handleBillingContactEmailChange}
-                                        handleBillingContactPhoneChange={handleBillingContactPhoneChange}
-                                    />
+                                    <SelectPricing values={formik.values} setFieldValue={formik.setFieldValue} />
                                 )}
-                                {/*{activeStep === 2 && (*/}
-                                {/*    <Stack>*/}
-                                {/*        <SelectClientLocation client_id={formik.values.client_id}*/}
-                                {/*                              setFieldValue={formik.setFieldValue}/>*/}
-                                {/*        <Divider sx={{mt: 2, mb: 3.5}}/>*/}
-                                {/*        <SelectContact client_id={formik.values.client_id}*/}
-                                {/*                       setFieldValue={formik.setFieldValue}/>*/}
-                                {/*        <Divider sx={{my: 2}}/>*/}
-                                {/*    </Stack>*/}
-                                {/*)}*/}
-                                {/*{activeStep === 3 && (*/}
-                                {/*    <JobDetails*/}
-                                {/*        charge_unit={formik.values.charge_unit}*/}
-                                {/*        charge_per_unit={formik.values.charge_per_unit}*/}
-                                {/*        service_type={formik.values.service_type}*/}
-                                {/*        client_default_monthly_charge={formik.values.client_default_monthly_charge}*/}
-                                {/*        client_default_on_demand_charge={formik.values.client_default_on_demand_charge}*/}
-                                {/*        default_hourly_charge={formik.values.default_hourly_charge}*/}
-                                {/*        setFieldValue={formik.setFieldValue}*/}
-                                {/*        handleSummaryChange={handleSummaryChange}*/}
-                                {/*        handleDriverNotesChange={handleDriverNotesChange}*/}
-                                {/*    />*/}
-                                {/*)}*/}
-                                {/*{activeStep === 4 && formik.values.service_type === "Recurring" && (*/}
-                                {/*    <Stack>*/}
-                                {/*        <SelectDuration duration={formik.values.duration}*/}
-                                {/*                        setFieldValue={formik.setFieldValue}/>*/}
-                                {/*        <Divider sx={{mt: 2, mb: 3.5}}/>*/}
-                                {/*        <SelectRecurrence*/}
-                                {/*            services_per_week={formik.values.services_per_week}*/}
-                                {/*            days_of_week={formik.values.days_of_week}*/}
-                                {/*            setFieldValue={formik.setFieldValue}*/}
-                                {/*        />*/}
-                                {/*        <Divider sx={{mt: 2, mb: 3.5}}/>*/}
-                                {/*        <SelectTimeWindow*/}
-                                {/*            start_time_window={formik.values.start_time_window}*/}
-                                {/*            end_time_window={formik.values.end_time_window}*/}
-                                {/*            any_time={formik.values.any_time_window}*/}
-                                {/*            duration={formik.values.duration}*/}
-                                {/*            setFieldValue={formik.setFieldValue}*/}
-                                {/*        />*/}
-                                {/*        <Divider sx={{mt: 2, mb: 1.5}}/>*/}
-                                {/*    </Stack>*/}
-                                {/*)}*/}
-                                {/*{activeStep === 4 && formik.values.service_type !== "Recurring" && (*/}
-                                {/*    <Stack>*/}
-                                {/*        <SelectDateAndDuration duration={formik.values.duration}*/}
-                                {/*                               timestamp={formik.values.timestamp}*/}
-                                {/*                               setFieldValue={formik.setFieldValue}/>*/}
-                                {/*        <Divider sx={{mt: 2.5, mb: 1}}/>*/}
-                                {/*    </Stack>*/}
-                                {/*)}*/}
-                                {/*{activeStep === 5 && (*/}
-                                {/*    <Review formValues={formik.values}/>*/}
-                                {/*)}*/}
                                 <Box sx={{display: "flex", flexDirection: "row", pt: 2}}>
                                     <Button
                                         color="inherit"
@@ -495,16 +327,13 @@ export const CreateClientPage = () => {
                                     <Button
                                         disabled={
                                             (activeStep === 0 && (!formik.values.name || !formik.values.type))
-                                            || (activeStep === 1 && (!formik.values.service_location || !formik.values.billing_location))
-                                            || (activeStep === 2 && (!formik.values.default_monthly_charge || !formik.values.default_on_demand_charge || !formik.values.default_hourly_charge))
-                                            || (activeStep === 3 && (formik.values.service_contact.first_name.length < 1
-                                                || formik.values.service_contact.last_name.length < 1
-                                                || formik.values.service_contact.email.length < 1
-                                                || formik.values.service_contact.phone.length < 1
-                                                || formik.values.billing_contact.first_name.length < 1
-                                                || formik.values.billing_contact.last_name.length < 1
-                                                || formik.values.billing_contact.email.length < 1
-                                                || formik.values.billing_contact.phone.length < 1))
+                                            || (activeStep === 1 && (!formik.values.account_contact.first_name
+                                                || !formik.values.account_contact.last_name
+                                                || !formik.values.account_contact.email
+                                                || !formik.values.account_contact.phone))
+                                            || (activeStep === 2 && formik.values.locations.length < 1)
+                                            || (activeStep === 3 && (!formik.values.default_monthly_charge
+                                                || !formik.values.default_hourly_charge))
                                            }
                                         endIcon={(
                                             <SvgIcon>

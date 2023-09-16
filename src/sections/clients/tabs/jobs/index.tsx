@@ -16,18 +16,20 @@ import {
 } from "@mui/material";
 import {ChangeEvent, useCallback, useEffect, useMemo, useState} from "react";
 import {useDispatch, useSelector} from "react-redux";
-import {useMounted} from "../../../hooks/use-mounted.ts";
-import {useAuth} from "../../../hooks/use-auth.ts";
-import {jobsApi} from "../../../api/jobs";
-import {setFilteredJobs, setJobCount, setJobsStatus, upsertManyJobs} from "../../../slices/jobs";
-import {Status} from "../../../utils/status.ts";
-import {Job} from "../../../types/job.ts";
-import {Scrollbar} from "../../../components/scrollbar.tsx";
-import {RouterLink} from "../../../components/router-link.tsx";
-import {getSeverityServiceTypeColor, getSeverityStatusColor} from "../../../utils/severity-color.ts";
-import {SeverityPill} from "../../../components/severity-pill.tsx";
-import {getJobRecurrenceDescription} from "../../../utils/job-recurrence-description.ts";
+import {useMounted} from "../../../../hooks/use-mounted.ts";
+import {useAuth} from "../../../../hooks/use-auth.ts";
+import {jobsApi} from "../../../../api/jobs";
+import {setFilteredJobs, setJobCount, setJobsStatus, upsertManyJobs} from "../../../../slices/jobs";
+import {Status} from "../../../../utils/status.ts";
+import {Job} from "../../../../types/job.ts";
+import {Scrollbar} from "../../../../components/scrollbar.tsx";
+import {RouterLink} from "../../../../components/router-link.tsx";
+import {getSeverityServiceTypeColor, getSeverityStatusColor} from "../../../../utils/severity-color.ts";
+import {SeverityPill} from "../../../../components/severity-pill.tsx";
+import {getJobRecurrenceDescription} from "../../../../utils/job-recurrence-description.ts";
 import Skeleton from "@mui/material/Skeleton";
+import {HourglassEmpty} from "@mui/icons-material";
+import {JobsSummary} from "../../../../components/jobs-summary";
 
 interface ClientJobsSearchState {
     client_id: string;
@@ -142,11 +144,12 @@ export const ClientJobs: FC<ClientJobsProps> = (props) => {
     }, [clientJobsSearch.state])
 
     return (
-        <Card {...other}>
-            <CardHeader
-                title="Jobs"
-            />
-            {/*<Scrollbar>*/}
+        <Stack spacing={3}>
+            <JobsSummary jobs={filteredClientJobs} />
+            <Card {...other}>
+                <CardHeader
+                    title="Jobs"
+                />
                 <Table sx={{minWidth: 600}}>
                     <TableHead>
                         <TableRow>
@@ -154,7 +157,7 @@ export const ClientJobs: FC<ClientJobsProps> = (props) => {
                                 #
                             </TableCell>
                             <TableCell>
-                                Summary
+                                Location
                             </TableCell>
                             <TableCell>
                                 When
@@ -171,7 +174,7 @@ export const ClientJobs: FC<ClientJobsProps> = (props) => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {(!filteredClientJobs || filteredClientJobs.length === 0 || loading) && [...Array(5)].map((_, rowIndex) => (
+                        {(!filteredClientJobs || filteredClientJobs.length === 0) && loading && [...Array(5)].map((_, rowIndex) => (
                             <TableRow key={rowIndex}>
                                 <TableCell sx={{pl: 2, m: 0, py: 0}}>
                                     <Skeleton variant="text" width="80%" height={24}/>
@@ -207,7 +210,7 @@ export const ClientJobs: FC<ClientJobsProps> = (props) => {
                                         </Link>
                                     </TableCell>
                                     <TableCell sx={{py:0}}>
-                                        {job.summary}
+                                        {job.location.name}
                                     </TableCell>
                                     <TableCell sx={{py:0}}>
                                         {getJobRecurrenceDescription(job)}
@@ -239,17 +242,25 @@ export const ClientJobs: FC<ClientJobsProps> = (props) => {
                         })}
                     </TableBody>
                 </Table>
-            {/*</Scrollbar>*/}
-            <TablePagination
-                component="div"
-                count={clientJobsStore.jobCount}
-                onPageChange={clientJobsSearch.handlePageChange}
-                onRowsPerPageChange={clientJobsSearch.handleRowsPerPageChange}
-                page={clientJobsSearch.state.page}
-                rowsPerPage={clientJobsSearch.state.rowsPerPage}
-                rowsPerPageOptions={[10, 25, 50]}
-            />
-        </Card>
+                {filteredClientJobs.length === 0 && !loading && (
+                    <Stack alignItems={'center'} sx={{my: 5}} spacing={1}>
+                        <HourglassEmpty fontSize={'large'} sx={{color:'text.secondary'}} />
+                        <Typography variant={'subtitle1'} color={'text.secondary'}>
+                            No jobs found.
+                        </Typography>
+                    </Stack>
+                )}
+                <TablePagination
+                    component="div"
+                    count={clientJobsStore.jobCount}
+                    onPageChange={clientJobsSearch.handlePageChange}
+                    onRowsPerPageChange={clientJobsSearch.handleRowsPerPageChange}
+                    page={clientJobsSearch.state.page}
+                    rowsPerPage={clientJobsSearch.state.rowsPerPage}
+                    rowsPerPageOptions={[10, 25, 50]}
+                />
+            </Card>
+        </Stack>
     );
 };
 

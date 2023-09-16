@@ -190,7 +190,7 @@ export const SideNavItem: FC<SideNavItemProps> = (props) => {
           justifyContent: 'flex-start',
           pl: `${6 + offset}px`,
           pr: '16px',
-          py: '12px', //6px
+          py: depth > 0 ? '6px' : '16px', //6px
           textAlign: 'left',
           width: '100%',
           ...(active && {

@@ -1,7 +1,7 @@
 import {Client} from "../../types/client.ts";
 import {supabase} from "../../config.ts";
 import {ClientLocation} from "../../types/client-location.ts";
-import {ClientUser} from "../../types/client-user.ts";
+import {ClientContact} from "../../types/client-contact.ts";
 import {Bin} from "../../types/bin.ts";
 
 type GetBinsRequest = {

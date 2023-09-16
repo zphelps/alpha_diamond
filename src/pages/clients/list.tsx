@@ -111,7 +111,7 @@ const useClientsSearch = (organization_id: string, franchise_id: string) => {
     };
 };
 
-const useClientsStore = (searchState: ClientsSearchState) => {
+const useClientsStore = (searchState: ClientsSearchState, setLoading) => {
     const isMounted = useMounted();
     const dispatch = useDispatch();
 
@@ -129,6 +129,7 @@ const useClientsStore = (searchState: ClientsSearchState) => {
                 console.error(err);
                 dispatch(setClientsStatus(Status.ERROR));
             }
+            setLoading(false);
         },
         [searchState, isMounted]
     );
@@ -163,16 +164,23 @@ const useFilteredClients = (clients: Client[] = []) => {
 export default function ClientListPage() {
     const navigate = useNavigate();
     const auth = useAuth();
-    const clientsSearch = useClientsSearch(auth.user.organization.id, auth.user.franchise.id);
-    useClientsStore(clientsSearch.state);
 
     // @ts-ignore
     const clientsStore = useSelector((state) => state.clients);
+
+    const [loading, setLoading] = useState<boolean>(clientsStore.clientsCount === 0);
+
+    const clientsSearch = useClientsSearch(auth.user.organization.id, auth.user.franchise.id);
+    useClientsStore(clientsSearch.state, setLoading);
 
     const clientsIds = useClientsIds(clientsStore.filteredClients);
     const clientsSelection = useSelection<string>(clientsIds);
 
     const filteredClients = useFilteredClients(clientsStore.filteredClients);
+
+    useEffect(() => {
+        setLoading(true);
+    }, [clientsSearch.state]);
 
     // @ts-ignore
     return (
@@ -220,6 +228,7 @@ export default function ClientListPage() {
                             />
 
                             <ClientListTable
+                                loading={loading}
                                 count={clientsStore.clientsCount}
                                 items={filteredClients}
                                 onDeselectAll={clientsSelection.handleDeselectAll}

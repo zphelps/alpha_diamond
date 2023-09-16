@@ -68,17 +68,16 @@ const useJobServicesSearch = (jobID: string) => {
     };
 };
 
-const useJobServicesStore = (searchState: JobServicesSearchState) => {
+const useJobServicesStore = (searchState: JobServicesSearchState, organization_id: string, franchise_id: string) => {
     const isMounted = useMounted();
     const dispatch = useDispatch();
-    const auth = useAuth();
 
     const handleJobServicesGet = useCallback(
         async () => {
             try {
                 const response = await servicesApi.getServices({
-                    organization_id: auth.user?.organization_id,
-                    franchise_id: auth.user?.franchise_id,
+                    organization_id: organization_id,
+                    franchise_id: franchise_id,
                     ...searchState
                 });
 
@@ -119,9 +118,10 @@ interface JobServicesProps {
 
 export const JobServices: FC<JobServicesProps> = (props) => {
     const {clientID, jobID, ...other} = props;
+    const auth = useAuth();
 
     const jobServicesSearch = useJobServicesSearch(jobID);
-    useJobServicesStore(jobServicesSearch.state);
+    useJobServicesStore(jobServicesSearch.state, auth.user.organization.id, auth.user.franchise.id);
 
     // @ts-ignore
     const jobServicesStore = useSelector((state) => state.services);

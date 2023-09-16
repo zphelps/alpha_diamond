@@ -7,13 +7,13 @@ export const getSeverityStatusColor = (status: string) => {
         case 'open':
             return 'success';
         case 'in-progress':
-            return 'warning';
+            return 'secondary';
         case 'completed':
             return 'success';
         case 'cancelled':
             return 'error';
         case 'incomplete':
-            return 'error';
+            return 'warning';
         default:
             return 'info';
     }
@@ -54,5 +54,25 @@ export const getServiceScheduleBlockColor = (service_type: string, status: strin
         return colors.red[100];
     } else if (status === ServiceStatus.INCOMPLETE) {
         return colors.orange[300];
+    }
+}
+
+
+export const getTruckStatusColor = (status: string) => {
+    switch (status) {
+        case 'inactive':
+            return 'error';
+        case 'day not started':
+            return 'error';
+        case 'day completed':
+            return 'success';
+        case 'on break':
+            return 'secondary';
+        case 'en route':
+            return 'info';
+        case 'completing service':
+            return 'warning';
+        default:
+            return 'info';
     }
 }

@@ -115,6 +115,20 @@ export const useSections = () => {
                     <Business />
                   </SvgIcon>
               ),
+              // items: [
+              //   {
+              //     title: "General",
+              //     path: `/franchise/users`,
+              //   },
+              //   {
+              //     title: "Legal",
+              //     path: `/franchise/users`,
+              //   },
+              //   {
+              //       title: "Users",
+              //       path: `/franchise/users`,
+              //   },
+              // ]
             }
           ]
         },

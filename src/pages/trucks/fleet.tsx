@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import type {Theme} from "@mui/material";
-import {Box, Divider, Stack, Typography, useMediaQuery} from "@mui/material";
+import {Box, Button, Divider, Stack, SvgIcon, Typography, useMediaQuery} from "@mui/material";
 import {Seo} from "../../components/seo.tsx";
 import {FleetList} from "../../sections/trucks/fleet-list.tsx";
 import {Truck} from "../../types/truck.ts";
@@ -16,6 +16,10 @@ import {trucksApi} from "../../api/trucks";
 import {setTruckStatus, upsertManyTrucks} from "../../slices/trucks";
 import {useAuth} from "../../hooks/use-auth.ts";
 import {Client} from "../../types/client.ts";
+import {paths} from "../../paths.ts";
+import PlusIcon from "@untitled-ui/icons-react/build/esm/Plus";
+import {AddTruckDialog} from "../../sections/trucks/add-truck-dialog.tsx";
+import {useDialog} from "../../hooks/use-dialog.tsx";
 
 interface TrucksSearchState {
     organization_id: string;
@@ -80,6 +84,8 @@ export const FleetPage = () => {
     const [openDrawer, setOpenDrawer] = useState<boolean>(false);
     const [currentVehicleId, setCurrentVehicleId] = useState<string | undefined>(trucks[0]?.id);
 
+    const addTruckDialog = useDialog();
+
     useEffect(() => {
         if (trucks.length > 0) {
             setCurrentVehicleId(trucks[0]?.id);
@@ -137,10 +143,23 @@ export const FleetPage = () => {
                             flex: "0 0 400px"
                         }}
                     >
-                        <Box sx={{p: 2}}>
-                            <Typography variant="h5">
-                                Fleet
-                            </Typography>
+                        <Box sx={{p: 2, mb: 2}}>
+                            <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
+                                <Typography variant="h5">
+                                    Trucks
+                                </Typography>
+                                <Button
+                                    onClick={addTruckDialog.handleOpen}
+                                    startIcon={(
+                                        <SvgIcon>
+                                            <PlusIcon/>
+                                        </SvgIcon>
+                                    )}
+                                    variant="contained"
+                                >
+                                    Add
+                                </Button>
+                            </Stack>
                         </Box>
                         <FleetList
                             currentVehicleId={currentVehicleId}
@@ -184,6 +203,10 @@ export const FleetPage = () => {
                     />
                 </FleetDrawer>
             )}
+            <AddTruckDialog
+                onClose={addTruckDialog.handleClose}
+                open={addTruckDialog.open}
+            />
         </>
     );
 };

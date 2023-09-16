@@ -74,6 +74,7 @@ export const CreateContentPopover: FC<CreateContentPopoverProps> = (props) => {
                 disableScrollLock
                 onClose={onClose}
                 open={open}
+
                 PaperProps={{ sx: { width: anchorEl?.clientWidth, mt: 1 } }}
                 {...other}
             >

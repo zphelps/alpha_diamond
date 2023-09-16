@@ -4,10 +4,10 @@ import ArrowLeftIcon from "@untitled-ui/icons-react/build/esm/ArrowLeft";
 import ChevronDownIcon from "@untitled-ui/icons-react/build/esm/ChevronDown";
 import Edit02Icon from "@untitled-ui/icons-react/build/esm/Edit02";
 import {
-    Avatar,
+    Avatar, Backdrop,
     Box,
     Button,
-    Chip,
+    Chip, CircularProgress,
     Container,
     Divider,
     Link,
@@ -28,19 +28,21 @@ import {clientsApi} from "../../api/clients";
 import {useDispatch, useSelector} from "react-redux";
 import {setClientsStatus, upsertOneClient} from "../../slices/clients";
 import {Status} from "../../utils/status.ts";
-import {ClientBasicDetails} from "../../sections/clients/client-basic-details.tsx";
-import {ClientLocations} from "../../sections/clients/client-locations.tsx";
+import {ClientOverview} from "../../sections/clients/tabs/details/client-overview.tsx";
 import {ClientServiceContact} from "../../sections/clients/client-service-contact.tsx";
-import {ClientPricingDetails} from "../../sections/clients/client-pricing-details.tsx";
-import {ClientBillingContact} from "../../sections/clients/client-billing-contact.tsx";
-import {ClientJobs} from "../../sections/clients/jobs";
+import {ClientPricing} from "../../sections/clients/tabs/details/client-pricing.tsx";
+import {ClientAccountContact} from "../../sections/clients/client-account-contact.tsx";
+import {ClientJobs} from "../../sections/clients/tabs/jobs";
+import {SeverityPill} from "../../components/severity-pill.tsx";
+import {ClientRevenueByLocation} from "../../sections/clients/tabs/details/client-revenue-by-location.tsx";
+import {ClientLocations} from "../../sections/clients/tabs/locations";
 
 const tabs = [
     {label: "Details", value: "details"},
     {label: "Jobs", value: "jobs"},
     {label: "Services", value: "services"},
     {label: "Invoices", value: "invoices"},
-    // {label: "Locations", value: "locations"},
+    {label: "Locations", value: "locations"},
     // {label: "Contacts", value: "contacts"}
 ];
 
@@ -79,7 +81,9 @@ export const ClientDetailsPage = () => {
     useClient(params.clientID);
 
     // @ts-ignore
-    const client = useSelector((state) => state.clients).clients[params.clientID];
+    const clientStore = useSelector((state) => state.clients);
+
+    const client = clientStore.clients[params.clientID];
 
     useEffect(() => {
         setCurrentTab(params.tab ?? 'details')
@@ -93,13 +97,15 @@ export const ClientDetailsPage = () => {
         []
     );
 
-    if (!client) {
-        return null;
+    if (!client || !client.locations) {
+        return <Stack sx={{alignItems: 'center', justifyContent: 'center', height: '100%'}}>
+            <CircularProgress/>
+        </Stack>
     }
 
     return (
         <>
-            <Seo title={`Client: ${client.name}`}/>
+            <Seo title={`${client.name}`}/>
             <Box
                 component="main"
                 sx={{
@@ -146,17 +152,16 @@ export const ClientDetailsPage = () => {
                                 >
                                     <Stack spacing={2}>
                                         <Typography variant="h4">
-                                            {client.name}
+                                            {client.name ?? "Client Name"}
                                         </Typography>
                                         <Stack
                                             alignItems="center"
                                             direction="row"
                                             spacing={1}
                                         >
-                                            <Chip
-                                                label={`ID-${client.id.split("-").shift().toUpperCase()}`}
-                                                size="small"
-                                            />
+                                            <SeverityPill color={client.status === 'active' ? 'success' : 'error'}>
+                                                {client.status}
+                                            </SeverityPill>
                                         </Stack>
                                     </Stack>
                                 </Stack>
@@ -220,15 +225,12 @@ export const ClientDetailsPage = () => {
                                         lg={4}
                                     >
                                         <Stack spacing={2}>
-                                            <ClientBasicDetails
-                                                name={client.name}
-                                                country={client.country}
-                                                type={client.type}
-                                                status={client.status}
+                                            <ClientOverview
+                                                client={client}
                                             />
-                                            <ClientPricingDetails
+                                            {/*<ClientAccountContact account_contact={client.account_contact} />*/}
+                                            <ClientPricing
                                                 monthly_charge={client.default_monthly_charge.toString()}
-                                                on_demand_charge={client.default_on_demand_charge.toString()}
                                                 hourly_charge={client.default_hourly_charge.toString()}
                                             />
                                         </Stack>
@@ -238,25 +240,24 @@ export const ClientDetailsPage = () => {
                                         lg={8}
                                     >
                                         <Stack spacing={2}>
-                                            <ClientLocations
-                                                billing_location={client.service_location}
-                                                service_location={client.service_location}
-                                            />
-                                            <ClientServiceContact
-                                                service_contact={client.service_contact}
-                                            />
-                                            <ClientBillingContact
-                                                billing_contact={client.billing_contact}
-                                            />
-                                          {/*<CustomerEmailsSummary />*/}
-                                          {/*<CustomerDataManagement />*/}
+                                            <ClientRevenueByLocation locations={client.locations} />
+                                            {/*<ClientLocations*/}
+                                            {/*    billing_location={client.service_location}*/}
+                                            {/*    service_location={client.service_location}*/}
+                                            {/*/>*/}
+                                            {/*<ClientServiceContact*/}
+                                            {/*    service_contact={client.service_contact}*/}
+                                            {/*/>*/}
+                                            {/*<ClientBillingContact*/}
+                                            {/*    billing_contact={client.billing_contact}*/}
+                                            {/*/>*/}
                                         </Stack>
                                     </Grid>
                                 </Grid>
                             </div>
                         )}
                         {currentTab === 'jobs' && <ClientJobs clientID={client.id} />}
-                        {/*{currentTab === 'logs' && <CustomerLogs logs={logs} />}*/}
+                        {currentTab === 'locations' && <ClientLocations locations={client.locations} />}
                     </Stack>
                 </Container>
             </Box>
